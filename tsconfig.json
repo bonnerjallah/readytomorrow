@@ -1,6 +1,20 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "strict": true
-  }
+    "strict": true,
+    "baseUrl": ".",
+    "typeRoots": ["./types", "./node_modules/@types"]
+  },
+  "include": [
+    "app/**/*",
+    "types"
+  ]
 }
+
+
+// This file is used to configure TypeScript for the React Native project.
+// It extends the Expo TypeScript configuration and sets strict mode and base URL for module resolution.
+// The "include" option specifies that TypeScript should check all files in the "app"
+// directory and its subdirectories.
+// This allows for better type checking and autocompletion in the project.
+// The "baseUrl" option allows for easier imports by setting a base directory for module resolution
