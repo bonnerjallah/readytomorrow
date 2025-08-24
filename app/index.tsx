@@ -14,6 +14,8 @@ import { userAtom, AppUser } from '../atoms/userAtoms';
 import SplashScreenWithLottie from '../components/SplashScreenWithLottie';
 
 
+
+
 const Index = () => {
   
   const [loading, setLoading] = useState(true);

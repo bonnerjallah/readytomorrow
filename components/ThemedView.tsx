@@ -17,6 +17,13 @@ const ThemedView: React.FC<ThemedViewProps> = ({ style, safe = false, children, 
     typeof child === 'string' ? <Text style={{ color: theme.text }}>{child}</Text> : child
   );
 
+  if(!safe) return (
+    <View 
+      style = {[{backgroundColor: theme.background}, style]}
+      {...props}
+    />
+  );
+
   return (
     <View
       style={[

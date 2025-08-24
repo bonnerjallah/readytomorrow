@@ -32,6 +32,8 @@ const ThemedButton: React.FC<ThemedButtonProps> = ({ style, children, textStyle,
           justifyContent: 'center',
           alignItems: 'center',
           opacity: pressed ? 0.6 : 1,
+          width: "50%",
+          height:50
         },
         style,
       ]}

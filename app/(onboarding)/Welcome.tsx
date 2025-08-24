@@ -74,7 +74,7 @@ export default function WelcomeScreen({ onFinish }: Props) {
         <ThemedButton
             style={styles.arrowRightStyle}
             onPress={isLastSlide ? handleFinish : handleNext}
-            >
+        >
             {isLastSlide ? (
                 <ThemedText variant="button">Get Started</ThemedText>
             ) : (

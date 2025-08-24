@@ -20,8 +20,8 @@ const ThemedTextInput: React.FC<ThemedTextInputProps> = ({
   const { theme } = useTheme();
 
   return (
-    <View>
-      {children && <View style={[styles.inputWrapper, style]}>{children}</View>}
+    <View style={[styles.inputWrapper, style]}>
+      {children && <View style={{ marginRight: 8 }}>{children}</View>}
       <TextInput
         style={[styles.input, { color: theme.text }]}
         placeholderTextColor={placeHolderTextColor || theme.placeholder}

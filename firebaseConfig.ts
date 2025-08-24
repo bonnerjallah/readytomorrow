@@ -28,7 +28,6 @@ const app = initializeApp(firebaseConfig);
 // Initialize Auth (React Native Auto-persistence)
 export const auth = initializeAuth(app);
 
-// Optionally, you can call setPersistence(auth, somePersistence) if needed later
-
+// Initialize Firestore and Storage
 export const db = getFirestore(app);
 export const storage = getStorage(app);

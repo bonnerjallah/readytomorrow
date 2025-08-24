@@ -17,7 +17,7 @@ export const Typography = {
 
     body:{
         fontFamily: "Quicksand-Regular",
-        fontSize: 62,
+        fontSize: 20,
     },
 
     button:{
