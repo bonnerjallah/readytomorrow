@@ -24,20 +24,20 @@ const Index = () => {
   const setUser = useSetAtom(userAtom);
 
 
-  // For testing purposes: clear onboarding flag on each app start
-  // Remove this in production
-  useEffect(() => {
-    const resetOnboarding = async () => {
-      try {
-        await AsyncStorage.removeItem('seenOnboarding');
-        console.log('Onboarding flag cleared!');
-      } catch (error) {
-        console.error('Error clearing onboarding flag:', error);
-      }
-    };
+  // // For testing purposes: clear onboarding flag on each app start
+  // // Remove this in production
+  // useEffect(() => {
+  //   const resetOnboarding = async () => {
+  //     try {
+  //       await AsyncStorage.removeItem('seenOnboarding');
+  //       console.log('Onboarding flag cleared!');
+  //     } catch (error) {
+  //       console.error('Error clearing onboarding flag:', error);
+  //     }
+  //   };
 
-    resetOnboarding();
-  }, []);
+  //   resetOnboarding();
+  // }, []);
 
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;

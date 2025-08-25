@@ -4,12 +4,14 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 // Define AppUser type
 export interface AppUser {
   id: string;
-  name: string;
   email: string | null;
+  createdAt: Date
+  [key: string]: any; // ✅ allows extra fields like settings
 }
 
 // AsyncStorage wrapper
 const asyncStorage = {
+
   getItem: async (key: string) => {
     try {
       const value = await AsyncStorage.getItem(key);
@@ -19,6 +21,7 @@ const asyncStorage = {
       return null;
     }
   },
+
   setItem: async (key: string, value: AppUser | null) => {
     try {
       await AsyncStorage.setItem(key, JSON.stringify(value));
@@ -26,6 +29,7 @@ const asyncStorage = {
       console.error("Error setting AsyncStorage:", key, e);
     }
   },
+  
   removeItem: async (key: string) => {
     try {
       await AsyncStorage.removeItem(key);
@@ -36,6 +40,16 @@ const asyncStorage = {
 };
 
 // Atom to persist AppUser (not the raw Firebase.User)
-export const userAtom = atomWithStorage<AppUser | null>("user", null, asyncStorage);
-// This atom will automatically sync with AsyncStorage
+export const userAtom = atomWithStorage<AppUser | null>("user", null, {
+  getItem: async (key) => {
+    const value = await asyncStorage.getItem(key);
+    if (value) {
+      // Convert createdAt string back to Date
+      value.createdAt = new Date(value.createdAt);
+    }
+    return value;
+  },
+  setItem: asyncStorage.setItem,
+  removeItem: asyncStorage.removeItem,
+});
 
