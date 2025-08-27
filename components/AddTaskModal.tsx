@@ -4,14 +4,16 @@ import { Modal, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, Vi
 // 🎨 UI
 import {useTheme} from "../components/ThemeContext"
 import ThemedText from './ThemedText'
+import { useState } from 'react'
 
 // 🔤 TYPES
 type AddTaskModalProps = {
     isVisible: boolean,
     onClose: () => void
+    onSelect?: (type: "activity" | "routine" | "ritual") => void
 }
 
-const AddTaskModal = ({isVisible, onClose}: AddTaskModalProps) => {
+const AddTaskModal = ({isVisible, onClose, onSelect}: AddTaskModalProps) => {
 
     const {theme} = useTheme()
 
@@ -26,17 +28,37 @@ const AddTaskModal = ({isVisible, onClose}: AddTaskModalProps) => {
         <TouchableWithoutFeedback onPress={onClose}>
             <View style={[styles.container]}>
                 <View style={styles.modalContent}>
-                    <TouchableOpacity style={styles.touchStyle}>
+                    <TouchableOpacity 
+                        style={styles.touchStyle}
+                        onPress={() => {
+                            onClose();
+                            onSelect?.("activity")
+                        }}
+                    >
                         <ThemedText>
                             📝 Add Activity
                         </ThemedText>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.touchStyle}>
+
+                    <TouchableOpacity 
+                        style={styles.touchStyle}
+                        onPress={() => {
+                            onClose();
+                            onSelect?.("routine")
+                        }}
+                    >
                         <ThemedText>
                             🕒 Schedule Routine                        
                         </ThemedText>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.touchStyle}>
+
+                    <TouchableOpacity 
+                        style={styles.touchStyle}
+                        onPress={() => {
+                            onClose();
+                            onSelect?.("ritual")
+                        }}
+                    >
                         <ThemedText>
                             🌅 Add Daily Ritual
                         </ThemedText>

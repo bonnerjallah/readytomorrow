@@ -12,15 +12,29 @@ import { CalendarDays, CirclePlus, SlidersHorizontal, TableOfContents } from 'lu
 import AddTaskModal from "../../components/AddTaskModal"
 import DisplayOptionsModal from "../../components/DisplayOptionsModal"
 import HambergurMenuModal from "../../components/HambergurMenuModal"
+import ActivityInputModal from "../../components/ActivityInputModal"
+import ShowDailyRitualModal from "../../components/ShowDailyRitualModal"
+
+
+// ⚛️ STATE MANAGEMENT
+import { useTheme } from 'components/ThemeContext'
+import ScheduleRoutineModal from '../../components/ScheduleRoutineModal'
+
 
 
 
 
 const Home = () => {
 
+    const {darkMode} = useTheme()
+
     const [showAddTaskModal, setShowAddTaskModal] = useState(false)
     const [showDisplayOptionModal, setShowDisplayOptionModal] = useState(false)
     const [showHamburgerModal, setShowHamburgerModal] = useState(false)
+    const [showActivityInputModal, setShowActivityInputModal] = useState(false);
+    const [showScheduleRoutine, setShowScheduleRoutineModal] = useState(false)
+    const [showDailyRitualModal, setShowDailyRitualModal] = useState(false)
+
 
 
   return (
@@ -32,13 +46,21 @@ const Home = () => {
             <TouchableOpacity
                 onPress={() => setShowHamburgerModal(true)}
             >
-                <TableOfContents  size={35}/>
+                {darkMode === "dark" ? (
+                    <TableOfContents size={35} stroke="white" />
+                ) : (
+                    <TableOfContents  size={35} stroke="black" />
+                )}
             </TouchableOpacity>
 
             <TouchableOpacity
                 onPress={() => setShowDisplayOptionModal(true)}
             >
-                <SlidersHorizontal size={30} />
+                {darkMode === "dark" ? (
+                    <SlidersHorizontal size={35} stroke="white" />
+                ) : (
+                    <SlidersHorizontal  size={35} stroke="black" />
+                )}
             </TouchableOpacity>
         </View>
         
@@ -52,7 +74,11 @@ const Home = () => {
 
             </View>
             <View style={{flexDirection:"row", alignItems:"center", columnGap: 5}}>
-                <CalendarDays size={20} />
+                {darkMode === "dark" ? (
+                    <CalendarDays size={20} stroke="white" />
+                ) : (
+                    <CalendarDays  size={20} stroke="black" />
+                )}
                 <ThemedText>
                     {new Date().toLocaleDateString("en-US", {
                         month: "long",
@@ -69,7 +95,12 @@ const Home = () => {
         <View style={{flex: 1}}>
             <ScrollView>
                 <View>
-                    <Text>hello world</Text>
+                    
+                    
+
+
+
+
                 </View>
             </ScrollView>
 
@@ -97,9 +128,31 @@ const Home = () => {
             </Pressable>
         </View>
 
-        <AddTaskModal isVisible={showAddTaskModal} onClose={() => setShowAddTaskModal(false)} />
+        <AddTaskModal 
+            isVisible={showAddTaskModal} 
+            onClose={() => setShowAddTaskModal(false)} 
+            onSelect={(type) => {
+                if(type === "activity") {
+                    setShowAddTaskModal(false)
+                    setShowActivityInputModal(true)
+                } else if (type === "routine") {
+                    setShowAddTaskModal(false)
+                    setShowScheduleRoutineModal(true)
+                } else {
+                    setShowAddTaskModal(false)
+                    setShowDailyRitualModal(true)
+                }
+                return
+            }}
+            
+        />
+
         <DisplayOptionsModal isVisible={showDisplayOptionModal} onClose={() => setShowDisplayOptionModal(false)} />
         <HambergurMenuModal isVisible={showHamburgerModal} onClose={() => setShowHamburgerModal(false)} />
+        <ActivityInputModal isVisible={showActivityInputModal} onClose={() => setShowActivityInputModal(false)}/>
+        <ShowDailyRitualModal isVisible={showDailyRitualModal} onClose={() => setShowDailyRitualModal(false)}/>
+        <ScheduleRoutineModal isVisible={showScheduleRoutine} onClose={() => setShowScheduleRoutineModal(false)} />
+
     </ThemedView>
   )
 }

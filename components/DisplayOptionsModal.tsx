@@ -72,15 +72,7 @@ const DisplayOptionsModal = ({ isVisible, onClose }: DisplayOptionsModalProps) =
         <Spacer height={20} />
 
         <View style={{flexDirection:"row", justifyContent:'space-evenly', alignItems:"center"}}>
-            <CircleX  
-                onPress={onClose}
-                stroke="#34a0a4"
-                size={35}
-            />
-
-            <ThemedText variant="title" title>Display Options</ThemedText>
-
-           <TouchableOpacity
+            <TouchableOpacity
                 onPress={() => setDarkmode(darkModeBool ? "light" : "dark")}
                 style={{ padding: 10 }}
                 >
@@ -89,7 +81,16 @@ const DisplayOptionsModal = ({ isVisible, onClose }: DisplayOptionsModalProps) =
                     ) : (
                         <Moon size={30} fill={darkModeBool ? "white" : "black"} />
                     )}
-            </TouchableOpacity>
+            </TouchableOpacity>            
+
+            <ThemedText variant="title" title>Display Options</ThemedText>
+
+           
+            <CircleX  
+                onPress={onClose}
+                stroke="#34a0a4"
+                size={35}
+            />
         </View>
 
         
@@ -109,14 +110,15 @@ const DisplayOptionsModal = ({ isVisible, onClose }: DisplayOptionsModalProps) =
         {dropdowns[0].open && (
             <Animated.View
                 style={[
-                styles.dropdown,
-                { height: dropdowns[0].height, opacity: dropdowns[0].opacity },
-                ]}
-            >
+                    styles.dropdown,
+                    { height: dropdowns[0].height, opacity: dropdowns[0].opacity, backgroundColor: theme.dropdownBackground }
+                    ]}
+                >
                 <Text style={styles.item}>Option 1</Text>
                 <Text style={styles.item}>Option 2</Text>
                 <Text style={styles.item}>Option 3</Text>
             </Animated.View>
+
         )}
 
         <Spacer height={40} />
@@ -135,7 +137,7 @@ const DisplayOptionsModal = ({ isVisible, onClose }: DisplayOptionsModalProps) =
             <Animated.View
                 style={[
                 styles.dropdown,
-                { height: dropdowns[1].height, opacity: dropdowns[1].opacity },
+                { height: dropdowns[1].height, opacity: dropdowns[1].opacity, backgroundColor: theme.dropdownBackground },
                 ]}
             >
                 <Text style={styles.item}>Option 1</Text>

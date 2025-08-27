@@ -11,6 +11,7 @@ export const Colors = {
     tabIconSelected: "#3e61c8ff", // highlight orange
     inputBackground: "#F3F4F6", // light gray input bg
     cardbackground: "#FFFFFF",  // white cards
+    dropdownBackground: "#dee2e6"
   },
   dark: {
     background: "#1C1917",      // warm dark brownish-gray
@@ -24,6 +25,8 @@ export const Colors = {
     tabIconSelected: "#bfd7b5", // highlight orange
     inputBackground: "#292524", // dark input background
     cardbackground: "#292524",  // dark cards
+    dropdownBackground: "#6c757d"
+
   }
 }
 
