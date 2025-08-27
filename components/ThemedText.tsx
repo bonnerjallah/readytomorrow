@@ -10,13 +10,13 @@ type ThemedTextProps = TextProps & {
   children?: ReactNode;
 };
 
-const ThemedText: React.FC<ThemedTextProps> = ({
+const ThemedText = ({
   style,
   title = false,
   variant = 'body',
   children,
   ...props
-}) => {
+ } : ThemedTextProps) => {
 
   const { theme } = useTheme();
     

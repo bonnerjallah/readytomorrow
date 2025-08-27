@@ -12,7 +12,7 @@ module.exports = function(api) {
           allowUndefined: false // prevents missing keys
         }
       ],
-      "react-native-reanimated/plugin"
+      'react-native-worklets/plugin',
     ]
   };
 };

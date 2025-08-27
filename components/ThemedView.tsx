@@ -6,10 +6,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 type ThemedViewProps = {
   style?: StyleProp<ViewStyle>;
   safe?: boolean;
+  padding?: number | { top?: number; bottom?: number; left?: number; right?: number };
   children?: ReactNode;
 } & React.ComponentProps<typeof View>;
 
-const ThemedView: React.FC<ThemedViewProps> = ({ style, safe = false, children, ...props }) => {
+const ThemedView = ({ style, safe = false, children, ...props } : ThemedViewProps) => {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
 
@@ -31,8 +32,8 @@ const ThemedView: React.FC<ThemedViewProps> = ({ style, safe = false, children, 
           backgroundColor: theme.background,
           paddingTop: insets.top,
           paddingBottom: insets.bottom,
-          paddingLeft: insets.left,
-          paddingRight: insets.right,
+          paddingLeft: 10,
+          paddingRight: 10,
         },
         style,
       ]}

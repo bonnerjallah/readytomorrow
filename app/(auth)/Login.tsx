@@ -169,7 +169,7 @@ const AuthFlow = () => {
       setPassword("");
 
       // Redirect to dashboard
-      router.replace("(dashboard)/Home");
+      router.replace("/(dashboard)/Home");
 
     } catch (error) {
       console.log("Error logging in", error);
@@ -243,7 +243,7 @@ const AuthFlow = () => {
 
                 <Spacer height={20} />
 
-                <View style={{ width: "95%", alignSelf: "center" }}>
+                <View style={{ width: "100%", alignSelf: "center" }}>
                   <ThemedTextInput
                     placeholder="Email"
                     style={[styles.inputStyle, { backgroundColor: theme.inputBackground }]}
@@ -305,7 +305,7 @@ const AuthFlow = () => {
 
                 <Spacer height={20} />
 
-                <View style={{ width: "95%", alignSelf: "center" }}>
+                <View style={{ width: "100%", alignSelf: "center" }}>
                   <ThemedTextInput
                     placeholder="Email"
                     style={[styles.inputStyle, { backgroundColor: theme.inputBackground }]}

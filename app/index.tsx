@@ -54,6 +54,9 @@ const Index = () => {
             id: firebaseUser.uid,
             name: firebaseUser.displayName || 'User',
             email: firebaseUser.email || null,
+            createdAt: firebaseUser.metadata?.creationTime
+              ? new Date(firebaseUser.metadata.creationTime)
+              : new Date(),
           });
         } else {
           setUser(null);

@@ -4,32 +4,31 @@ import { useTheme } from './ThemeContext';
 
 // Define the type for the props
 type ThemedTextInputProps = TextInputProps & {
-  style?: StyleProp<ViewStyle>;
-  children?: ReactNode;
-  placeHolderTextColor?: string;
+  style?: StyleProp<ViewStyle>; 
+  children?: ReactNode;          // for icons/buttons inside input
+  placeholderTextColor?: string; // match React Native naming
 };
 
-// ThemedTextInput component
-const ThemedTextInput: React.FC<ThemedTextInputProps> = ({
+const ThemedTextInput = ({
   style,
   children,
-  placeHolderTextColor,
+  placeholderTextColor,
   ...props
-}) => {
-    
+}: ThemedTextInputProps) => {
   const { theme } = useTheme();
 
   return (
-    <View style={[styles.inputWrapper, style]}>
+    <View style={[styles.inputWrapper, { flexDirection: "row", alignItems: "center" }, style]}>
       {children && <View style={{ marginRight: 8 }}>{children}</View>}
       <TextInput
-        style={[styles.input, { color: theme.text }]}
-        placeholderTextColor={placeHolderTextColor || theme.placeholder}
+        style={[styles.input, { color: theme.text, flex: 1 }]}
+        placeholderTextColor={placeholderTextColor || theme.placeholder}
         {...props}
       />
     </View>
   );
 };
+
 
 export default ThemedTextInput;
 

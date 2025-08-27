@@ -8,7 +8,7 @@ type ThemedButtonProps = PressableProps & {
   textStyle?: StyleProp<TextStyle>;
 };
 
-const ThemedButton: React.FC<ThemedButtonProps> = ({ style, children, textStyle, ...props }) => {
+const ThemedButton = ({ style, children, textStyle, ...props }: ThemedButtonProps) => {
   const { theme } = useTheme();
 
   const renderContent = () => {

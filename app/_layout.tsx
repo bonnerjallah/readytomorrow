@@ -3,6 +3,7 @@ import { View } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { Stack } from "expo-router";
 
+
 // Firebase auth listener 
 // This will update the userAtom with the current auth state
 // and automatically sync with AsyncStorage
@@ -100,7 +101,8 @@ function Layout () {
         <Stack.Screen name="index" options={{headerShown: false}} />
         <Stack.Screen name="(onboarding)" options={{headerShown: false}} />
         <Stack.Screen name="(auth)" options={{headerShown: false}} />
-
+        <Stack.Screen name="(dashboard)" options={{headerShown: false}} />
+        
       </Stack>
     </View>
   )

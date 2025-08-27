@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Dimensions, StyleSheet, Touchable, TouchableOpacity, View } from 'react-native';
+import { Dimensions, SafeAreaView, StyleSheet, Touchable, TouchableOpacity, View } from 'react-native';
 import Swiper from 'react-native-swiper';
 import LottieView from 'lottie-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -37,7 +37,7 @@ export default function WelcomeScreen({ onFinish }: Props) {
   };
 
   return (
-    <ThemedView style={{ flex: 1 }} safe>
+    <SafeAreaView style={{ flex: 1 }} >
 
         <TouchableOpacity style={styles.skipBtn}>
             <ThemedText style={{fontSize: 25, fontFamily: "bold"}} onPress={handleFinish}>Skip</ThemedText>
@@ -82,7 +82,7 @@ export default function WelcomeScreen({ onFinish }: Props) {
             )}
         </ThemedButton>
 
-    </ThemedView>
+    </SafeAreaView>
   );
 }
 
