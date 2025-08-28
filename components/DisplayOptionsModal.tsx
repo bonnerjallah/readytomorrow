@@ -118,7 +118,7 @@ const DisplayOptionsModal = ({ isVisible, onClose }: DisplayOptionsModalProps) =
                         { height: dropdowns[0].height, opacity: dropdowns[0].opacity }
                     ]}
                 >
-                     <TouchableOpacity onPress={() => selectSortBy?.("alpha")}>
+                     {/* <TouchableOpacity onPress={() => selectSortBy?.("alpha")}>
                         <Text style={[styles.item, { backgroundColor: theme.dropdownBackground }]}>
                         Option 1
                         </Text>
@@ -134,7 +134,7 @@ const DisplayOptionsModal = ({ isVisible, onClose }: DisplayOptionsModalProps) =
                         <Text style={[styles.item, { backgroundColor: theme.dropdownBackground }]}>
                         Option 3
                         </Text>
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                 </Animated.View>
             )}
         </View>

@@ -3,9 +3,9 @@ import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 
 import { useState } from 'react'
 
 // 🎨 UI
-import ThemedView from 'components/ThemedView'
-import ThemedText from 'components/ThemedText'
-import Spacer from 'components/Spacer'
+import ThemedView from '../../components/ThemedView'
+import ThemedText from '../../components/ThemedText'
+import Spacer from '../../components/Spacer'
 import { CalendarDays, CirclePlus, SlidersHorizontal, TableOfContents } from 'lucide-react-native'
 
 // 🧩 COMPONENTS
@@ -17,7 +17,7 @@ import ShowDailyRitualModal from "../../components/ShowDailyRitualModal"
 
 
 // ⚛️ STATE MANAGEMENT
-import { useTheme } from 'components/ThemeContext'
+import { useTheme } from '../../components/ThemeContext'
 import ScheduleRoutineModal from '../../components/ScheduleRoutineModal'
 
 
