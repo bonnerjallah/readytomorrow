@@ -15,6 +15,11 @@ export const Typography = {
         fontSize: 18,
     },
 
+    smallertitle:{
+        fontFamily: "Quicksand-Medium",
+        fontSize: 13,
+    },
+
     body:{
         fontFamily: "Quicksand-Regular",
         fontSize: 20,

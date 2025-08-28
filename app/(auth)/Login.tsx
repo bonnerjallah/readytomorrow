@@ -433,7 +433,6 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   container: { flex: 1 },
   inputStyle: {
-    backgroundColor: "#fff",
     padding: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },

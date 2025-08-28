@@ -16,7 +16,7 @@ export const Colors = {
   dark: {
     background: "#1C1917",      // warm dark brownish-gray
     primary: "#77d1d2",         // softer orange
-    title: "#F5F5F4",           // fallback for titles in dark mode
+    title: "#34a0a4",           // fallback for titles in dark mode
     text: "#F5F5F4",            // warm off-white
     button: "#6c757d",          // bright green
     buttontitle: "#1C1917",     // dark text on buttons

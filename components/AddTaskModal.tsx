@@ -13,6 +13,9 @@ type AddTaskModalProps = {
     onSelect?: (type: "activity" | "routine" | "ritual") => void
 }
 
+
+
+
 const AddTaskModal = ({isVisible, onClose, onSelect}: AddTaskModalProps) => {
 
     const {theme} = useTheme()

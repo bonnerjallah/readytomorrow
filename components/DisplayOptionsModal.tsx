@@ -12,12 +12,6 @@ import {
 } from "react-native";
 import ThemedView from "./ThemedView";
 
-// 🔤 TYPES
-type DisplayOptionsModalProps = {
-  isVisible: boolean;
-  onClose: () => void;
-};
-
 // 🎨 UI
 import Spacer from '../components/Spacer'
 import ThemedText from "./ThemedText";
@@ -25,6 +19,13 @@ import { Moon, Sun } from 'lucide-react-native'
 
 // ⚛️ STATE MANAGEMENT
 import { useTheme } from "./ThemeContext";
+
+// 🔤 TYPES
+type DisplayOptionsModalProps = {
+  isVisible: boolean;
+  onClose: () => void;
+  selectSortBy: (type: "alpha" | "time" | "date") => void
+};
 
 
 
@@ -41,6 +42,7 @@ const DisplayOptionsModal = ({ isVisible, onClose }: DisplayOptionsModalProps) =
         { open: false, height: new Animated.Value(0), opacity: new Animated.Value(0) },
     ]);
 
+    // 🔹 Toogle function for dropdown
     const toggleDropDown = (index: number) => {
         const current = dropdowns[index];
         if (current.open) {
@@ -75,12 +77,12 @@ const DisplayOptionsModal = ({ isVisible, onClose }: DisplayOptionsModalProps) =
             <TouchableOpacity
                 onPress={() => setDarkmode(darkModeBool ? "light" : "dark")}
                 style={{ padding: 10 }}
-                >
-                    {darkModeBool ? (
-                        <Sun size={30} stroke="yellow" fill="yellow" />
-                    ) : (
-                        <Moon size={30} fill={darkModeBool ? "white" : "black"} />
-                    )}
+            >
+                {darkModeBool ? (
+                    <Sun size={30} stroke="yellow" fill="yellow" />
+                ) : (
+                    <Moon size={30} fill={darkModeBool ? "white" : "black"} />
+                )}
             </TouchableOpacity>            
 
             <ThemedText variant="title" title>Display Options</ThemedText>
@@ -97,54 +99,72 @@ const DisplayOptionsModal = ({ isVisible, onClose }: DisplayOptionsModalProps) =
 
         <Spacer height={55} />
 
-        <TouchableOpacity style={styles.button} onPress={() => toggleDropDown(0)}>
-            <View style={{flexDirection: "row", justifyContent:"space-between"}}>
-                <ThemedText>Sort by</ThemedText>
-                {dropdowns[0].open ? (
-                    <ChevronDown />
-                ) : (
-                    <ChevronRight />
-                )}
-            </View>
-        </TouchableOpacity>
-        {dropdowns[0].open && (
-            <Animated.View
-                style={[
-                    styles.dropdown,
-                    { height: dropdowns[0].height, opacity: dropdowns[0].opacity, backgroundColor: theme.dropdownBackground }
+
+        <View style={styles.button}>
+            <TouchableOpacity  onPress={() => toggleDropDown(0)}>
+                <View style={{flexDirection: "row", justifyContent:"space-between"}}>
+                    <ThemedText>Sort by</ThemedText>
+                    {dropdowns[0].open ? (
+                        <ChevronDown />
+                    ) : (
+                        <ChevronRight />
+                    )}
+                </View>
+            </TouchableOpacity>
+            {dropdowns[0].open && (
+                <Animated.View
+                    style={[
+                        styles.dropdown,
+                        { height: dropdowns[0].height, opacity: dropdowns[0].opacity }
                     ]}
                 >
-                <Text style={styles.item}>Option 1</Text>
-                <Text style={styles.item}>Option 2</Text>
-                <Text style={styles.item}>Option 3</Text>
-            </Animated.View>
+                     <TouchableOpacity onPress={() => selectSortBy?.("alpha")}>
+                        <Text style={[styles.item, { backgroundColor: theme.dropdownBackground }]}>
+                        Option 1
+                        </Text>
+                    </TouchableOpacity>
 
-        )}
+                    <TouchableOpacity onPress={() => selectSortBy?.("time")}>
+                        <Text style={[styles.item, { backgroundColor: theme.dropdownBackground }]}>
+                        Option 2
+                        </Text>
+                    </TouchableOpacity>
 
-        <Spacer height={40} />
+                    <TouchableOpacity onPress={() => selectSortBy?.("date")}>
+                        <Text style={[styles.item, { backgroundColor: theme.dropdownBackground }]}>
+                        Option 3
+                        </Text>
+                    </TouchableOpacity>
+                </Animated.View>
+            )}
+        </View>
 
-        <TouchableOpacity style={styles.button} onPress={() => toggleDropDown(1)}>
-            <View style={{flexDirection: "row", justifyContent:"space-between"}}>
-                <ThemedText>Sort by</ThemedText>
-                {dropdowns[1].open ? (
-                    <ChevronDown />
-                ) : (
-                    <ChevronRight />
-                )}
-            </View>
-        </TouchableOpacity>
-        {dropdowns[1].open && (
-            <Animated.View
-                style={[
-                styles.dropdown,
-                { height: dropdowns[1].height, opacity: dropdowns[1].opacity, backgroundColor: theme.dropdownBackground },
-                ]}
-            >
-                <Text style={styles.item}>Option 1</Text>
-                <Text style={styles.item}>Option 2</Text>
-                <Text style={styles.item}>Option 3</Text>
-            </Animated.View>
-        )}
+        <Spacer height={20} />
+
+        <View style={styles.button}>
+            <TouchableOpacity  onPress={() => toggleDropDown(1)}>
+                <View style={{flexDirection: "row", justifyContent:"space-between"}}>
+                    <ThemedText>Sort by</ThemedText>
+                    {dropdowns[0].open ? (
+                        <ChevronDown />
+                    ) : (
+                        <ChevronRight />
+                    )}
+                </View>
+            </TouchableOpacity>
+            {dropdowns[1].open && (
+                <Animated.View
+                    style={[
+                        styles.dropdown,
+                        { height: dropdowns[1].height, opacity: dropdowns[1].opacity }
+                    ]}
+                >
+                    <Text style={[styles.item, {backgroundColor: theme.dropdownBackground}]}>Option 1</Text>
+                    <Text style={[styles.item, {backgroundColor: theme.dropdownBackground}]}>Option 2</Text>
+                    <Text style={[styles.item, {backgroundColor: theme.dropdownBackground}]}>Option 3</Text>
+                </Animated.View>
+            )}
+        </View>
 
 
       </ThemedView>
@@ -165,6 +185,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         padding: 10,
         alignSelf:"center",
+        justifyContent: "center",
 
 
         // iOS shadow
@@ -183,8 +204,14 @@ const styles = StyleSheet.create({
         overflow: "hidden",
         padding: 10,
         marginTop: 10,
-        width: "80%",
+        width: "90%",
         alignSelf:"center"
     },
-    item: { paddingVertical: 5, fontSize: 16 },
+    item: {
+        padding: 5, 
+        fontSize: 16, 
+        marginTop: 5,
+        borderRadius: 10
+        
+    },
 });
