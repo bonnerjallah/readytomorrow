@@ -169,11 +169,12 @@ const ActivityInputModal = ({ isVisible, onClose }: ActivityInputModalProps) => 
   return (
     <Modal visible={isVisible} animationType="slide" transparent>
       <ThemedView style={styles.container} safe>
+        <View style={{flexDirection:"row"}}>
+          <CircleX size={40} stroke="#77d1d2ff" onPress={onClose}/>
+          <ThemedText style={{textAlign: "center", width: "83%"}} variant='title' title  >Add Activity</ThemedText>
+        </View>
+
         <ScrollView style={{ flex: 1, padding: 10}}>
-          <View style={{flexDirection:"row"}}>
-            <CircleX size={40} stroke="#77d1d2ff" onPress={onClose}/>
-            <ThemedText style={{textAlign: "center", width: "83%"}} variant='title' title  >Add Activity</ThemedText>
-          </View>
 
           <Spacer height={30} />
 
@@ -218,36 +219,34 @@ const ActivityInputModal = ({ isVisible, onClose }: ActivityInputModalProps) => 
 
                 <Spacer height={15}/>
     
-                {dropdowns[0].open && (
-                  <Animated.View
-                    style={{
-                      height: dropdowns[0].height,
-                      opacity: dropdowns[0].opacity,
-                      overflow: "hidden"
-                    }}
-                  >
-                    <View style={{flexDirection: "row", justifyContent:"space-between", alignItems:"center"}}>
-                      <ThemedText variant='subtitle'>Recuring</ThemedText>
-                      <Switch 
-                        value={isRecurring}
-                        onValueChange={setIsRecurring}
-                      />
-                    </View>
-
-                    <Spacer height={10} />
-
-                    <DateTimePicker
-                      value={selectedDate ? new Date(selectedDate) : new Date()}
-                      mode="date"
-                      display={Platform.OS === "ios" ? "inline" : "spinner"}
-                      textColor={darkMode === "dark" ? "white" : "black"} 
-                      onChange={(_event, date) => {
-                        if (date) setSelectedDate(date.toISOString().split("T")[0]);
-                      }}
-                      style={{ alignSelf:"center" }}
+                <Animated.View
+                  style={{
+                    height: dropdowns[0].height,
+                    opacity: dropdowns[0].opacity,
+                    overflow: "hidden"
+                  }}
+                >
+                  <View style={{flexDirection: "row", justifyContent:"space-between", alignItems:"center"}}>
+                    <ThemedText variant='subtitle'>Recuring</ThemedText>
+                    <Switch 
+                      value={isRecurring}
+                      onValueChange={setIsRecurring}
                     />
-                  </Animated.View>
-                )}
+                  </View>
+
+                  <Spacer height={10} />
+
+                  <DateTimePicker
+                    value={selectedDate ? new Date(selectedDate) : new Date()}
+                    mode="date"
+                    display={Platform.OS === "ios" ? "inline" : "spinner"}
+                    textColor={darkMode === "dark" ? "white" : "black"} 
+                    onChange={(_event, date) => {
+                      if (date) setSelectedDate(date.toISOString().split("T")[0]);
+                    }}
+                    style={{ alignSelf:"center" }}
+                  />
+                </Animated.View>
               </View>
             </TouchableWithoutFeedback>
 
@@ -276,77 +275,75 @@ const ActivityInputModal = ({ isVisible, onClose }: ActivityInputModalProps) => 
 
                 <Spacer height={15}/>
 
-                {dropdowns[1].open && (
-                  <Animated.View style={{ height: dropdowns[1].height, opacity: dropdowns[1].opacity, overflow:"hidden" }}>
-                    <View style={{borderTopWidth: 0.2}}>
-                      <ThemedText style={{alignSelf: "center", margin: 10}} variant='smallertitle'>Select part of day</ThemedText>
+                <Animated.View style={{ height: dropdowns[1].height, opacity: dropdowns[1].opacity, overflow:"hidden" }}>
+                  <View style={{borderTopWidth: 0.2}}>
+                    <ThemedText style={{alignSelf: "center", margin: 10}} variant='smallertitle'>Select part of day</ThemedText>
 
-                      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                        {["morning", "afternoon", "evening"].map((part) => (
-                          <Pressable
-                            key={part}
-                            onPress={() => handleTimeOfDay(part as "morning" | "afternoon" | "evening")}
-                            style={({ pressed }) => ({
-                              ...styles.timeOfDaySelector,
-                              borderWidth: 0.2,
-                              borderColor: theme.text, // or another color for the border
-                              backgroundColor: pressed
-                                ? theme.dropdownBackground // background when pressing
-                                : selectedPart === part
-                                ? theme.dropdownBackground // background stays if selected
-                                : theme.inputBackground, // default background
-                            })}
-                          >
-                            <ThemedText variant="smallertitle">
-                              {part.charAt(0).toUpperCase() + part.slice(1)}
-                            </ThemedText>
-                          </Pressable>
-                        ))}
-                      </View>
-
-
-                      <ThemedText style={{alignSelf: "center", margin: 10}}  variant='smallertitle'>or set a specific time</ThemedText>
-
-                      {dropdowns[2].open ? (
-                        <>
-                          <Animated.View style={{ height: dropdowns[2].height, opacity: dropdowns[2].opacity }}>
-                            <DateTimePicker
-                              value={selectedTime ? new Date(selectedTime) : new Date()}
-                              mode="time"
-                              display={Platform.OS === "ios" ? "spinner" : "default"}
-                              textColor={darkMode === "dark" ? "white" : "black"} 
-                              onChange={(_event, date) => {
-                                if (_event.type === "set" && date) {
-                                  setSelectedTime(date.toISOString());
-                                }
-                              }}
-                            />
-                          </Animated.View>
-
-                          <TouchableOpacity
-                            onPress={() => {
-                              setSelectedTime(""); 
-                              setSelectedPart("")
-                              toggleDropDown(2);  
-                            }}
-                            style={{
-                              position:"absolute",
-                              bottom: 230,
-                              right: 5
-                            }}
-                          >
-                            <ThemedText style={{backgroundColor:theme.primary, padding: 5, borderRadius:10, color: theme.buttontitle}} variant='smallertitle'>Unset
-                            </ThemedText>
-                          </TouchableOpacity>
-                        </>
-                      ) : (
-                        <ThemedButton style={{ alignSelf: "center", marginTop: 15 }} onPress={() => toggleDropDown(2)}>
-                          <ThemedText style={{ color: theme.buttontitle }}>Set Time</ThemedText>
-                        </ThemedButton>
-                      )}                      
+                    <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
+                      {["morning", "afternoon", "evening"].map((part) => (
+                        <Pressable
+                          key={part}
+                          onPress={() => handleTimeOfDay(part as "morning" | "afternoon" | "evening")}
+                          style={({ pressed }) => ({
+                            ...styles.timeOfDaySelector,
+                            borderWidth: 0.2,
+                            borderColor: theme.text, // or another color for the border
+                            backgroundColor: pressed
+                              ? theme.dropdownBackground // background when pressing
+                              : selectedPart === part
+                              ? theme.dropdownBackground // background stays if selected
+                              : theme.inputBackground, // default background
+                          })}
+                        >
+                          <ThemedText variant="smallertitle">
+                            {part.charAt(0).toUpperCase() + part.slice(1)}
+                          </ThemedText>
+                        </Pressable>
+                      ))}
                     </View>
-                  </Animated.View>
-                )}
+
+
+                    <ThemedText style={{alignSelf: "center", margin: 10}}  variant='smallertitle'>or set a specific time</ThemedText>
+
+                    {dropdowns[2].open ? (
+                      <>
+                        <Animated.View style={{ height: dropdowns[2].height, opacity: dropdowns[2].opacity }}>
+                          <DateTimePicker
+                            value={selectedTime ? new Date(selectedTime) : new Date()}
+                            mode="time"
+                            display={Platform.OS === "ios" ? "spinner" : "default"}
+                            textColor={darkMode === "dark" ? "white" : "black"} 
+                            onChange={(_event, date) => {
+                              if (_event.type === "set" && date) {
+                                setSelectedTime(date.toISOString());
+                              }
+                            }}
+                          />
+                        </Animated.View>
+
+                        <TouchableOpacity
+                          onPress={() => {
+                            setSelectedTime(""); 
+                            setSelectedPart("")
+                            toggleDropDown(2);  
+                          }}
+                          style={{
+                            position:"absolute",
+                            bottom: 230,
+                            right: 5
+                          }}
+                        >
+                          <ThemedText style={{backgroundColor:theme.primary, padding: 5, borderRadius:10, color: theme.buttontitle}} variant='smallertitle'>Unset
+                          </ThemedText>
+                        </TouchableOpacity>
+                      </>
+                    ) : (
+                      <ThemedButton style={{ alignSelf: "center", marginTop: 15 }} onPress={() => toggleDropDown(2)}>
+                        <ThemedText style={{ color: theme.buttontitle }}>Set Time</ThemedText>
+                      </ThemedButton>
+                    )}                      
+                  </View>
+                </Animated.View>
               </View>
             </TouchableWithoutFeedback>
 
@@ -380,44 +377,42 @@ const ActivityInputModal = ({ isVisible, onClose }: ActivityInputModalProps) => 
 
                 </TouchableOpacity>
 
-                  <Spacer height={15}/>
+                <Spacer height={15}/>
 
-                  {dropdowns[3].open && (
-                    <Animated.View
-                      style={{
-                        height: dropdowns[3].height,
-                        opacity: dropdowns[3].opacity,
-                        overflow: "hidden"
-                      }}
-                    >
-                      <View style={{flexDirection: "row", justifyContent:"space-between", alignItems:"center"}}>
-                        <ThemedText variant='subtitle'>All Day</ThemedText>
-                        <Switch 
-                          value={isAllDay}
-                          onValueChange={setIsAllDay}
-                        />
-                      </View>
+                <Animated.View
+                  style={{
+                    height: dropdowns[3].height,
+                    opacity: dropdowns[3].opacity,
+                    overflow: "hidden"
+                  }}
+                >
+                  <View style={{flexDirection: "row", justifyContent:"space-between", alignItems:"center"}}>
+                    <ThemedText variant='subtitle'>All Day</ThemedText>
+                    <Switch 
+                      value={isAllDay}
+                      onValueChange={setIsAllDay}
+                    />
+                  </View>
 
-                      <CustomWheelPicker 
-                        onValueChange={(days, hours, minutes) => {
-                          setDurationDays(days);
-                          setDurationHours(hours);
-                          setDurationMinutes(minutes);
-                        }} 
+                  <CustomWheelPicker 
+                    onValueChange={(days, hours, minutes) => {
+                      setDurationDays(days);
+                      setDurationHours(hours);
+                      setDurationMinutes(minutes);
+                    }} 
 
-                          days={durationDays}
-                          hours={durationHours}
-                          minutes={durationMinutes}
+                      days={durationDays}
+                      hours={durationHours}
+                      minutes={durationMinutes}
 
-                        onUnset={() => {
-                          setDurationDays(0);
-                          setDurationHours(0);
-                          setDurationMinutes(0);
-                        }}
-                        
-                      />
-                    </Animated.View>
-                  )}
+                    onUnset={() => {
+                      setDurationDays(0);
+                      setDurationHours(0);
+                      setDurationMinutes(0);
+                    }}
+                    
+                  />
+                </Animated.View>
 
               </View>
 
@@ -439,42 +434,40 @@ const ActivityInputModal = ({ isVisible, onClose }: ActivityInputModalProps) => 
                   ) }
                 </TouchableOpacity>
 
-                  <Spacer height={15}/>
+                <Spacer height={15}/>
 
-                  {dropdowns[4].open && (
-                    <Animated.View
-                      style={{
-                        height: dropdowns[4].height,
-                        opacity: dropdowns[4].opacity,
-                        overflow: "hidden"
-                      }}
-                    >
-                      <View style={{ flexDirection: "row", justifyContent: "space-between", borderTopWidth: 0.2}}>
-                        {["Normal", "High", "Highest"].map((part) => (
-                          <Pressable
-                            key={part}
-                            onPress={() => handlePriority(part as "Normal" | "High" | "Highest")}
-                            style={({ pressed }) => ({
-                              ...styles.timeOfDaySelector,
-                              marginTop: 20,
-                              borderWidth: 0.2,
-                              borderColor: theme.text, // or another color for the border
-                              backgroundColor: pressed
-                                ? theme.dropdownBackground // background when pressing
-                                : selectedPriority  === part
-                                ? theme.dropdownBackground // background stays if selected
-                                : theme.inputBackground, // default background
-                            })}
-                          >
-                            <ThemedText variant="smallertitle">
-                              {part.charAt(0).toUpperCase() + part.slice(1)}
-                            </ThemedText>
-                          </Pressable>
-                        ))}
-                      </View>
+                <Animated.View
+                  style={{
+                    height: dropdowns[4].height,
+                    opacity: dropdowns[4].opacity,
+                    overflow: "hidden"
+                  }}
+                >
+                  <View style={{ flexDirection: "row", justifyContent: "space-between", borderTopWidth: 0.2}}>
+                    {["Normal", "High", "Highest"].map((part) => (
+                      <Pressable
+                        key={part}
+                        onPress={() => handlePriority(part as "Normal" | "High" | "Highest")}
+                        style={({ pressed }) => ({
+                          ...styles.timeOfDaySelector,
+                          marginTop: 20,
+                          borderWidth: 0.2,
+                          borderColor: theme.text, // or another color for the border
+                          backgroundColor: pressed
+                            ? theme.dropdownBackground // background when pressing
+                            : selectedPriority  === part
+                            ? theme.dropdownBackground // background stays if selected
+                            : theme.inputBackground, // default background
+                        })}
+                      >
+                        <ThemedText variant="smallertitle">
+                          {part.charAt(0).toUpperCase() + part.slice(1)}
+                        </ThemedText>
+                      </Pressable>
+                    ))}
+                  </View>
 
-                    </Animated.View>
-                  )}
+                </Animated.View>
 
               </View>
 
@@ -489,10 +482,11 @@ const ActivityInputModal = ({ isVisible, onClose }: ActivityInputModalProps) => 
                 onValueChange={setReminder}
               />
             </View>
-
-
           </View>
         </ScrollView>
+        <ThemedButton style={{alignSelf:"center", width: "100%"}}>
+          <ThemedText>Save</ThemedText>
+        </ThemedButton>
       </ThemedView>      
   </Modal>
   )

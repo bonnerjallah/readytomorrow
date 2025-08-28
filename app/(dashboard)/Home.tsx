@@ -35,7 +35,20 @@ const Home = () => {
     const [showScheduleRoutine, setShowScheduleRoutineModal] = useState(false)
     const [showDailyRitualModal, setShowDailyRitualModal] = useState(false)
 
-   
+
+    const selectSortBy = (value: "A-Z" | "Time" | "Date") => {
+        console.log("Selected sort:", value);
+        
+    };
+
+    const selectGroupBy = (value: "Days" | "Goals" | "Priority" | "No Grouping") => {
+        console.log("Selected group", value)
+    }
+    
+
+    const selectIncludes = (value: "Recently Missed Activities" | "Skipped Activities") => {
+        console.log("selectd includes", value)
+    }
 
 
   return (
@@ -147,7 +160,7 @@ const Home = () => {
             
         />
 
-        <DisplayOptionsModal isVisible={showDisplayOptionModal} onClose={() => setShowDisplayOptionModal(false)}  />
+        <DisplayOptionsModal isVisible={showDisplayOptionModal} onClose={() => setShowDisplayOptionModal(false)}  selectSortBy={selectSortBy} selectGroupBy={selectGroupBy} selectIncludes={selectIncludes}/>
         <HambergurMenuModal isVisible={showHamburgerModal} onClose={() => setShowHamburgerModal(false)} />
         <ActivityInputModal isVisible={showActivityInputModal} onClose={() => setShowActivityInputModal(false)}/>
         <ShowDailyRitualModal isVisible={showDailyRitualModal} onClose={() => setShowDailyRitualModal(false)}/>
