@@ -82,7 +82,6 @@ const AuthFlow = () => {
 
       await sendEmailVerification(response.user);
 
-      // ✅ Correct user path: users/<uid>
       await setDoc(doc(db, "users", response.user.uid), {
         email: trimedEmail,
         role: "user",
@@ -122,6 +121,7 @@ const AuthFlow = () => {
     try {
       const trimedEmail = email.trim();
       const trimedPwd = password.trim();
+
       const response = await signInWithEmailAndPassword(auth, trimedEmail, trimedPwd);
 
       const userData = response.user;
@@ -132,8 +132,8 @@ const AuthFlow = () => {
         return;
       }
 
-      // ✅ Get user doc from correct path
       const userDoc = await getDoc(doc(db, "users", userData.uid));
+      
       if (userDoc.exists()) {
         const profileData = userDoc.data();
         setUser({

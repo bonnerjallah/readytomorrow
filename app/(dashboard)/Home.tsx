@@ -1,6 +1,7 @@
 // 🌱 ROOT IMPORTS
 import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { useEffect, useState } from 'react'
+import Checkbox from "expo-checkbox";
 
 // 🎨 UI
 import ThemedView from '../../components/ThemedView'
@@ -22,7 +23,7 @@ import ScheduleRoutineModal from '../../components/ScheduleRoutineModal'
 
 // 💾 FIREBASE
 import {auth, db} from "../../firebaseConfig"
-import { collection, getDocs, doc, query, orderBy} from 'firebase/firestore'
+import { collection, getDocs, doc, query, orderBy, updateDoc} from 'firebase/firestore'
 
 
 
@@ -58,9 +59,11 @@ const Home = () => {
 
     // 🔹fetch data state
     const [allActivities, setAllActivities] = useState<ActivityType[]>([]);
+    const [dayActivities, setDayActivities] = useState<ActivityType[]>([])
 
 
 
+    // 🔹Fetch user activities
     useEffect(() => {
         const fetchData = async () => {
             const userId = auth.currentUser?.uid;
@@ -69,7 +72,7 @@ const Home = () => {
             try {
                 // Reference the subcollection
                 const activitiesCol = collection(db, "users", userId, "activities")
-                const q = query(activitiesCol, orderBy("createdAt", "desc")) //"decs" old data first "asc" new first
+                const q = query(activitiesCol, orderBy("createdAt", "asc")) //"decs" old data first "asc" new first
                 const snapshot = await getDocs(q)
 
                 const activitiesData : ActivityType[] = snapshot.docs.map(doc => ({
@@ -77,17 +80,37 @@ const Home = () => {
                     ...doc.data()
                 })) as ActivityType[]
 
+                // ✅ Format today into "yyyy-MM-dd"
+                const today = new Date().toISOString().split("T")[0]; 
+
+                const todayActivities = activitiesData.filter(elem => elem.selectedDate === today)
+
                 setAllActivities(activitiesData)
-                
+                setDayActivities(todayActivities);
             } catch (error) {
                 console.log("Error fetching user activities", error)
             }
         }
         fetchData()
-    }, [])
+    }, [dayActivities])
 
-    console.log("activities data", allActivities)
 
+    // 🔹 Update user task complete
+    const handleTaskComplete = async (id:string, newValue:boolean) => {
+
+        const userId = auth.currentUser?.uid
+        
+        if(!userId) return
+
+
+        try {
+            const docRef = doc(db, "users", userId, "activities", id)
+            await updateDoc(docRef, {done: newValue})
+            
+        } catch (error) {
+            console.log("Error updating user task", error)
+        }
+    }
 
     const selectSortBy = (value: "A-Z" | "Time" | "Date") => {
         console.log("Selected sort:", value);
@@ -160,8 +183,45 @@ const Home = () => {
 
         <View style={{flex: 1}}>
             <ScrollView>
-                <View>
-                    
+                <View style={{rowGap: 15}}>
+                    {dayActivities && dayActivities.map((elem, idx) => (
+                        <View
+                            key={idx}
+                            style={styles.taskCard}
+                        >
+                            <ThemedText>
+                                {elem.isAllDay ? (
+                                    <ThemedText variant='smallertitle'>All Day</ThemedText>
+                                ) : elem.selectedPart ? (
+                                    <ThemedText variant='smallertitle'>{elem.selectedPart}</ThemedText>
+                                ) : (
+                                    <View>
+                                        <ThemedText variant='smallertitle'>Any Time</ThemedText>
+                                    </View>
+                                )}
+                            </ThemedText>
+                            <View style={{flexDirection:"row", height: 30, columnGap: 10, alignItems:"center", marginTop: 10}} >
+
+                                <TouchableOpacity
+                                    style={{
+                                        height: 20, 
+                                        borderRadius: 10,
+                                        borderWidth: 0.5, 
+                                        width: 20, 
+                                        backgroundColor: elem.done ? "green" : "transparent"
+                                    }}
+                                    onPress={() => handleTaskComplete(elem.id, !elem.done)}
+                                >
+                                </TouchableOpacity>
+
+                                <ThemedText variant='body'>
+                                    {elem.activity}
+                                </ThemedText>
+
+                            </View>
+
+                        </View>
+                    ))}
                     
 
 
@@ -210,10 +270,14 @@ const Home = () => {
                 }
                 return
             }}
-            
         />
-
-        <DisplayOptionsModal isVisible={showDisplayOptionModal} onClose={() => setShowDisplayOptionModal(false)}  selectSortBy={selectSortBy} selectGroupBy={selectGroupBy} selectIncludes={selectIncludes}/>
+        <DisplayOptionsModal 
+            isVisible={showDisplayOptionModal} 
+            onClose={() => setShowDisplayOptionModal(false)}  
+            selectSortBy={selectSortBy} 
+            selectGroupBy={selectGroupBy} 
+            selectIncludes={selectIncludes}
+        />
         <HambergurMenuModal isVisible={showHamburgerModal} onClose={() => setShowHamburgerModal(false)} />
         <ActivityInputModal isVisible={showActivityInputModal} onClose={() => setShowActivityInputModal(false)}/>
         <ShowDailyRitualModal isVisible={showDailyRitualModal} onClose={() => setShowDailyRitualModal(false)}/>
@@ -228,5 +292,12 @@ export default Home
 const styles = StyleSheet.create({
     container:{
         flex: 1,
+    }, 
+
+    taskCard:{
+        borderWidth: 1,
+        height: 100,
+        borderRadius: 10,
+        padding: 10
     }
 })
