@@ -7,7 +7,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 
 // 💾 FIREBASE
 import { auth, db } from '../firebaseConfig'
-import { doc, setDoc } from 'firebase/firestore'
+import { collection, doc, setDoc } from 'firebase/firestore'
 
 
 // ⚛️ STATE MANAGEMENT
@@ -38,6 +38,7 @@ const ActivityInputModal = ({ isVisible, onClose }: ActivityInputModalProps) => 
   const {theme, darkMode} = useTheme()
 
   const [activity, setActivity] = useState("")
+  const [note, setNote] = useState("")
   const [dateDropDwn, setDateDropDwn] = useState(false);
   const [selectedDate, setSelectedDate] = useState("");  
   const [selectedTime, setSelectedTime] = useState("")  
@@ -110,28 +111,58 @@ const ActivityInputModal = ({ isVisible, onClose }: ActivityInputModalProps) => 
   };
 
   
-  //🔹Activity input function
+    //🔹Activity input function
   const createActivity = async () => {
+    if(activity === "") {
+      Alert.alert("Must enter activity")
+      return
+    } 
 
-    const id = auth.currentUser?.uid
-    if(!id) return
+    const id = auth.currentUser?.uid;
+    if (!id) return;
 
     try {
-      const activityRef = doc(db, "user", id, "activities", crypto.randomUUID())
+      // ✅ Correct path: users/<uid>/activities
+      const activitiesCol = collection(db, "users", id, "activities");
+      const activityRef = doc(activitiesCol); // auto-generated ID
+
       await setDoc(activityRef, {
         activity,
+        note,
+        selectedDate,
+        selectedTime,
+        isRecurring,
+        isAllDay,
+        reminder,
+        selectedPart,
+        selectedPriority,
+        durationDays,
+        durationHours,
+        durationMinutes,
         createdAt: new Date(),
         done: false
-      })
-      
-      setActivity("")
-      onClose()
-      
+      });
+
+      // Reset inputs
+      setActivity("");
+      setNote("");
+      setSelectedDate("");
+      setSelectedTime("");
+      setIsRecurring(false);
+      setIsAllDay(false);
+      setReminder(false);
+      setSelectedPart("");
+      setSelectedPriority("Normal");
+      setDurationDays(0);
+      setDurationHours(0);
+      setDurationMinutes(0);
+
+      onClose();
     } catch (error) {
-      console.log("Error adding task", error)
-      Alert.alert("Error", "Could't add activity")
+      console.log("Error adding task", error);
+      Alert.alert("Error", "Couldn't add activity");
     }
-  }
+  };
 
   //🔹Date formating function
   const formatDate = (dateStr? : string) => {
@@ -181,6 +212,8 @@ const ActivityInputModal = ({ isVisible, onClose }: ActivityInputModalProps) => 
           <View>
             <ThemedTextInput 
               placeholder='Enter Activity'
+              value={activity}
+              onChangeText={setActivity}
               style = {[styles.inputStyle, {backgroundColor: theme.inputBackground}]}
             />
 
@@ -188,6 +221,8 @@ const ActivityInputModal = ({ isVisible, onClose }: ActivityInputModalProps) => 
 
             <ThemedTextInput 
               placeholder='Enter Note'
+              value={note}
+              onChangeText={setNote}
               style = {[styles.inputStyle, {backgroundColor: theme.inputBackground}]}
             />
 
@@ -484,9 +519,14 @@ const ActivityInputModal = ({ isVisible, onClose }: ActivityInputModalProps) => 
             </View>
           </View>
         </ScrollView>
-        <ThemedButton style={{alignSelf:"center", width: "100%"}}>
+
+        <ThemedButton 
+          style={{alignSelf:"center", width: "100%"}}
+          onPress={createActivity}
+        >
           <ThemedText>Save</ThemedText>
         </ThemedButton>
+
       </ThemedView>      
   </Modal>
   )

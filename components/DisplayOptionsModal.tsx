@@ -66,46 +66,46 @@ const DisplayOptionsModal = ({ isVisible, onClose, selectSortBy, selectGroupBy, 
         const targetHeight = dropdownHeights[index];
 
         if(current.open) {
-      // Close
-      Animated.parallel([
-        Animated.timing(current.height, {
-          toValue: 0,
-          duration: 250,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: false
-        }),
-        Animated.timing(current.opacity, {
-          toValue: 0,
-          duration: 150,
-          useNativeDriver: false
-        })
-      ]).start(() => {
-        const updated = [...dropdowns];
-        updated[index].open = false;
-        setDropdowns(updated);
-      });
-    } else {
-      // Open
-      const updated = [...dropdowns];
-      updated[index].open = true;
-      setDropdowns(updated);
+            // Close
+            Animated.parallel([
+                Animated.timing(current.height, {
+                toValue: 0,
+                duration: 250,
+                easing: Easing.out(Easing.ease),
+                useNativeDriver: false
+                }),
+                Animated.timing(current.opacity, {
+                toValue: 0,
+                duration: 150,
+                useNativeDriver: false
+                })
+            ]).start(() => {
+                const updated = [...dropdowns];
+                updated[index].open = false;
+                setDropdowns(updated);
+            });
+        } else {
+            // Open
+            const updated = [...dropdowns];
+            updated[index].open = true;
+            setDropdowns(updated);
 
-      Animated.parallel([
-        Animated.spring(current.height, {
-          toValue: targetHeight, // 🎯 use individual target
-          stiffness: 120,
-          damping: 15,
-          mass: 1,
-          useNativeDriver: false
-        }),
-        Animated.timing(current.opacity, {
-          toValue: 1,
-          duration: 150,
-          useNativeDriver: false
-        })
-      ]).start();
-    }
-  };
+            Animated.parallel([
+                Animated.spring(current.height, {
+                    toValue: targetHeight, // 🎯 use individual target
+                    stiffness: 120,
+                    damping: 15,
+                    mass: 1,
+                    useNativeDriver: false
+                }),
+                Animated.timing(current.opacity, {
+                    toValue: 1,
+                    duration: 150,
+                    useNativeDriver: false
+                })
+            ]).start();
+        }
+    };
 
    
 

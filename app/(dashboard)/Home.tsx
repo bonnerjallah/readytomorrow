@@ -1,6 +1,6 @@
 // 🌱 ROOT IMPORTS
 import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 // 🎨 UI
 import ThemedView from '../../components/ThemedView'
@@ -20,9 +20,30 @@ import ShowDailyRitualModal from "../../components/ShowDailyRitualModal"
 import { useTheme } from '../../components/ThemeContext'
 import ScheduleRoutineModal from '../../components/ScheduleRoutineModal'
 
+// 💾 FIREBASE
+import {auth, db} from "../../firebaseConfig"
+import { collection, getDocs, doc, query, orderBy} from 'firebase/firestore'
 
 
 
+// 🔤 TYPES
+type ActivityType = {
+  id: string;
+  activity: string;
+  note?: string;
+  selectedDate?: string;
+  selectedTime?: string;
+  isRecurring?: boolean;
+  isAllDay?: boolean;
+  reminder?: boolean;
+  selectedPart?: "morning" | "afternoon" | "evening" | "";
+  selectedPriority?: "Normal" | "High" | "Highest" | "";
+  durationDays?: number;
+  durationHours?: number;
+  durationMinutes?: number;
+  createdAt: any;
+  done: boolean;
+};
 
 const Home = () => {
 
@@ -34,6 +55,38 @@ const Home = () => {
     const [showActivityInputModal, setShowActivityInputModal] = useState(false);
     const [showScheduleRoutine, setShowScheduleRoutineModal] = useState(false)
     const [showDailyRitualModal, setShowDailyRitualModal] = useState(false)
+
+    // 🔹fetch data state
+    const [allActivities, setAllActivities] = useState<ActivityType[]>([]);
+
+
+
+    useEffect(() => {
+        const fetchData = async () => {
+            const userId = auth.currentUser?.uid;
+            if(!userId) return;
+
+            try {
+                // Reference the subcollection
+                const activitiesCol = collection(db, "users", userId, "activities")
+                const q = query(activitiesCol, orderBy("createdAt", "desc")) //"decs" old data first "asc" new first
+                const snapshot = await getDocs(q)
+
+                const activitiesData : ActivityType[] = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                })) as ActivityType[]
+
+                setAllActivities(activitiesData)
+                
+            } catch (error) {
+                console.log("Error fetching user activities", error)
+            }
+        }
+        fetchData()
+    }, [])
+
+    console.log("activities data", allActivities)
 
 
     const selectSortBy = (value: "A-Z" | "Time" | "Date") => {

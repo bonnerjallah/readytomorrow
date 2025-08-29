@@ -65,39 +65,34 @@ const AuthFlow = () => {
 
   // 🔹 REGISTER HANDLER 🔹
   const handleRegisterSubmit = async () => {
+    setLoading(true);
 
-    setLoading(true)
-
-    if(password !== confPwd) {
-      setErrMsg("Password do not match")
-      setTimeout(() => setErrMsg(""),3000)
-      setLoading(false)
+    if (password !== confPwd) {
+      setErrMsg("Passwords do not match");
+      setTimeout(() => setErrMsg(""), 3000);
+      setLoading(false);
       return;
     }
 
-    const trimedEmail = email.trim();
-    const trimedPwd = password.trim();
-
     try {
+      const trimedEmail = email.trim();
+      const trimedPwd = password.trim();
 
-      const response = await createUserWithEmailAndPassword(
-        auth,
-        trimedEmail,
-        trimedPwd
-      )
+      const response = await createUserWithEmailAndPassword(auth, trimedEmail, trimedPwd);
 
-      await sendEmailVerification(response.user)
+      await sendEmailVerification(response.user);
 
+      // ✅ Correct user path: users/<uid>
       await setDoc(doc(db, "users", response.user.uid), {
         email: trimedEmail,
         role: "user",
-        createdAt : new Date()
-      })
+        createdAt: new Date(),
+      });
 
       setScreen("checkEmail");
 
     } catch (error) {
-      console.log("Error registering user", error)
+      console.log("Error registering user", error);
       let msg = "An error occurred.";
       if (error instanceof FirebaseError) {
         const messages: Record<string, string> = {
@@ -108,11 +103,10 @@ const AuthFlow = () => {
         msg = messages[error.code] ?? error.message;
       }
       showError(msg);
-
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // 🔹 LOGIN HANDLER
   const handleLoginIn = async () => {
@@ -125,18 +119,12 @@ const AuthFlow = () => {
       return;
     }
 
-    const trimedEmail = email.trim();
-    const trimedPwd = password.trim();
-
     try {
+      const trimedEmail = email.trim();
+      const trimedPwd = password.trim();
       const response = await signInWithEmailAndPassword(auth, trimedEmail, trimedPwd);
-      const userData = response.user;
 
-      if (!userData?.uid) {
-        showError("Something went wrong. Please try again");
-        setLoading(false);
-        return;
-      }
+      const userData = response.user;
 
       if (!userData.emailVerified) {
         showError("Please verify your email before logging in.");
@@ -144,8 +132,8 @@ const AuthFlow = () => {
         return;
       }
 
+      // ✅ Get user doc from correct path
       const userDoc = await getDoc(doc(db, "users", userData.uid));
-
       if (userDoc.exists()) {
         const profileData = userDoc.data();
         setUser({
@@ -154,37 +142,20 @@ const AuthFlow = () => {
           createdAt: profileData.createdAt.toDate(),
           ...profileData,
         });
-      } else {
-        console.log("User profile not found in Firestore");
-
-        setUser({
-          id: userData.uid,
-          email: userData.email,
-          createdAt: new Date(),
-        });
       }
 
-      // Clear login fields
       setEmail("");
       setPassword("");
 
-      // Redirect to dashboard
       router.replace("/(dashboard)/Home");
 
     } catch (error) {
       console.log("Error logging in", error);
-      let msg = "Invalid login credentials.";
-      if (error instanceof FirebaseError) {
-        if (error.code === "auth/invalid-credentials") {
-          msg = "Invalid email or password";
-        }
-      }
-      showError(msg);
+      showError("Invalid login credentials.");
     } finally {
       setLoading(false);
     }
   };
-
 
   // 🔹 PASSWORD RESET HANDLER
   const handleReset = async () => {
