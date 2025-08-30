@@ -222,7 +222,7 @@ const AuthFlow = () => {
                     value={email}
                     onChangeText={setEmail}
                   >
-                    <Mail size={20} />
+                    <Mail/>
                   </ThemedTextInput>
 
                   <Spacer height={30} />
@@ -230,7 +230,7 @@ const AuthFlow = () => {
                   <ThemedTextInput
                     placeholder="Password"
                     style={[styles.inputStyle, { backgroundColor: theme.inputBackground }]}
-                    secureTextEntry
+                    secureTextEntry={true}
                     value={password}
                     onChangeText={setPassword}
                   >
@@ -284,7 +284,7 @@ const AuthFlow = () => {
                     value={email}
                     onChangeText={setEmail}
                   >
-                    <Mail size={20} />
+                    <Mail />
                   </ThemedTextInput>
 
                   <Spacer height={20} />

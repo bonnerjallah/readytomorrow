@@ -15,6 +15,12 @@ export const Typography = {
         fontSize: 18,
     },
 
+    subtitleBold:{
+        fontFamily: "Quicksand-Medium",
+        fontSize: 18,
+        fontWigth: "bold"
+    },
+
     smallertitle:{
         fontFamily: "Quicksand-Medium",
         fontSize: 13,
@@ -24,6 +30,7 @@ export const Typography = {
         fontFamily: "Quicksand-Regular",
         fontSize: 20,
     },
+
 
     button:{
         fontFamily: "Quicksand-SemiBold",

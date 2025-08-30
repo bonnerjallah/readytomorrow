@@ -7,7 +7,7 @@ import Checkbox from "expo-checkbox";
 import ThemedView from '../../components/ThemedView'
 import ThemedText from '../../components/ThemedText'
 import Spacer from '../../components/Spacer'
-import { CalendarDays, CirclePlus, SlidersHorizontal, TableOfContents } from 'lucide-react-native'
+import { CalendarDays, CirclePlus, Clock, EllipsisVertical, RedoDot, SlidersHorizontal, TableOfContents } from 'lucide-react-native'
 
 // 🧩 COMPONENTS
 import AddTaskModal from "../../components/AddTaskModal"
@@ -23,7 +23,7 @@ import ScheduleRoutineModal from '../../components/ScheduleRoutineModal'
 
 // 💾 FIREBASE
 import {auth, db} from "../../firebaseConfig"
-import { collection, getDocs, doc, query, orderBy, updateDoc} from 'firebase/firestore'
+import { collection, getDocs, doc, query, orderBy, updateDoc, onSnapshot} from 'firebase/firestore'
 
 
 
@@ -48,7 +48,7 @@ type ActivityType = {
 
 const Home = () => {
 
-    const {darkMode} = useTheme()
+    const {theme, darkMode} = useTheme()
 
     const [showAddTaskModal, setShowAddTaskModal] = useState(false)
     const [showDisplayOptionModal, setShowDisplayOptionModal] = useState(false)
@@ -65,34 +65,70 @@ const Home = () => {
 
     // 🔹Fetch user activities
     useEffect(() => {
-        const fetchData = async () => {
-            const userId = auth.currentUser?.uid;
-            if(!userId) return;
+        const userId = auth.currentUser?.uid;
+        if (!userId) return;
 
-            try {
-                // Reference the subcollection
-                const activitiesCol = collection(db, "users", userId, "activities")
-                const q = query(activitiesCol, orderBy("createdAt", "asc")) //"decs" old data first "asc" new first
-                const snapshot = await getDocs(q)
+        const activitiesCol = collection(db, "users", userId, "activities");
+        const q = query(activitiesCol, orderBy("createdAt", "asc"));
 
-                const activitiesData : ActivityType[] = snapshot.docs.map(doc => ({
+        const unsubscribe = onSnapshot(
+            q,
+            (snapshot) => {
+                const activitiesData: ActivityType[] = snapshot.docs.map((doc) => ({
                     id: doc.id,
-                    ...doc.data()
-                })) as ActivityType[]
+                    ...doc.data(),
+                })) as ActivityType[];
 
-                // ✅ Format today into "yyyy-MM-dd"
-                const today = new Date().toISOString().split("T")[0]; 
+                // Get today's date in local time (yyyy-MM-dd)
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, "0");
+                const dd = String(today.getDate()).padStart(2, "0");
+                const todayStr = `${yyyy}-${mm}-${dd}`;
 
-                const todayActivities = activitiesData.filter(elem => elem.selectedDate === today)
+                // Debug: log all activities and their dates
+                activitiesData.forEach((a) =>
+                    console.log("activity:", a.activity, "selectedDate:", a.selectedDate, "selectedTime:", a.selectedTime)
+                );
 
-                setAllActivities(activitiesData)
+                const todayActivities = activitiesData.filter((elem) => {
+                    // Check selectedDate
+                    if (elem.selectedDate?.trim() === todayStr) return true;
+
+                    // Check selectedTime (convert to local date)
+                    if (elem.selectedTime) {
+                        const timeDate = new Date(elem.selectedTime);
+                        const elemDateStr = `${timeDate.getFullYear()}-${String(timeDate.getMonth() + 1).padStart(2, "0")}-${String(timeDate.getDate()).padStart(2, "0")}`;
+                        if (elemDateStr === todayStr) return true;
+                    }
+
+                    return false;
+                });
+
+                setAllActivities(activitiesData);
                 setDayActivities(todayActivities);
-            } catch (error) {
-                console.log("Error fetching user activities", error)
+            },
+            (error) => {
+                console.log("Error fetching real-time activities:", error);
             }
+        );
+
+        return () => unsubscribe();
+    }, []);
+
+    // 🔹 Color picker
+    const getPriorityColor = (priority: "Normal" | "High" | "Highest" = "Normal") => {
+        switch (priority) {
+            case "High":
+            return "rgba(240, 173, 78, 0.3)";
+            case "Highest":
+            return "rgba(220, 53, 69, 0.3)";
+            default:
+            return "rgba(108, 117, 125, 0.3)";
         }
-        fetchData()
-    }, [dayActivities])
+    };
+
+
 
 
     // 🔹 Update user task complete
@@ -182,50 +218,84 @@ const Home = () => {
         <Spacer height={10} />
 
         <View style={{flex: 1}}>
-            <ScrollView>
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+            >
                 <View style={{rowGap: 15}}>
                     {dayActivities && dayActivities.map((elem, idx) => (
                         <View
                             key={idx}
-                            style={styles.taskCard}
+                            style={[
+                                styles.taskCard, 
+                                {
+                                    borderColor: darkMode === "dark" ? "#495057" : "black", 
+                                    backgroundColor: getPriorityColor(elem.selectedPriority || "Normal")
+                                }
+                            ]}
                         >
-                            <ThemedText>
-                                {elem.isAllDay ? (
-                                    <ThemedText variant='smallertitle'>All Day</ThemedText>
-                                ) : elem.selectedPart ? (
-                                    <ThemedText variant='smallertitle'>{elem.selectedPart}</ThemedText>
-                                ) : (
-                                    <View>
-                                        <ThemedText variant='smallertitle'>Any Time</ThemedText>
-                                    </View>
-                                )}
-                            </ThemedText>
-                            <View style={{flexDirection:"row", height: 30, columnGap: 10, alignItems:"center", marginTop: 10}} >
+                            <View style={{flexDirection: "row", justifyContent:"space-between", marginRight: 10, marginLeft: 10, marginTop: 10}}>
+                                <ThemedText>
+                                    {elem.isAllDay ? (
+                                        <ThemedText variant='smallertitle'>All Day</ThemedText>
+                                    ) : elem.selectedPart ? (
+                                        <ThemedText variant='smallertitle'>{elem.selectedPart}</ThemedText>
+                                    ) : (
+                                        <View>
+                                            <ThemedText variant='smallertitle'>Any Time</ThemedText>
+                                        </View>
+                                    )}
+                                </ThemedText>
+                                <EllipsisVertical 
+                                    stroke={darkMode === "dark" ? theme.primary : "black" }
 
-                                <TouchableOpacity
-                                    style={{
-                                        height: 20, 
-                                        borderRadius: 10,
-                                        borderWidth: 0.5, 
-                                        width: 20, 
-                                        backgroundColor: elem.done ? "green" : "transparent"
-                                    }}
-                                    onPress={() => handleTaskComplete(elem.id, !elem.done)}
-                                >
-                                </TouchableOpacity>
+                                />
+                            </View>
+                            <View  style={{marginTop: 5}}>
 
-                                <ThemedText variant='body'>
-                                    {elem.activity}
+                                <View style={{flexDirection:"row", columnGap: 5, alignItems:"center", marginLeft: 10, marginRight: 10}}>
+                                    <TouchableOpacity
+                                        style={{
+                                            height: 20, 
+                                            borderRadius: 10,
+                                            borderWidth: 0.5, 
+                                            width: 20, 
+                                            borderColor: darkMode === "dark" ? "white" : "black",
+                                            backgroundColor: elem.done ? "green" : "transparent"
+                                        }}
+                                        onPress={() => handleTaskComplete(elem.id, !elem.done)}
+                                    >
+                                    </TouchableOpacity>
+
+                                    <ThemedText variant='subtitleBold' style={{width:"90%"}}>
+                                        {elem.activity}
+                                    </ThemedText>
+                                </View>
+
+                                <ThemedText style={{width:"90%", alignSelf:"center", paddingTop: 5, paddingHorizontal: 10}} variant='smallertitle'>
+                                    {elem.note}
                                 </ThemedText>
 
                             </View>
 
+                            <View 
+                                style={[styles.taskCardBottom, {backgroundColor: darkMode === "dark" ? "#495057" : "#e9ecef", 
+                            }]}>
+                                <RedoDot 
+                                    size={15}
+                                    stroke={darkMode === "dark" ? theme.primary : "black" }
+                                />
+
+                                <View style={{flexDirection:"row", columnGap: 5}}>
+                                    <Clock size={15} stroke={darkMode === "dark" ? theme.primary : "black" }
+                                />
+                                    <ThemedText variant='smallertitle'>
+                                        {elem.selectedPart}
+                                    </ThemedText>
+                                </View>
+                            </View>
+
                         </View>
                     ))}
-                    
-
-
-
 
                 </View>
             </ScrollView>
@@ -296,8 +366,17 @@ const styles = StyleSheet.create({
 
     taskCard:{
         borderWidth: 1,
-        height: 100,
         borderRadius: 10,
+        marginBottom: 10,
+        minHeight: 60,
+    },
+
+    taskCardBottom:{
+        flexDirection:"row", 
+        justifyContent:"space-between", 
+        width:"100%", 
+        borderBottomRightRadius: 10,
+        borderBottomLeftRadius: 10,
         padding: 10
     }
 })

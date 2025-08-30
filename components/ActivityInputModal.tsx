@@ -30,7 +30,6 @@ type ActivityInputModalProps = {
 const ActivityInputModal = ({ isVisible, onClose }: ActivityInputModalProps) => {
   const { theme, darkMode } = useTheme();
 
-  // 🗂 State
   const [activity, setActivity] = useState("");
   const [note, setNote] = useState("");
   const [selectedDate, setSelectedDate] = useState(() => {
@@ -115,9 +114,9 @@ const ActivityInputModal = ({ isVisible, onClose }: ActivityInputModalProps) => 
       const activityRef = doc(activitiesCol);
 
       await setDoc(activityRef, {
-        activity,
-        note,
-        selectedDate,
+        activity: activity.trim(),
+        note: note?.trim(),
+        selectedDate: selectedDate?.trim(),
         selectedTime,
         isAllDay,
         isRecurring,
@@ -130,6 +129,7 @@ const ActivityInputModal = ({ isVisible, onClose }: ActivityInputModalProps) => 
         createdAt: new Date(),
         done: false
       });
+
 
       // Reset
       setActivity(""); setNote(""); setSelectedDate(""); setSelectedTime(""); setIsAllDay(false);
@@ -155,7 +155,7 @@ const ActivityInputModal = ({ isVisible, onClose }: ActivityInputModalProps) => 
           <Spacer height={30} />
 
           {/* Activity & Note Inputs */}
-          <ThemedTextInput placeholder='Enter Activity' value={activity} onChangeText={setActivity} style={[styles.inputStyle, { backgroundColor: theme.inputBackground }]} />
+          <ThemedTextInput placeholder='Enter Activity' value={activity} onChangeText={setActivity} autoCapitalize="sentences" style={[styles.inputStyle, { backgroundColor: theme.inputBackground }]} />
           <Spacer height={20} />
           <ThemedTextInput placeholder='Enter Note' value={note} onChangeText={setNote} style={[styles.inputStyle, { backgroundColor: theme.inputBackground }]} />
           <Spacer height={20} />
