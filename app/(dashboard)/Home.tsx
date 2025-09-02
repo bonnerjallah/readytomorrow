@@ -1,13 +1,13 @@
 // 🌱 ROOT IMPORTS
 import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import Checkbox from "expo-checkbox";
 
 // 🎨 UI
 import ThemedView from '../../components/ThemedView'
 import ThemedText from '../../components/ThemedText'
 import Spacer from '../../components/Spacer'
-import { CalendarDays, CirclePlus, Clock, EllipsisVertical, RedoDot, SlidersHorizontal, TableOfContents } from 'lucide-react-native'
+import { CalendarDays, ChevronDown, CirclePlus, ClipboardCheck, ClipboardX, Clock, EllipsisVertical, RedoDot, SlidersHorizontal, SquareCheck, TableOfContents } from 'lucide-react-native'
 
 // 🧩 COMPONENTS
 import AddTaskModal from "../../components/AddTaskModal"
@@ -15,16 +15,19 @@ import DisplayOptionsModal from "../../components/DisplayOptionsModal"
 import HambergurMenuModal from "../../components/HambergurMenuModal"
 import ActivityInputModal from "../../components/ActivityInputModal"
 import ShowDailyRitualModal from "../../components/ShowDailyRitualModal"
+import EditDeleteModal from "../../components/EditDeleteModal"
 
 
 // ⚛️ STATE MANAGEMENT
 import { useTheme } from '../../components/ThemeContext'
 import ScheduleRoutineModal from '../../components/ScheduleRoutineModal'
+import { useSetAtom } from 'jotai';
+import {taskAtom} from "../../atoms/selectedTaskAtom"
+
 
 // 💾 FIREBASE
 import {auth, db} from "../../firebaseConfig"
-import { collection, getDocs, doc, query, orderBy, updateDoc, onSnapshot} from 'firebase/firestore'
-
+import { collection, getDocs, doc, query, orderBy, updateDoc, onSnapshot, deleteDoc} from 'firebase/firestore'
 
 
 // 🔤 TYPES
@@ -50,17 +53,18 @@ const Home = () => {
 
     const {theme, darkMode} = useTheme()
 
+    const setSelectedTask = useSetAtom(taskAtom)
+
     const [showAddTaskModal, setShowAddTaskModal] = useState(false)
     const [showDisplayOptionModal, setShowDisplayOptionModal] = useState(false)
     const [showHamburgerModal, setShowHamburgerModal] = useState(false)
     const [showActivityInputModal, setShowActivityInputModal] = useState(false);
     const [showScheduleRoutine, setShowScheduleRoutineModal] = useState(false)
     const [showDailyRitualModal, setShowDailyRitualModal] = useState(false)
+    const [showEditModal, setShowEditModal] = useState(false)
 
     // 🔹fetch data state
     const [allActivities, setAllActivities] = useState<ActivityType[]>([]);
-    const [dayActivities, setDayActivities] = useState<ActivityType[]>([])
-
 
 
     // 🔹Fetch user activities
@@ -79,34 +83,8 @@ const Home = () => {
                     ...doc.data(),
                 })) as ActivityType[];
 
-                // Get today's date in local time (yyyy-MM-dd)
-                const today = new Date();
-                const yyyy = today.getFullYear();
-                const mm = String(today.getMonth() + 1).padStart(2, "0");
-                const dd = String(today.getDate()).padStart(2, "0");
-                const todayStr = `${yyyy}-${mm}-${dd}`;
-
-                // Debug: log all activities and their dates
-                activitiesData.forEach((a) =>
-                    console.log("activity:", a.activity, "selectedDate:", a.selectedDate, "selectedTime:", a.selectedTime)
-                );
-
-                const todayActivities = activitiesData.filter((elem) => {
-                    // Check selectedDate
-                    if (elem.selectedDate?.trim() === todayStr) return true;
-
-                    // Check selectedTime (convert to local date)
-                    if (elem.selectedTime) {
-                        const timeDate = new Date(elem.selectedTime);
-                        const elemDateStr = `${timeDate.getFullYear()}-${String(timeDate.getMonth() + 1).padStart(2, "0")}-${String(timeDate.getDate()).padStart(2, "0")}`;
-                        if (elemDateStr === todayStr) return true;
-                    }
-
-                    return false;
-                });
 
                 setAllActivities(activitiesData);
-                setDayActivities(todayActivities);
             },
             (error) => {
                 console.log("Error fetching real-time activities:", error);
@@ -116,6 +94,63 @@ const Home = () => {
         return () => unsubscribe();
     }, []);
 
+    //🔹 Helper: format date as YYYY-MM-DD local
+    const formatLocalDate = (date: Date) => {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, "0");
+        const d = String(date.getDate()).padStart(2, "0");
+        return `${y}-${m}-${d}`;
+    };
+
+    const todayStr = formatLocalDate(new Date());
+
+
+    // 🔹Today activities
+   const todayActivities = useMemo(() => {
+        return allActivities.filter(task => {
+            if (task.done) return false;
+            if (!task.selectedDate) return false;
+
+            return task.selectedDate === todayStr;
+        });
+    }, [allActivities]);
+
+
+
+    // 🔹Miss activities
+    const missActivities = useMemo(() => {
+        return allActivities.filter(task => {
+            if (task.done) return false;
+            if (!task.selectedDate) return false;
+
+            return task.selectedDate < todayStr;
+        });
+    }, [allActivities]);
+
+
+    // 🔹Done activities
+    const doneActivities = useMemo(() => {
+        if(!allActivities.length) return [];
+        return allActivities.filter((elem) => elem.done)
+    },[allActivities])
+
+
+    //🔹Delete task
+    const deleteTask = async (id:string) => {
+
+        const userId = auth.currentUser?.uid
+        if(!userId) return
+
+        try {
+            const docRef = doc(db, "users", userId, "activities", id)
+            await deleteDoc(docRef)
+        } catch (error) {
+            console.log("Error deleting task", error)
+        }
+
+    }
+
+
     // 🔹 Color picker
     const getPriorityColor = (priority: "Normal" | "High" | "Highest" = "Normal") => {
         switch (priority) {
@@ -124,7 +159,7 @@ const Home = () => {
             case "Highest":
             return "rgba(220, 53, 69, 0.3)";
             default:
-            return "rgba(108, 117, 125, 0.3)";
+            return "rgba(95, 173, 241, 0.3)";
         }
     };
 
@@ -192,7 +227,7 @@ const Home = () => {
         
         <Spacer height={5} />
 
-        <View style={{borderBottomWidth: .5, borderBottomColor: "gray", paddingBottom: 15}}>
+        <View style={{paddingBottom: 15}}>
 
             <View style={{ flexDirection:"row", justifyContent:"space-between"}}>
                 <ThemedText variant='heading' title>Today</ThemedText>
@@ -221,8 +256,8 @@ const Home = () => {
             <ScrollView
                 showsVerticalScrollIndicator={false}
             >
-                <View style={{rowGap: 15}}>
-                    {dayActivities && dayActivities.map((elem, idx) => (
+                <View style={{rowGap: 15, borderTopWidth: .5, borderTopColor: "gray", paddingTop: 10}}>
+                    {todayActivities && todayActivities.map((elem, idx) => (
                         <View
                             key={idx}
                             style={[
@@ -247,6 +282,10 @@ const Home = () => {
                                 </ThemedText>
                                 <EllipsisVertical 
                                     stroke={darkMode === "dark" ? theme.primary : "black" }
+                                    onPress={() => {
+                                        setSelectedTask(elem)
+                                        setShowEditModal(true)
+                                    }}
 
                                 />
                             </View>
@@ -297,6 +336,180 @@ const Home = () => {
                         </View>
                     ))}
 
+                    <View style={{flexDirection: "row", borderTopWidth: 0.5, paddingTop: 10,  justifyContent: "space-between"}}>
+                        <View style={{flexDirection: 'row', columnGap: 7, alignItems: "center"}}>
+                            <ClipboardX 
+                                stroke="red"
+                                size={15}
+                            />
+                            <ThemedText style={{fontSize: 15}}>Recently Missed Activities</ThemedText>
+                        </View>
+
+                        <ChevronDown />
+                    </View>
+
+                    {missActivities && missActivities.map((elem, idx) => (
+                        <View
+                            key={idx}
+                            style={[
+                                styles.taskCard, 
+                                {
+                                    borderColor: darkMode === "dark" ? "#495057" : "black", 
+                                    backgroundColor: "rgba(229, 56, 59, 0.3)"
+                                }
+                            ]}
+                        >
+                            
+                            <View style={{flexDirection: "row", justifyContent:"space-between", marginRight: 10, marginLeft: 10, marginTop: 10}}>
+                                <ThemedText>
+                                    {elem.isAllDay ? (
+                                        <ThemedText variant='smallertitle'>All Day</ThemedText>
+                                    ) : elem.selectedPart ? (
+                                        <ThemedText variant='smallertitle'>{elem.selectedPart}</ThemedText>
+                                    ) : (
+                                        <View>
+                                            <ThemedText variant='smallertitle'>Any Time</ThemedText>
+                                        </View>
+                                    )}
+                                </ThemedText>
+                                <EllipsisVertical 
+                                    stroke={darkMode === "dark" ? theme.primary : "black" }
+                                    onPress={() => {
+                                        setSelectedTask(elem)
+                                        setShowEditModal(true)
+                                    }}
+                                />
+                            </View>
+                            <View  style={{marginTop: 5}}>
+
+                                <View style={{flexDirection:"row", columnGap: 5, alignItems:"center", marginLeft: 10, marginRight: 10}}>
+                                    <TouchableOpacity
+                                        style={{
+                                            height: 20, 
+                                            borderRadius: 10,
+                                            borderWidth: 0.5, 
+                                            width: 20, 
+                                            backgroundColor: elem.done ? "green" : "rgba(239, 35, 60, 0.5)"
+                                        }}
+                                        onPress={() => deleteTask(elem.id)}
+                                    >
+                                    </TouchableOpacity>
+
+                                    <ThemedText variant='subtitleBold' style={{width:"90%"}}>
+                                        {elem.activity}
+                                    </ThemedText>
+                                </View>
+
+                                <ThemedText style={{width:"90%", alignSelf:"center", paddingTop: 5, paddingHorizontal: 10}} variant='smallertitle'>
+                                    {elem.note}
+                                </ThemedText>
+
+                            </View>
+
+                            <View 
+                                style={[styles.taskCardBottom, {backgroundColor: "rgba(229, 56, 59, 0.3)"}]}>
+                                <RedoDot 
+                                    size={15}
+                                    stroke={darkMode === "dark" ? theme.primary : "black" }
+                                />
+
+                                <View style={{flexDirection:"row", columnGap: 5}}>
+                                    <Clock size={15} stroke={darkMode === "dark" ? theme.primary : "black" }
+                                />
+                                    <ThemedText variant='smallertitle'>
+                                        {elem.selectedPart}
+                                    </ThemedText>
+                                </View>
+                            </View>
+
+                        </View>
+                    ))}
+
+                    <View style={{flexDirection: "row", borderTopWidth: 0.5, paddingTop: 10,  justifyContent: "space-between"}}>
+                        <View style={{flexDirection: 'row', columnGap: 7, alignItems: "center"}}>
+                            <ClipboardCheck
+                                stroke="green"
+                                size={15}
+                            />
+                            <ThemedText style={{fontSize: 15}}>Done</ThemedText>
+                        </View>
+
+                        <ChevronDown />
+                    </View>
+
+                    {doneActivities && doneActivities.map((elem, idx) => (
+                        <View
+                            key={idx}
+                            style={[
+                                styles.taskCard, 
+                                {
+                                    borderColor: darkMode === "dark" ? "#495057" : "black", 
+                                    backgroundColor: "rgba(216, 243, 220, 0.4)"
+                                }
+                            ]}
+                        >
+                            
+                            <View style={{flexDirection: "row", justifyContent:"space-between", marginRight: 10, marginLeft: 10, marginTop: 10}}>
+                                <ThemedText style={{color: "gray"}}>
+                                    {elem.isAllDay ? (
+                                        <ThemedText variant='smallertitle'>All Day</ThemedText>
+                                    ) : elem.selectedPart ? (
+                                        <ThemedText variant='smallertitle' style={{color: "gray"}}>{elem.selectedPart}</ThemedText>
+                                    ) : (
+                                        <View>
+                                            <ThemedText variant='smallertitle'>Any Time</ThemedText>
+                                        </View>
+                                    )}
+                                </ThemedText>
+                                <EllipsisVertical 
+                                    stroke="gray"
+                                    onPress={() => {
+                                        setSelectedTask(elem)
+                                        setShowEditModal(true)
+                                    }}
+                                />
+                            </View>
+                            <View  style={{marginTop: 5}}>
+
+                                <View style={{flexDirection:"row", columnGap: 5, alignItems:"center", marginLeft: 10, marginRight: 10}}>
+                                    <TouchableOpacity
+                                        onPress={() => handleTaskComplete(elem.id, !elem.done)}
+                                    >
+                                        <SquareCheck 
+                                            stroke="rgba(63, 243, 90, 0.8)"
+                                        />
+                                    </TouchableOpacity>
+                                    
+
+                                    <ThemedText variant='subtitleBold' style={styles.lineThrough}>
+                                        {elem.activity}
+                                    </ThemedText>
+                                </View>
+
+                                <ThemedText style={{width:"90%", alignSelf:"center", paddingTop: 5, paddingHorizontal: 10}} variant='smallertitle'>
+                                    {elem.note}
+                                </ThemedText>
+
+                            </View>
+
+                            <View 
+                                style={[styles.taskCardBottom, { backgroundColor: "rgba(216, 243, 220, 0.8)"}]}>
+                                <RedoDot 
+                                    size={15}
+                                    stroke="gray"
+                                />
+
+                                <View style={{flexDirection:"row", columnGap: 5}}>
+                                    <Clock size={15} stroke="gray"
+                                />
+                                    <ThemedText variant='smallertitle' style={{color: "gray"}}>
+                                        {elem.selectedPart}
+                                    </ThemedText>
+                                </View>
+                            </View>
+
+                        </View>
+                    ))}
                 </View>
             </ScrollView>
 
@@ -348,6 +561,8 @@ const Home = () => {
             selectGroupBy={selectGroupBy} 
             selectIncludes={selectIncludes}
         />
+
+        <EditDeleteModal isVisible={showEditModal} onClose={() => setShowEditModal(false)} />
         <HambergurMenuModal isVisible={showHamburgerModal} onClose={() => setShowHamburgerModal(false)} />
         <ActivityInputModal isVisible={showActivityInputModal} onClose={() => setShowActivityInputModal(false)}/>
         <ShowDailyRitualModal isVisible={showDailyRitualModal} onClose={() => setShowDailyRitualModal(false)}/>
@@ -378,5 +593,12 @@ const styles = StyleSheet.create({
         borderBottomRightRadius: 10,
         borderBottomLeftRadius: 10,
         padding: 10
-    }
+    },
+
+    lineThrough: {
+        textDecorationLine: 'line-through', 
+        textDecorationStyle: 'solid',       
+        color: 'gray',  
+        width: "90%",
+    },
 })
