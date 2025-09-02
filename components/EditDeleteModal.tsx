@@ -83,38 +83,13 @@ const EditDeleteModal = ({isVisible, onClose}: DisplayOptionsModalProps) => {
             </TouchableOpacity>
 
         <ThemedText style={{alignSelf: "center"}} variant="title">
-            Edit delete screen
+            Edit or delete task
         </ThemedText>
 
         <Spacer height={50} />
 
             
-        <View>
-            <ThemedText variant="smallertitle">Action</ThemedText>
-            <View style={[styles.optionsWrapper, {justifyContent: "space-between", marginTop: 10, borderColor: darkMode === "dark" ? "gray" : "black"}]}>
-                <View style={{flexDirection: "row", columnGap: 20, alignItems:"center"}}>
-                    <CalendarSync  size={20} stroke={theme.primary}/>
-                    <ThemedText>Reschedule Activity</ThemedText>
-                </View>
-                <ChevronRight 
-                    stroke={theme.tabIconColor}
-                />
-            </View>
-
-            <Spacer height={10} />
-
-            <View style={[styles.optionsWrapper, {justifyContent: "space-between", borderColor: darkMode === "dark" ? "gray" : "black"}]}>
-                <View style={{flexDirection: "row", columnGap: 20, alignItems:"center"}}>
-                    <Logs size={20} stroke={theme.primary}/>
-                    <ThemedText>Add Sub-Task</ThemedText>
-                </View>
-                <ChevronRight 
-                    stroke={theme.tabIconColor}
-                />
-            </View>
-        </View>
-
-        <Spacer height={20} />
+        
 
         <View>
             <ThemedText variant="smallertitle">Manage</ThemedText>

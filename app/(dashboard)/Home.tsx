@@ -1,5 +1,5 @@
 // 🌱 ROOT IMPORTS
-import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View, Animated, Easing } from 'react-native'
 import { useEffect, useState, useMemo } from 'react'
 import Checkbox from "expo-checkbox";
 
@@ -7,7 +7,7 @@ import Checkbox from "expo-checkbox";
 import ThemedView from '../../components/ThemedView'
 import ThemedText from '../../components/ThemedText'
 import Spacer from '../../components/Spacer'
-import { CalendarDays, ChevronDown, CirclePlus, ClipboardCheck, ClipboardX, Clock, EllipsisVertical, RedoDot, SlidersHorizontal, SquareCheck, TableOfContents } from 'lucide-react-native'
+import { CalendarDays, ChevronDown, CirclePlus, ClipboardCheck, ClipboardList, ClipboardX, Clock, EllipsisVertical, RedoDot, SlidersHorizontal, SquareCheck, TableOfContents } from 'lucide-react-native'
 
 // 🧩 COMPONENTS
 import AddTaskModal from "../../components/AddTaskModal"
@@ -66,6 +66,40 @@ const Home = () => {
     // 🔹fetch data state
     const [allActivities, setAllActivities] = useState<ActivityType[]>([]);
 
+    // 🔹 Dropdowns state array
+    const [dropdowns, setDropdowns] = useState([
+    { open: false, height: new Animated.Value(0), opacity: new Animated.Value(0) }, 
+    { open: false, height: new Animated.Value(0), opacity: new Animated.Value(0) }, 
+    { open: false, height: new Animated.Value(0), opacity: new Animated.Value(0) }, 
+    ]);
+
+
+    const toggleDropDown = (index: number, items: ActivityType[]) => {
+        const current = dropdowns[index];
+        const ITEM_HEIGHT = 140; // height of a single task card
+        const targetHeight = items.length * ITEM_HEIGHT;
+
+        if (current.open) {
+            Animated.parallel([
+                Animated.timing(current.height, { toValue: 0, duration: 250, easing: Easing.out(Easing.ease), useNativeDriver: false }),
+                Animated.timing(current.opacity, { toValue: 0, duration: 150, useNativeDriver: false }),
+            ]).start(() => {
+                const updated = [...dropdowns];
+                updated[index].open = false;
+                setDropdowns(updated);
+            });
+        } else {
+            const updated = [...dropdowns];
+            updated[index].open = true;
+            setDropdowns(updated);
+            Animated.parallel([
+                Animated.spring(current.height, { toValue: targetHeight, stiffness: 120, damping: 15, mass: 1, useNativeDriver: false }),
+                Animated.timing(current.opacity, { toValue: 1, duration: 150, useNativeDriver: false }),
+            ]).start();
+        }
+    };
+
+
 
     // 🔹Fetch user activities
     useEffect(() => {
@@ -116,7 +150,6 @@ const Home = () => {
     }, [allActivities]);
 
 
-
     // 🔹Miss activities
     const missActivities = useMemo(() => {
         return allActivities.filter(task => {
@@ -164,8 +197,6 @@ const Home = () => {
     };
 
 
-
-
     // 🔹 Update user task complete
     const handleTaskComplete = async (id:string, newValue:boolean) => {
 
@@ -183,6 +214,7 @@ const Home = () => {
         }
     }
 
+    // 🔹Sorting functions
     const selectSortBy = (value: "A-Z" | "Time" | "Date") => {
         console.log("Selected sort:", value);
         
@@ -256,260 +288,343 @@ const Home = () => {
             <ScrollView
                 showsVerticalScrollIndicator={false}
             >
-                <View style={{rowGap: 15, borderTopWidth: .5, borderTopColor: "gray", paddingTop: 10}}>
-                    {todayActivities && todayActivities.map((elem, idx) => (
-                        <View
-                            key={idx}
-                            style={[
-                                styles.taskCard, 
-                                {
-                                    borderColor: darkMode === "dark" ? "#495057" : "black", 
-                                    backgroundColor: getPriorityColor(elem.selectedPriority || "Normal")
-                                }
-                            ]}
-                        >
-                            <View style={{flexDirection: "row", justifyContent:"space-between", marginRight: 10, marginLeft: 10, marginTop: 10}}>
-                                <ThemedText>
-                                    {elem.isAllDay ? (
-                                        <ThemedText variant='smallertitle'>All Day</ThemedText>
-                                    ) : elem.selectedPart ? (
-                                        <ThemedText variant='smallertitle'>{elem.selectedPart}</ThemedText>
-                                    ) : (
-                                        <View>
-                                            <ThemedText variant='smallertitle'>Any Time</ThemedText>
-                                        </View>
-                                    )}
-                                </ThemedText>
-                                <EllipsisVertical 
-                                    stroke={darkMode === "dark" ? theme.primary : "black" }
-                                    onPress={() => {
-                                        setSelectedTask(elem)
-                                        setShowEditModal(true)
-                                    }}
+                <View>
 
+                    <TouchableOpacity
+                        onPress={() => toggleDropDown(0, todayActivities)}
+                    >
+                        <View style={{flexDirection: "row", borderTopWidth: 0.5, paddingTop: 10, borderTopColor: "gray", justifyContent: "space-between"}}>
+                            <View style={{flexDirection: 'row', columnGap: 7, alignItems: "center"}}>
+                                <ClipboardList 
+                                    stroke={theme.tabIconColor}
+                                    size={15}
                                 />
+                                <ThemedText style={{fontSize: 15}}>New Task</ThemedText>
                             </View>
-                            <View  style={{marginTop: 5}}>
 
-                                <View style={{flexDirection:"row", columnGap: 5, alignItems:"center", marginLeft: 10, marginRight: 10}}>
-                                    <TouchableOpacity
-                                        style={{
-                                            height: 20, 
-                                            borderRadius: 10,
-                                            borderWidth: 0.5, 
-                                            width: 20, 
-                                            borderColor: darkMode === "dark" ? "white" : "black",
-                                            backgroundColor: elem.done ? "green" : "transparent"
+                            <Animated.View 
+                                style={{
+                                    transform: [{
+                                        rotate: dropdowns[0].open 
+                                        ? '180deg' 
+                                        : '0deg'   // rotate icon when open
+                                    }]
+                                }}>
+                                <ChevronDown stroke={theme.tabIconColor} />
+                            </Animated.View>
+                        </View>
+                    </TouchableOpacity>
+
+                    <Spacer height={10} />
+
+                    <Animated.View
+                        style={{
+                            height: dropdowns[0].height,
+                            opacity: dropdowns[0].opacity,
+                            overflow: 'hidden', // important so content is clipped when closed
+                        }}  
+                    >
+                        {todayActivities && todayActivities.map((elem, idx) => (
+                            <View
+                                key={idx}
+                                style={[
+                                    styles.taskCard, 
+                                    {
+                                        borderColor: darkMode === "dark" ? "#495057" : "black", 
+                                        backgroundColor: getPriorityColor(elem.selectedPriority || "Normal")
+                                    }
+                                ]}
+                            >
+                                <View style={{flexDirection: "row", justifyContent:"space-between", marginRight: 10, marginLeft: 10, marginTop: 10}}>
+                                    <ThemedText>
+                                        {elem.isAllDay ? (
+                                            <ThemedText variant='smallertitle'>All Day</ThemedText>
+                                        ) : elem.selectedPart ? (
+                                            <ThemedText variant='smallertitle'>{elem.selectedPart}</ThemedText>
+                                        ) : (
+                                            <View>
+                                                <ThemedText variant='smallertitle'>Any Time</ThemedText>
+                                            </View>
+                                        )}
+                                    </ThemedText>
+                                    <EllipsisVertical 
+                                        stroke={darkMode === "dark" ? theme.primary : "black" }
+                                        onPress={() => {
+                                            setSelectedTask(elem)
+                                            setShowEditModal(true)
                                         }}
-                                        onPress={() => handleTaskComplete(elem.id, !elem.done)}
-                                    >
-                                    </TouchableOpacity>
 
-                                    <ThemedText variant='subtitleBold' style={{width:"90%"}}>
-                                        {elem.activity}
+                                    />
+                                </View>
+                                <View  style={{marginTop: 5}}>
+
+                                    <View style={{flexDirection:"row", columnGap: 5, alignItems:"center", marginLeft: 10, marginRight: 10}}>
+                                        <TouchableOpacity
+                                            style={{
+                                                height: 20, 
+                                                borderRadius: 10,
+                                                borderWidth: 0.5, 
+                                                width: 20, 
+                                                borderColor: darkMode === "dark" ? "white" : "black",
+                                                backgroundColor: elem.done ? "green" : "transparent"
+                                            }}
+                                            onPress={() => handleTaskComplete(elem.id, !elem.done)}
+                                        >
+                                        </TouchableOpacity>
+
+                                        <ThemedText variant='subtitleBold' style={{width:"90%"}}>
+                                            {elem.activity}
+                                        </ThemedText>
+                                    </View>
+
+                                    <ThemedText style={{width:"90%", alignSelf:"center", paddingTop: 5, paddingHorizontal: 10}} variant='smallertitle'>
+                                        {elem.note}
                                     </ThemedText>
+
                                 </View>
 
-                                <ThemedText style={{width:"90%", alignSelf:"center", paddingTop: 5, paddingHorizontal: 10}} variant='smallertitle'>
-                                    {elem.note}
-                                </ThemedText>
+                                <View 
+                                    style={[styles.taskCardBottom, {backgroundColor: darkMode === "dark" ? "#495057" : "#e9ecef", 
+                                }]}>
+                                    <RedoDot 
+                                        size={15}
+                                        stroke={darkMode === "dark" ? theme.primary : "black" }
+                                    />
+
+                                    <View style={{flexDirection:"row", columnGap: 5}}>
+                                        <Clock size={15} stroke={darkMode === "dark" ? theme.primary : "black" }
+                                    />
+                                        <ThemedText variant='smallertitle'>
+                                            {elem.selectedPart}
+                                        </ThemedText>
+                                    </View>
+                                </View>
 
                             </View>
+                        ))}
+                    </Animated.View>
 
-                            <View 
-                                style={[styles.taskCardBottom, {backgroundColor: darkMode === "dark" ? "#495057" : "#e9ecef", 
-                            }]}>
-                                <RedoDot 
+                    <TouchableOpacity
+                        onPress={() => toggleDropDown(1, missActivities)}
+                    >
+                        <View style={{flexDirection: "row", borderTopWidth: 0.5, paddingTop: 10, borderTopColor: "gray", justifyContent: "space-between"}}>
+                            <View style={{flexDirection: 'row', columnGap: 7, alignItems: "center"}}>
+                                <ClipboardX 
+                                    stroke="red"
                                     size={15}
-                                    stroke={darkMode === "dark" ? theme.primary : "black" }
                                 />
+                                <ThemedText style={{fontSize: 15}}>Recently Missed Activities</ThemedText>
+                            </View>
 
-                                <View style={{flexDirection:"row", columnGap: 5}}>
-                                    <Clock size={15} stroke={darkMode === "dark" ? theme.primary : "black" }
-                                />
-                                    <ThemedText variant='smallertitle'>
-                                        {elem.selectedPart}
+                            <Animated.View 
+                                style={{
+                                    transform: [{
+                                        rotate: dropdowns[1].open 
+                                        ? '180deg' 
+                                        : '0deg'   // rotate icon when open
+                                    }]
+                                }}>
+                                <ChevronDown stroke={theme.tabIconColor} />
+                            </Animated.View>
+                        </View>
+                    </TouchableOpacity>
+
+                    <Spacer height={10} />
+                    
+                    <Animated.View
+                        style={{
+                            height: dropdowns[1].height,
+                            opacity: dropdowns[1].opacity,
+                            overflow: 'hidden', // important so content is clipped when closed
+                        }}
+                    >
+                        {missActivities && missActivities.map((elem, idx) => (
+                            <View
+                                key={idx}
+                                style={[
+                                    styles.taskCard, 
+                                    {
+                                        borderColor: darkMode === "dark" ? "#495057" : "black", 
+                                        backgroundColor: "rgba(229, 56, 59, 0.3)"
+                                    }
+                                ]}
+                            >
+                                
+                                <View style={{flexDirection: "row", justifyContent:"space-between", marginRight: 10, marginLeft: 10, marginTop: 10}}>
+                                    <ThemedText>
+                                        {elem.isAllDay ? (
+                                            <ThemedText variant='smallertitle'>All Day</ThemedText>
+                                        ) : elem.selectedPart ? (
+                                            <ThemedText variant='smallertitle'>{elem.selectedPart}</ThemedText>
+                                        ) : (
+                                            <View>
+                                                <ThemedText variant='smallertitle'>Any Time</ThemedText>
+                                            </View>
+                                        )}
                                     </ThemedText>
-                                </View>
-                            </View>
-
-                        </View>
-                    ))}
-
-                    <View style={{flexDirection: "row", borderTopWidth: 0.5, paddingTop: 10,  justifyContent: "space-between"}}>
-                        <View style={{flexDirection: 'row', columnGap: 7, alignItems: "center"}}>
-                            <ClipboardX 
-                                stroke="red"
-                                size={15}
-                            />
-                            <ThemedText style={{fontSize: 15}}>Recently Missed Activities</ThemedText>
-                        </View>
-
-                        <ChevronDown />
-                    </View>
-
-                    {missActivities && missActivities.map((elem, idx) => (
-                        <View
-                            key={idx}
-                            style={[
-                                styles.taskCard, 
-                                {
-                                    borderColor: darkMode === "dark" ? "#495057" : "black", 
-                                    backgroundColor: "rgba(229, 56, 59, 0.3)"
-                                }
-                            ]}
-                        >
-                            
-                            <View style={{flexDirection: "row", justifyContent:"space-between", marginRight: 10, marginLeft: 10, marginTop: 10}}>
-                                <ThemedText>
-                                    {elem.isAllDay ? (
-                                        <ThemedText variant='smallertitle'>All Day</ThemedText>
-                                    ) : elem.selectedPart ? (
-                                        <ThemedText variant='smallertitle'>{elem.selectedPart}</ThemedText>
-                                    ) : (
-                                        <View>
-                                            <ThemedText variant='smallertitle'>Any Time</ThemedText>
-                                        </View>
-                                    )}
-                                </ThemedText>
-                                <EllipsisVertical 
-                                    stroke={darkMode === "dark" ? theme.primary : "black" }
-                                    onPress={() => {
-                                        setSelectedTask(elem)
-                                        setShowEditModal(true)
-                                    }}
-                                />
-                            </View>
-                            <View  style={{marginTop: 5}}>
-
-                                <View style={{flexDirection:"row", columnGap: 5, alignItems:"center", marginLeft: 10, marginRight: 10}}>
-                                    <TouchableOpacity
-                                        style={{
-                                            height: 20, 
-                                            borderRadius: 10,
-                                            borderWidth: 0.5, 
-                                            width: 20, 
-                                            backgroundColor: elem.done ? "green" : "rgba(239, 35, 60, 0.5)"
+                                    <EllipsisVertical 
+                                        stroke={darkMode === "dark" ? theme.primary : "black" }
+                                        onPress={() => {
+                                            setSelectedTask(elem)
+                                            setShowEditModal(true)
                                         }}
-                                        onPress={() => deleteTask(elem.id)}
-                                    >
-                                    </TouchableOpacity>
+                                    />
+                                </View>
+                                <View  style={{marginTop: 5}}>
 
-                                    <ThemedText variant='subtitleBold' style={{width:"90%"}}>
-                                        {elem.activity}
+                                    <View style={{flexDirection:"row", columnGap: 5, alignItems:"center", marginLeft: 10, marginRight: 10}}>
+                                        <TouchableOpacity
+                                            style={{
+                                                height: 20, 
+                                                borderRadius: 10,
+                                                borderWidth: 0.5, 
+                                                width: 20, 
+                                                backgroundColor: elem.done ? "green" : "rgba(239, 35, 60, 0.5)"
+                                            }}
+                                            onPress={() => deleteTask(elem.id)}
+                                        >
+                                        </TouchableOpacity>
+
+                                        <ThemedText variant='subtitleBold' style={{width:"90%"}}>
+                                            {elem.activity}
+                                        </ThemedText>
+                                    </View>
+
+                                    <ThemedText style={{width:"90%", alignSelf:"center", paddingTop: 5, paddingHorizontal: 10}} variant='smallertitle'>
+                                        {elem.note}
                                     </ThemedText>
+
                                 </View>
 
-                                <ThemedText style={{width:"90%", alignSelf:"center", paddingTop: 5, paddingHorizontal: 10}} variant='smallertitle'>
-                                    {elem.note}
-                                </ThemedText>
+                                <View 
+                                    style={[styles.taskCardBottom, {backgroundColor: "rgba(229, 56, 59, 0.3)"}]}>
+                                    <RedoDot 
+                                        size={15}
+                                        stroke={darkMode === "dark" ? theme.primary : "black" }
+                                    />
+
+                                    <View style={{flexDirection:"row", columnGap: 5}}>
+                                        <Clock size={15} stroke={darkMode === "dark" ? theme.primary : "black" }
+                                    />
+                                        <ThemedText variant='smallertitle'>
+                                            {elem.selectedPart}
+                                        </ThemedText>
+                                    </View>
+                                </View>
 
                             </View>
-
-                            <View 
-                                style={[styles.taskCardBottom, {backgroundColor: "rgba(229, 56, 59, 0.3)"}]}>
-                                <RedoDot 
+                        ))}
+                    </Animated.View>
+                    
+                    <TouchableOpacity
+                        onPress={() => toggleDropDown(2, doneActivities)}
+                    >
+                        <View style={{flexDirection: "row", borderTopWidth: 0.5, paddingTop: 10, borderTopColor: "gray",  justifyContent: "space-between"}}>
+                            <View style={{flexDirection: 'row', columnGap: 7, alignItems: "center"}}>
+                                <ClipboardCheck
+                                    stroke="green"
                                     size={15}
-                                    stroke={darkMode === "dark" ? theme.primary : "black" }
                                 />
-
-                                <View style={{flexDirection:"row", columnGap: 5}}>
-                                    <Clock size={15} stroke={darkMode === "dark" ? theme.primary : "black" }
-                                />
-                                    <ThemedText variant='smallertitle'>
-                                        {elem.selectedPart}
-                                    </ThemedText>
-                                </View>
+                                <ThemedText style={{fontSize: 15}}>Done Task</ThemedText>
                             </View>
 
+                            <Animated.View 
+                                style={{
+                                    transform: [{
+                                        rotate: dropdowns[2].open 
+                                        ? '180deg' 
+                                        : '0deg'   // rotate icon when open
+                                    }]
+                                }}>
+                                <ChevronDown stroke={theme.tabIconColor} />
+                            </Animated.View>
                         </View>
-                    ))}
+                    </TouchableOpacity>
 
-                    <View style={{flexDirection: "row", borderTopWidth: 0.5, paddingTop: 10,  justifyContent: "space-between"}}>
-                        <View style={{flexDirection: 'row', columnGap: 7, alignItems: "center"}}>
-                            <ClipboardCheck
-                                stroke="green"
-                                size={15}
-                            />
-                            <ThemedText style={{fontSize: 15}}>Done</ThemedText>
-                        </View>
-
-                        <ChevronDown />
-                    </View>
-
-                    {doneActivities && doneActivities.map((elem, idx) => (
-                        <View
-                            key={idx}
-                            style={[
-                                styles.taskCard, 
-                                {
-                                    borderColor: darkMode === "dark" ? "#495057" : "black", 
-                                    backgroundColor: "rgba(216, 243, 220, 0.4)"
-                                }
-                            ]}
-                        >
-                            
-                            <View style={{flexDirection: "row", justifyContent:"space-between", marginRight: 10, marginLeft: 10, marginTop: 10}}>
-                                <ThemedText style={{color: "gray"}}>
-                                    {elem.isAllDay ? (
-                                        <ThemedText variant='smallertitle'>All Day</ThemedText>
-                                    ) : elem.selectedPart ? (
-                                        <ThemedText variant='smallertitle' style={{color: "gray"}}>{elem.selectedPart}</ThemedText>
-                                    ) : (
-                                        <View>
-                                            <ThemedText variant='smallertitle'>Any Time</ThemedText>
-                                        </View>
-                                    )}
-                                </ThemedText>
-                                <EllipsisVertical 
-                                    stroke="gray"
-                                    onPress={() => {
-                                        setSelectedTask(elem)
-                                        setShowEditModal(true)
-                                    }}
-                                />
-                            </View>
-                            <View  style={{marginTop: 5}}>
-
-                                <View style={{flexDirection:"row", columnGap: 5, alignItems:"center", marginLeft: 10, marginRight: 10}}>
-                                    <TouchableOpacity
-                                        onPress={() => handleTaskComplete(elem.id, !elem.done)}
-                                    >
-                                        <SquareCheck 
-                                            stroke="rgba(63, 243, 90, 0.8)"
-                                        />
-                                    </TouchableOpacity>
-                                    
-
-                                    <ThemedText variant='subtitleBold' style={styles.lineThrough}>
-                                        {elem.activity}
+                    <Spacer height={10} />
+                    
+                    <Animated.View
+                        style={{
+                            height: dropdowns[2].height,
+                            opacity: dropdowns[2].opacity,
+                            overflow: 'hidden', // important so content is clipped when closed
+                        }}
+                    >
+                        {doneActivities && doneActivities.map((elem, idx) => (
+                            <View
+                                key={idx}
+                                style={[
+                                    styles.taskCard, 
+                                    {
+                                        borderColor: darkMode === "dark" ? "#495057" : "black", 
+                                        backgroundColor: "rgba(216, 243, 220, 0.4)"
+                                    }
+                                ]}
+                            >
+                                
+                                <View style={{flexDirection: "row", justifyContent:"space-between", marginRight: 10, marginLeft: 10, marginTop: 10}}>
+                                    <ThemedText style={{color: "gray"}}>
+                                        {elem.isAllDay ? (
+                                            <ThemedText variant='smallertitle'>All Day</ThemedText>
+                                        ) : elem.selectedPart ? (
+                                            <ThemedText variant='smallertitle' style={{color: "gray"}}>{elem.selectedPart}</ThemedText>
+                                        ) : (
+                                            <View>
+                                                <ThemedText variant='smallertitle'>Any Time</ThemedText>
+                                            </View>
+                                        )}
                                     </ThemedText>
+                                    <EllipsisVertical 
+                                        stroke="gray"
+                                        onPress={() => {
+                                            setSelectedTask(elem)
+                                            setShowEditModal(true)
+                                        }}
+                                    />
+                                </View>
+                                <View  style={{marginTop: 5}}>
+
+                                    <View style={{flexDirection:"row", columnGap: 5, alignItems:"center", marginLeft: 10, marginRight: 10}}>
+                                        <TouchableOpacity
+                                            onPress={() => handleTaskComplete(elem.id, !elem.done)}
+                                        >
+                                            <SquareCheck 
+                                                stroke="rgba(63, 243, 90, 0.8)"
+                                            />
+                                        </TouchableOpacity>
+                                        
+
+                                        <ThemedText variant='subtitleBold' style={styles.lineThrough}>
+                                            {elem.activity}
+                                        </ThemedText>
+                                    </View>
+
+                                    <ThemedText style={{width:"90%", alignSelf:"center", paddingTop: 5, paddingHorizontal: 10}} variant='smallertitle'>
+                                        {elem.note}
+                                    </ThemedText>
+
                                 </View>
 
-                                <ThemedText style={{width:"90%", alignSelf:"center", paddingTop: 5, paddingHorizontal: 10}} variant='smallertitle'>
-                                    {elem.note}
-                                </ThemedText>
+                                <View 
+                                    style={[styles.taskCardBottom, { backgroundColor: "rgba(216, 243, 220, 0.8)"}]}>
+                                    <RedoDot 
+                                        size={15}
+                                        stroke="gray"
+                                    />
 
-                            </View>
-
-                            <View 
-                                style={[styles.taskCardBottom, { backgroundColor: "rgba(216, 243, 220, 0.8)"}]}>
-                                <RedoDot 
-                                    size={15}
-                                    stroke="gray"
-                                />
-
-                                <View style={{flexDirection:"row", columnGap: 5}}>
-                                    <Clock size={15} stroke="gray"
-                                />
-                                    <ThemedText variant='smallertitle' style={{color: "gray"}}>
-                                        {elem.selectedPart}
-                                    </ThemedText>
+                                    <View style={{flexDirection:"row", columnGap: 5}}>
+                                        <Clock size={15} stroke="gray"
+                                    />
+                                        <ThemedText variant='smallertitle' style={{color: "gray"}}>
+                                            {elem.selectedPart}
+                                        </ThemedText>
+                                    </View>
                                 </View>
-                            </View>
 
-                        </View>
-                    ))}
+                            </View>
+                        ))}
+                    </Animated.View>
+
                 </View>
             </ScrollView>
 
