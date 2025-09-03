@@ -78,48 +78,49 @@ const EditDeleteModal = ({isVisible, onClose}: DisplayOptionsModalProps) => {
                     top: 45,
                     left: 20
                 }} 
+                onPress={onClose}
             >
-                <ArrowBigLeft size={40} stroke="#77d1d2ff" onPress={onClose} />
+                <ArrowBigLeft size={40} stroke="#77d1d2ff" />
             </TouchableOpacity>
 
-        <ThemedText style={{alignSelf: "center"}} variant="title">
-            Edit or delete task
-        </ThemedText>
+            <ThemedText style={{alignSelf: "center"}} variant="title">
+                Edit or delete task
+            </ThemedText>
 
-        <Spacer height={50} />
+            <Spacer height={50} />
 
             
         
 
-        <View>
-            <ThemedText variant="smallertitle">Manage</ThemedText>
-            <TouchableOpacity
-                onPress={() => setEditActivityModal(true)}
-            >
-                <View style={[styles.optionsWrapper, {justifyContent: "space-between", marginTop: 10, borderColor: darkMode === "dark" ? "gray" : "black"}]}>
-                    <View style={{flexDirection: "row", columnGap: 20, alignItems:"center"}}>
-                        <PencilLine  size={20} stroke={theme.primary}/>
-                        <ThemedText>Edit Activity</ThemedText>
+            <View>
+                <ThemedText variant="smallertitle">Manage</ThemedText>
+                <TouchableOpacity
+                    onPress={() => setEditActivityModal(true)}
+                >
+                    <View style={[styles.optionsWrapper, {justifyContent: "space-between", marginTop: 10, borderColor: darkMode === "dark" ? "gray" : "black"}]}>
+                        <View style={{flexDirection: "row", columnGap: 20, alignItems:"center"}}>
+                            <PencilLine  size={20} stroke={theme.primary}/>
+                            <ThemedText>Edit Activity</ThemedText>
+                        </View>
+                        <ChevronRight 
+                            stroke={theme.tabIconColor}
+                        />
                     </View>
-                    <ChevronRight 
-                        stroke={theme.tabIconColor}
-                    />
-                </View>
-            </TouchableOpacity>
-            
+                </TouchableOpacity>
+                
 
-            <Spacer height={15} />
+                <Spacer height={15} />
 
-            <TouchableOpacity
-                onPress={() => handleDeleteTask()}
-            >
-                <View style={[styles.optionsWrapper, {borderColor: darkMode === "dark" ? "gray" : "black"}]}>
-                    <Trash2 size={20} stroke= "red"/>
-                    <ThemedText style={{color: "red"}}>Delete Activity</ThemedText>
-                </View>
-            </TouchableOpacity>
-            
-        </View>
+                <TouchableOpacity
+                    onPress={() => handleDeleteTask()}
+                >
+                    <View style={[styles.optionsWrapper, {borderColor: darkMode === "dark" ? "gray" : "black"}]}>
+                        <Trash2 size={20} stroke= "red"/>
+                        <ThemedText style={{color: "red"}}>Delete Activity</ThemedText>
+                    </View>
+                </TouchableOpacity>
+                
+            </View>
 
             <EditActivityModal isVisible={showEditActivityModal} onClose={() => setEditActivityModal(false)} />
 

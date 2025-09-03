@@ -28,7 +28,7 @@ type DisplayOptionsModalProps = {
   isVisible: boolean;
   onClose: () => void;
   selectSortBy?: (type: "A-Z" | "Time" | "Date") => void
-  selectGroupBy?: (type: "Days" | "Goals" | "Priority" | "No Grouping") => void
+  selectGroupBy?: (type: "Days" | "Priority" | "No Grouping") => void
   selectIncludes?: (type: "Recently Missed Activities" | "Skipped Activities") => void
 };
 
@@ -46,7 +46,7 @@ const DisplayOptionsModal = ({ isVisible, onClose, selectSortBy, selectGroupBy, 
     const [selectedIncludeOption, setSelectedIncludeOption] = useState<"Recently Missed Activities" | "Skipped Activities">("Recently Missed Activities" )
 
     const sortOptions: ("A-Z" | "Time" | "Date")[] = ["A-Z", "Time", "Date"];
-    const groupOptions: ("Days" | "Goals" | "Priority" | "No Grouping")[] = ["Days", "Goals", "Priority", "No Grouping"]
+    const groupOptions: ("Days" | "Priority" | "No Grouping")[] = ["Days", "Priority", "No Grouping"]
     const includeOption: ("Recently Missed Activities" | "Skipped Activities")[]=["Recently Missed Activities", "Skipped Activities"]
 
 
@@ -167,26 +167,25 @@ const DisplayOptionsModal = ({ isVisible, onClose, selectSortBy, selectGroupBy, 
                             styles.dropdown,
                             { height: dropdowns[0].height, opacity: dropdowns[0].opacity, overflow: "hidden" }
                         ]}
-                        >
+                    >
                         {sortOptions.map((type) => (
                             <View 
                                 key={type} 
                                 style={{flexDirection:"row", alignItems:"center", columnGap: 10 , borderBottomWidth:0.2, paddingBottom: 10}}
                             >
-                            <Checkbox
-                                value={selectedSort === type}
-                                onValueChange={() => {
-                                setSelectedSort(type);
-                                selectSortBy?.(type);
-                                }}
-                            />
-                            <ThemedText style={styles.item}>
-                                {type === "A-Z" ? "A-Z" : type === "Time" ? "Time" : "Date"}
-                            </ThemedText>
+                                <Checkbox
+                                    value={selectedSort === type}
+                                    onValueChange={() => {
+                                        setSelectedSort(type);
+                                        selectSortBy?.(type);
+                                    }}
+                                />
+                                <ThemedText style={styles.item}>
+                                    {type === "A-Z" ? "A-Z" : type === "Time" ? "Time" : "Date"}
+                                </ThemedText>
                             </View>
                         ))}
                     </Animated.View>
-                
                 </View>
 
                 <Spacer height={20} />
@@ -229,7 +228,7 @@ const DisplayOptionsModal = ({ isVisible, onClose, selectSortBy, selectGroupBy, 
                                     }}
                                 />
                                 <ThemedText style={styles.item}>
-                                    {type === "Days" ? "Days" : type === "Goals" ? "Goals" : type === "Priority" ? "Priority" : "No Grouping" }
+                                    {type === "Days" ? "Days" : type === "Priority" ? "Priority" : "No Grouping" }
                                 </ThemedText>
 
                             </View>

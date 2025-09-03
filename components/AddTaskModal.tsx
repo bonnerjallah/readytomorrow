@@ -4,7 +4,6 @@ import { Modal, StyleSheet, Text, TouchableOpacity, TouchableWithoutFeedback, Vi
 // 🎨 UI
 import {useTheme} from "../components/ThemeContext"
 import ThemedText from './ThemedText'
-import { useState } from 'react'
 
 // 🔤 TYPES
 type AddTaskModalProps = {

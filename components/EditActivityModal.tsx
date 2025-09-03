@@ -5,7 +5,7 @@ import DateTimePicker from "@react-native-community/datetimepicker";
 
 // 💾 FIREBASE
 import { auth, db } from '../firebaseConfig'
-import { collection, doc, setDoc, updateDoc } from 'firebase/firestore'
+import { doc, updateDoc } from 'firebase/firestore'
 
 // ⚛️ STATE MANAGEMENT
 import { useTheme } from './ThemeContext';
@@ -157,20 +157,20 @@ const EditActivityModal = ({ isVisible, onClose }: ActivityInputModalProps) => {
         const activityRef = doc(db, "users", userId, "activities", selectedTask.id);
 
         await updateDoc(activityRef, {
-        activity: activity.trim(),
-        note: note?.trim(),
-        selectedDate: selectedDate?.trim(),
-        selectedTime,
-        isAllDay,
-        isRecurring,
-        reminder,
-        selectedPart,
-        selectedPriority,
-        durationDays,
-        durationHours,
-        durationMinutes,
-        // don’t reset createdAt when editing! Use updatedAt instead.
-        updatedAt: new Date(),
+          activity: activity.trim(),
+          note: note?.trim(),
+          selectedDate: selectedDate?.trim(),
+          selectedTime,
+          isAllDay,
+          isRecurring,
+          reminder,
+          selectedPart,
+          selectedPriority,
+          durationDays,
+          durationHours,
+          durationMinutes,
+          // don’t reset createdAt when editing! Use updatedAt instead.
+          updatedAt: new Date(),
         });
 
         // Reset local state

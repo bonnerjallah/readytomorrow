@@ -7,7 +7,7 @@ import Checkbox from "expo-checkbox";
 import ThemedView from '../../components/ThemedView'
 import ThemedText from '../../components/ThemedText'
 import Spacer from '../../components/Spacer'
-import { CalendarDays, ChevronDown, CirclePlus, ClipboardCheck, ClipboardList, ClipboardX, Clock, EllipsisVertical, RedoDot, SlidersHorizontal, SquareCheck, TableOfContents } from 'lucide-react-native'
+import { CalendarDays, ChevronDown, CirclePlus, ClipboardCheck, ClipboardList, ClipboardX, SlidersHorizontal, TableOfContents } from 'lucide-react-native'
 
 // 🧩 COMPONENTS
 import AddTaskModal from "../../components/AddTaskModal"
@@ -16,6 +16,8 @@ import HambergurMenuModal from "../../components/HambergurMenuModal"
 import ActivityInputModal from "../../components/ActivityInputModal"
 import ShowDailyRitualModal from "../../components/ShowDailyRitualModal"
 import EditDeleteModal from "../../components/EditDeleteModal"
+import Taskcard from "../../components/Taskcard"
+import RescheduleModal from "../../components/RescheduleModal"
 
 
 // ⚛️ STATE MANAGEMENT
@@ -58,10 +60,13 @@ const Home = () => {
     const [showAddTaskModal, setShowAddTaskModal] = useState(false)
     const [showDisplayOptionModal, setShowDisplayOptionModal] = useState(false)
     const [showHamburgerModal, setShowHamburgerModal] = useState(false)
+    const [showRedoModal, setShowRedoModal] = useState(false)
+
     const [showActivityInputModal, setShowActivityInputModal] = useState(false);
     const [showScheduleRoutine, setShowScheduleRoutineModal] = useState(false)
     const [showDailyRitualModal, setShowDailyRitualModal] = useState(false)
     const [showEditModal, setShowEditModal] = useState(false)
+    const [sortedData, setSortatedData] = useState<ActivityType[] | null>(null)
 
     // 🔹fetch data state
     const [allActivities, setAllActivities] = useState<ActivityType[]>([]);
@@ -98,7 +103,6 @@ const Home = () => {
             ]).start();
         }
     };
-
 
 
     // 🔹Fetch user activities
@@ -147,7 +151,7 @@ const Home = () => {
 
             return task.selectedDate === todayStr;
         });
-    }, [allActivities]);
+    }, [allActivities, todayStr]);
 
 
     // 🔹Miss activities
@@ -184,17 +188,9 @@ const Home = () => {
     }
 
 
-    // 🔹 Color picker
-    const getPriorityColor = (priority: "Normal" | "High" | "Highest" = "Normal") => {
-        switch (priority) {
-            case "High":
-            return "rgba(240, 173, 78, 0.3)";
-            case "Highest":
-            return "rgba(220, 53, 69, 0.3)";
-            default:
-            return "rgba(95, 173, 241, 0.3)";
-        }
-    };
+    useEffect(() => {
+        setSortatedData(todayActivities); 
+    }, [todayActivities]);
 
 
     // 🔹 Update user task complete
@@ -216,12 +212,84 @@ const Home = () => {
 
     // 🔹Sorting functions
     const selectSortBy = (value: "A-Z" | "Time" | "Date") => {
-        console.log("Selected sort:", value);
-        
+
+        let sorted = [...todayActivities];
+
+        if (value === "A-Z") {
+            sorted.sort((a, b) => a.activity.localeCompare(b.activity));
+        }
+
+        if (value === "Time") {
+            sorted.sort((a, b) => {
+            const atime = a.selectedTime ? new Date(a.selectedTime).getTime() : Infinity;
+            const btime = b.selectedTime ? new Date(b.selectedTime).getTime() : Infinity;
+            return atime - btime;
+            });
+        }
+
+        if (value === "Date") {
+            sorted.sort((a, b) => {
+                const aDate = a.selectedDate ? new Date(a.selectedDate) : null;
+                const bDate = b.selectedDate ? new Date(b.selectedDate) : null;
+
+                const aDay = aDate ? new Date(aDate.getFullYear(), aDate.getMonth(), aDate.getDate()).getTime() : Infinity;
+                const bDay = bDate ? new Date(bDate.getFullYear(), bDate.getMonth(), bDate.getDate()).getTime() : Infinity;
+
+                return aDay - bDay;
+            });
+        }
+
+        setSortatedData(sorted)
     };
 
-    const selectGroupBy = (value: "Days" | "Goals" | "Priority" | "No Grouping") => {
-        console.log("Selected group", value)
+
+    const selectGroupBy = (value: "Days" | "Priority" | "No Grouping") => {
+        console.log("value", value)
+        if (value === "No Grouping") {
+            setSortatedData(todayActivities); 
+            return;
+        }
+
+        let group = [...todayActivities]
+
+        type GroupedActivity = ActivityType & { groupKey: string };
+
+        if (value === "Days") {
+            const grouped: GroupedActivity[] = [];
+
+            group.forEach((elem) => {
+                const day = elem.selectedDate
+                ? new Date(elem.selectedDate).toDateString()
+                : "No Data";
+
+                grouped.push({ ...elem, groupKey: day });
+            });
+
+            setSortatedData(grouped); // still an array ✅
+        }
+
+        if (value === "Priority") {
+
+            const priorityOrder = ["Highest", "High", "Normal"]
+
+            const grouped: (ActivityType & { groupKey: string })[] = [];
+
+            // sort first based on priorityOrder
+            group.sort((a, b) => {
+                const aIndex = priorityOrder.indexOf(a.selectedPriority ?? "Unknown");
+                const bIndex = priorityOrder.indexOf(b.selectedPriority ?? "Unknown");
+                return aIndex - bIndex;
+            });
+
+             // add groupKey for each activity
+            group.forEach((elem) => {
+                const priority = elem.selectedPriority ?? "Unknown";
+                grouped.push({ ...elem, groupKey: priority });
+            });
+
+            setSortatedData(grouped);
+        }
+
     }
     
 
@@ -324,83 +392,17 @@ const Home = () => {
                             overflow: 'hidden', // important so content is clipped when closed
                         }}  
                     >
-                        {todayActivities && todayActivities.map((elem, idx) => (
-                            <View
-                                key={idx}
-                                style={[
-                                    styles.taskCard, 
-                                    {
-                                        borderColor: darkMode === "dark" ? "#495057" : "black", 
-                                        backgroundColor: getPriorityColor(elem.selectedPriority || "Normal")
-                                    }
-                                ]}
-                            >
-                                <View style={{flexDirection: "row", justifyContent:"space-between", marginRight: 10, marginLeft: 10, marginTop: 10}}>
-                                    <ThemedText>
-                                        {elem.isAllDay ? (
-                                            <ThemedText variant='smallertitle'>All Day</ThemedText>
-                                        ) : elem.selectedPart ? (
-                                            <ThemedText variant='smallertitle'>{elem.selectedPart}</ThemedText>
-                                        ) : (
-                                            <View>
-                                                <ThemedText variant='smallertitle'>Any Time</ThemedText>
-                                            </View>
-                                        )}
-                                    </ThemedText>
-                                    <EllipsisVertical 
-                                        stroke={darkMode === "dark" ? theme.primary : "black" }
-                                        onPress={() => {
-                                            setSelectedTask(elem)
-                                            setShowEditModal(true)
-                                        }}
-
-                                    />
-                                </View>
-                                <View  style={{marginTop: 5}}>
-
-                                    <View style={{flexDirection:"row", columnGap: 5, alignItems:"center", marginLeft: 10, marginRight: 10}}>
-                                        <TouchableOpacity
-                                            style={{
-                                                height: 20, 
-                                                borderRadius: 10,
-                                                borderWidth: 0.5, 
-                                                width: 20, 
-                                                borderColor: darkMode === "dark" ? "white" : "black",
-                                                backgroundColor: elem.done ? "green" : "transparent"
-                                            }}
-                                            onPress={() => handleTaskComplete(elem.id, !elem.done)}
-                                        >
-                                        </TouchableOpacity>
-
-                                        <ThemedText variant='subtitleBold' style={{width:"90%"}}>
-                                            {elem.activity}
-                                        </ThemedText>
-                                    </View>
-
-                                    <ThemedText style={{width:"90%", alignSelf:"center", paddingTop: 5, paddingHorizontal: 10}} variant='smallertitle'>
-                                        {elem.note}
-                                    </ThemedText>
-
-                                </View>
-
-                                <View 
-                                    style={[styles.taskCardBottom, {backgroundColor: darkMode === "dark" ? "#495057" : "#e9ecef", 
-                                }]}>
-                                    <RedoDot 
-                                        size={15}
-                                        stroke={darkMode === "dark" ? theme.primary : "black" }
-                                    />
-
-                                    <View style={{flexDirection:"row", columnGap: 5}}>
-                                        <Clock size={15} stroke={darkMode === "dark" ? theme.primary : "black" }
-                                    />
-                                        <ThemedText variant='smallertitle'>
-                                            {elem.selectedPart}
-                                        </ThemedText>
-                                    </View>
-                                </View>
-
-                            </View>
+                        {(sortedData ?? todayActivities).map((elem, idx) => (
+                            <Taskcard
+                                key={elem.id ?? idx}
+                                elem={elem}
+                                darkMode={darkMode ?? "light"}
+                                theme={theme}
+                                setSelectedTask={setSelectedTask}
+                                setShowEditModal={setShowEditModal}
+                                handleTaskComplete={handleTaskComplete}
+                                setShowRedoModal={setShowRedoModal}
+                            />
                         ))}
                     </Animated.View>
 
@@ -439,80 +441,17 @@ const Home = () => {
                         }}
                     >
                         {missActivities && missActivities.map((elem, idx) => (
-                            <View
-                                key={idx}
-                                style={[
-                                    styles.taskCard, 
-                                    {
-                                        borderColor: darkMode === "dark" ? "#495057" : "black", 
-                                        backgroundColor: "rgba(229, 56, 59, 0.3)"
-                                    }
-                                ]}
-                            >
-                                
-                                <View style={{flexDirection: "row", justifyContent:"space-between", marginRight: 10, marginLeft: 10, marginTop: 10}}>
-                                    <ThemedText>
-                                        {elem.isAllDay ? (
-                                            <ThemedText variant='smallertitle'>All Day</ThemedText>
-                                        ) : elem.selectedPart ? (
-                                            <ThemedText variant='smallertitle'>{elem.selectedPart}</ThemedText>
-                                        ) : (
-                                            <View>
-                                                <ThemedText variant='smallertitle'>Any Time</ThemedText>
-                                            </View>
-                                        )}
-                                    </ThemedText>
-                                    <EllipsisVertical 
-                                        stroke={darkMode === "dark" ? theme.primary : "black" }
-                                        onPress={() => {
-                                            setSelectedTask(elem)
-                                            setShowEditModal(true)
-                                        }}
-                                    />
-                                </View>
-                                <View  style={{marginTop: 5}}>
-
-                                    <View style={{flexDirection:"row", columnGap: 5, alignItems:"center", marginLeft: 10, marginRight: 10}}>
-                                        <TouchableOpacity
-                                            style={{
-                                                height: 20, 
-                                                borderRadius: 10,
-                                                borderWidth: 0.5, 
-                                                width: 20, 
-                                                backgroundColor: elem.done ? "green" : "rgba(239, 35, 60, 0.5)"
-                                            }}
-                                            onPress={() => deleteTask(elem.id)}
-                                        >
-                                        </TouchableOpacity>
-
-                                        <ThemedText variant='subtitleBold' style={{width:"90%"}}>
-                                            {elem.activity}
-                                        </ThemedText>
-                                    </View>
-
-                                    <ThemedText style={{width:"90%", alignSelf:"center", paddingTop: 5, paddingHorizontal: 10}} variant='smallertitle'>
-                                        {elem.note}
-                                    </ThemedText>
-
-                                </View>
-
-                                <View 
-                                    style={[styles.taskCardBottom, {backgroundColor: "rgba(229, 56, 59, 0.3)"}]}>
-                                    <RedoDot 
-                                        size={15}
-                                        stroke={darkMode === "dark" ? theme.primary : "black" }
-                                    />
-
-                                    <View style={{flexDirection:"row", columnGap: 5}}>
-                                        <Clock size={15} stroke={darkMode === "dark" ? theme.primary : "black" }
-                                    />
-                                        <ThemedText variant='smallertitle'>
-                                            {elem.selectedPart}
-                                        </ThemedText>
-                                    </View>
-                                </View>
-
-                            </View>
+                             <Taskcard
+                                key={elem.id ?? idx}
+                                elem={elem}
+                                darkMode={darkMode ?? "light"}
+                                theme={theme}
+                                setSelectedTask={setSelectedTask}
+                                setShowEditModal={setShowEditModal}
+                                handleTaskComplete={handleTaskComplete}
+                                setShowRedoModal={setShowRedoModal}
+                                backgroundColor="rgba(255, 77, 109, 0.3)" // ✅ string!
+                            />
                         ))}
                     </Animated.View>
                     
@@ -551,77 +490,18 @@ const Home = () => {
                         }}
                     >
                         {doneActivities && doneActivities.map((elem, idx) => (
-                            <View
-                                key={idx}
-                                style={[
-                                    styles.taskCard, 
-                                    {
-                                        borderColor: darkMode === "dark" ? "#495057" : "black", 
-                                        backgroundColor: "rgba(216, 243, 220, 0.4)"
-                                    }
-                                ]}
-                            >
-                                
-                                <View style={{flexDirection: "row", justifyContent:"space-between", marginRight: 10, marginLeft: 10, marginTop: 10}}>
-                                    <ThemedText style={{color: "gray"}}>
-                                        {elem.isAllDay ? (
-                                            <ThemedText variant='smallertitle'>All Day</ThemedText>
-                                        ) : elem.selectedPart ? (
-                                            <ThemedText variant='smallertitle' style={{color: "gray"}}>{elem.selectedPart}</ThemedText>
-                                        ) : (
-                                            <View>
-                                                <ThemedText variant='smallertitle'>Any Time</ThemedText>
-                                            </View>
-                                        )}
-                                    </ThemedText>
-                                    <EllipsisVertical 
-                                        stroke="gray"
-                                        onPress={() => {
-                                            setSelectedTask(elem)
-                                            setShowEditModal(true)
-                                        }}
-                                    />
-                                </View>
-                                <View  style={{marginTop: 5}}>
-
-                                    <View style={{flexDirection:"row", columnGap: 5, alignItems:"center", marginLeft: 10, marginRight: 10}}>
-                                        <TouchableOpacity
-                                            onPress={() => handleTaskComplete(elem.id, !elem.done)}
-                                        >
-                                            <SquareCheck 
-                                                stroke="rgba(63, 243, 90, 0.8)"
-                                            />
-                                        </TouchableOpacity>
-                                        
-
-                                        <ThemedText variant='subtitleBold' style={styles.lineThrough}>
-                                            {elem.activity}
-                                        </ThemedText>
-                                    </View>
-
-                                    <ThemedText style={{width:"90%", alignSelf:"center", paddingTop: 5, paddingHorizontal: 10}} variant='smallertitle'>
-                                        {elem.note}
-                                    </ThemedText>
-
-                                </View>
-
-                                <View 
-                                    style={[styles.taskCardBottom, { backgroundColor: "rgba(216, 243, 220, 0.8)"}]}>
-                                    <RedoDot 
-                                        size={15}
-                                        stroke="gray"
-                                    />
-
-                                    <View style={{flexDirection:"row", columnGap: 5}}>
-                                        <Clock size={15} stroke="gray"
-                                    />
-                                        <ThemedText variant='smallertitle' style={{color: "gray"}}>
-                                            {elem.selectedPart}
-                                        </ThemedText>
-                                    </View>
-                                </View>
-
-                            </View>
+                            <Taskcard
+                                key={elem.id ?? idx}
+                                elem={elem}
+                                darkMode={darkMode ?? "light"}
+                                theme={theme}
+                                setSelectedTask={setSelectedTask}
+                                setShowEditModal={setShowEditModal}
+                                handleTaskComplete={handleTaskComplete}
+                                setShowRedoModal={setShowRedoModal}
+                                backgroundColor='rgba(68, 153, 113, 0.3)'
+                                textStyle={styles.lineThrough}
+                            />
                         ))}
                     </Animated.View>
 
@@ -676,7 +556,7 @@ const Home = () => {
             selectGroupBy={selectGroupBy} 
             selectIncludes={selectIncludes}
         />
-
+        <RescheduleModal isVisible={showRedoModal} onClose={() => setShowRedoModal(false)} />
         <EditDeleteModal isVisible={showEditModal} onClose={() => setShowEditModal(false)} />
         <HambergurMenuModal isVisible={showHamburgerModal} onClose={() => setShowHamburgerModal(false)} />
         <ActivityInputModal isVisible={showActivityInputModal} onClose={() => setShowActivityInputModal(false)}/>
@@ -693,22 +573,6 @@ const styles = StyleSheet.create({
     container:{
         flex: 1,
     }, 
-
-    taskCard:{
-        borderWidth: 1,
-        borderRadius: 10,
-        marginBottom: 10,
-        minHeight: 60,
-    },
-
-    taskCardBottom:{
-        flexDirection:"row", 
-        justifyContent:"space-between", 
-        width:"100%", 
-        borderBottomRightRadius: 10,
-        borderBottomLeftRadius: 10,
-        padding: 10
-    },
 
     lineThrough: {
         textDecorationLine: 'line-through', 
