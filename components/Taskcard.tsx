@@ -1,4 +1,4 @@
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
 import React from 'react';
 import ThemedView from '../components/ThemedView'
 import ThemedText from '../components/ThemedText'
@@ -44,15 +44,14 @@ const TaskCard = ({ elem, darkMode, theme, backgroundColor, textStyle, setSelect
         >
             {/* Header */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginHorizontal: 10, marginTop: 10 }}>
+               
                 <ThemedText>
-                    {elem.isAllDay ? (
-                        <ThemedText variant="smallertitle">All Day</ThemedText>
-                    ) : elem.selectedPart ? (
-                        <ThemedText variant="smallertitle">{elem.selectedPart}</ThemedText>
-                    ) : (
-                        <ThemedText variant="smallertitle">Any Time</ThemedText>
+                    {elem.selectedPriority && (
+                        <ThemedText variant="smallertitle">{elem.selectedPriority} Priority</ThemedText>
                     )}
                 </ThemedText>
+
+                
 
                 <EllipsisVertical
                     stroke={darkMode === 'dark' ? theme.primary : 'black'}
@@ -99,7 +98,15 @@ const TaskCard = ({ elem, darkMode, theme, backgroundColor, textStyle, setSelect
                 </TouchableOpacity>
                 <View style={{ flexDirection: 'row', columnGap: 5 }}>
                     <Clock size={15} stroke={darkMode === 'dark' ? theme.primary : 'black'} />
-                    <ThemedText variant="smallertitle">{elem.selectedPart}</ThemedText>
+                     <ThemedText>
+                        {elem.isAllDay ? (
+                            <ThemedText variant="smallertitle">All Day</ThemedText>
+                        ) : elem.selectedPart ? (
+                            <ThemedText variant="smallertitle">{elem.selectedPart}</ThemedText>
+                        ) : (
+                            <ThemedText variant="smallertitle">Any Time</ThemedText>
+                        )}
+                    </ThemedText>
                 </View>
             </View>
         </View>
