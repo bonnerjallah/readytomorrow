@@ -25,9 +25,10 @@
   type ActivityInputModalProps = {
     isVisible: boolean;
     onClose: () => void;
+    selectedOption: string;
   };
 
-  const ActivityInputModal = ({ isVisible, onClose }: ActivityInputModalProps) => {
+  const ActivityInputModal = ({ isVisible, onClose, selectedOption}: ActivityInputModalProps) => {
     const { theme, darkMode } = useTheme();
 
     const [activity, setActivity] = useState("");
@@ -38,7 +39,7 @@
     });
     const [selectedTime, setSelectedTime] = useState<string>("");
     const [isAllDay, setIsAllDay] = useState(false);
-    const [isRecurring, setIsRecurring] = useState(false);
+    const [isRecurring, setIsRecurring] = useState(true);
     const [reminder, setReminder] = useState(false);
     const [selectedPart, setSelectedPart] = useState<"Morning" | "Afternoon" | "Evening" | "">("");
     const [selectedPriority, setSelectedPriority] = useState<"Normal" | "High" | "Highest" | "">("Normal");
@@ -87,6 +88,11 @@
       }
     }, [isAllDay]);
 
+
+    useEffect(() => {
+        setActivity(selectedOption); 
+    }, [selectedOption]);
+
     // 🔹 Handlers
     const handleTimeOfDay = (part: "Morning" | "Afternoon" | "Evening") => setSelectedPart(part);
     const handlePriority = (priority: "Normal" | "High" | "Highest") => setSelectedPriority(priority);
@@ -103,14 +109,14 @@
       };
     };
 
-    const createActivity = async () => {
+    const createRoutine = async () => {
       if (!activity) return Alert.alert("Must enter activity");
 
       const userId = auth.currentUser?.uid;
       if (!userId) return;
 
       try {
-        const activitiesCol = collection(db, "users", userId, "activities");
+        const activitiesCol = collection(db, "users", userId, "routines");
         const activityRef = doc(activitiesCol);
 
         await setDoc(activityRef, {
@@ -159,15 +165,15 @@
         <ThemedView style={styles.container} safe>
           {/* Header */}
           <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <CircleX size={40} stroke="#77d1d2ff" onPress={onClose} />
-            <ThemedText style={{ textAlign: "center", width: "83%" }} variant='title'>Add Activity</ThemedText>
+            <CircleX size={40} stroke="#77d1d2ff" onPress={() => {onClose(); setActivity("")}} />
+            <ThemedText style={{ textAlign: "center", width: "83%" }} variant='title'>Schedule Routine</ThemedText>
           </View>
 
           <ScrollView style={{ flex: 1, padding: 10 }} showsVerticalScrollIndicator={false}>
             <Spacer height={30} />
 
             {/* Activity & Note Inputs */}
-            <ThemedTextInput placeholder='Enter Activity' value={activity} onChangeText={setActivity} autoCapitalize="sentences" style={[styles.inputStyle, { backgroundColor: theme.inputBackground }]} />
+            <ThemedTextInput placeholder='Enter Routine' value={activity} onChangeText={setActivity} autoCapitalize="sentences" style={[styles.inputStyle, { backgroundColor: theme.inputBackground }]} />
             
             <Spacer height={20} />
 
@@ -365,7 +371,7 @@
 
           </ScrollView>
 
-          <ThemedButton style={{ alignSelf: "center", width: "100%" }} onPress={createActivity}>
+          <ThemedButton style={{ alignSelf: "center", width: "100%" }} onPress={createRoutine}>
             <ThemedText>Save</ThemedText>
           </ThemedButton>
 

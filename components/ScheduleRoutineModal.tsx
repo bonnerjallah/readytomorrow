@@ -15,6 +15,7 @@
   import ThemedTextInput from './ThemedTextInput';
   import { ChevronUp, Plus, CircleX, ChevronDown, ChevronRight } from 'lucide-react-native';
   import ThemedButton from './ThemedButton';
+  import RoutineInputModal from "./RoutineInputModal"
 
 
 type ActivityInputModalProps = {
@@ -25,6 +26,9 @@ type ActivityInputModalProps = {
 const ScheduleRoutineModal = ({isVisible, onClose} : ActivityInputModalProps) => {
 
   const {theme} = useTheme()
+
+  const [showRoutineInputModal, setShowRoutineInputModal] = useState(false)
+  const [selectedOption, setSelectedOption] = useState<string>("")
 
   const [droupDowns, setDroupDown] = useState([
     {open: false, height: new Animated.Value(0), opacity: new Animated.Value(0)},
@@ -62,7 +66,10 @@ const ScheduleRoutineModal = ({isVisible, onClose} : ActivityInputModalProps) =>
 
 
 
-
+  const handleCreateMyOwn = () => {
+    setSelectedOption("");           
+    setShowRoutineInputModal(true);  
+  };
 
 
   return (
@@ -103,22 +110,42 @@ const ScheduleRoutineModal = ({isVisible, onClose} : ActivityInputModalProps) =>
             >
               <View style={styles.optionsContainer}>
 
-                <TouchableOpacity style={styles.options}>            
+                <TouchableOpacity style={styles.options} 
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("📩 Check Emails")
+                  }}
+                >            
                   <ThemedText >📩 Check Emails</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.options}>
+                <TouchableOpacity style={styles.options} 
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("🗓️ Schedule Meetings")
+                  }}
+                >
                   <ThemedText>🗓️ Schedule Meetings</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.options}>
+                <TouchableOpacity style={styles.options} 
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("📚 Learn A New Skill")
+                  }}
+                >
                   <ThemedText>📚 Learn A New Skill</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={{justifyContent: 'space-between', flexDirection:"row"}}>
+                <TouchableOpacity style={{justifyContent: 'space-between', flexDirection:"row"}} 
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("💡 Brainstorm New Ideas")
+                  }}
+                >
                   <ThemedText>💡 Brainstorm New Ideas</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
@@ -153,22 +180,42 @@ const ScheduleRoutineModal = ({isVisible, onClose} : ActivityInputModalProps) =>
             >
               <View style={styles.optionsContainer}>
 
-                <TouchableOpacity style={styles.options}>            
+                <TouchableOpacity style={styles.options}
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("📱 Call Or Message A Family Member")
+                  }}
+                >            
                   <ThemedText>📱 Call Or Message A Family Member</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.options}>
+                <TouchableOpacity style={styles.options}
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("🎲 Plan A Family Activity")
+                  }}
+                >
                   <ThemedText>🎲 Plan A Family Activity</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.options}>
+                <TouchableOpacity style={styles.options}
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("🍴 Host Family Dinner")
+                  }}
+                >
                   <ThemedText>🍴 Host Family Dinner</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={{justifyContent: 'space-between', flexDirection:"row"}}>
+                <TouchableOpacity style={{justifyContent: 'space-between', flexDirection:"row"}}
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("🌍 Arrange A Family Vacation")
+                  }}
+                >
                   <ThemedText>🌍 Arrange A Family Vacation</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
@@ -203,37 +250,72 @@ const ScheduleRoutineModal = ({isVisible, onClose} : ActivityInputModalProps) =>
             >
               <View style={styles.optionsContainer}>
 
-                <TouchableOpacity style={styles.options}>            
+                <TouchableOpacity style={styles.options}
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("📖 Read A Book")
+                  }}
+                >            
                   <ThemedText>📖 Read A Book</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.options}>            
+                <TouchableOpacity style={styles.options}
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("🏀 Favorite Sport")
+                  }}
+                >            
                   <ThemedText>🏀 Favorite Sport</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.options}>
+                <TouchableOpacity style={styles.options}
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("🎹 Play An Instrument")
+                  }}
+                >
                   <ThemedText>🎹 Play An Instrument</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.options}>
+                <TouchableOpacity style={styles.options}
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("📺 Watch A Documentry")
+                  }}
+                >
                   <ThemedText>📺 Watch A Documentry</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.options}>
+                <TouchableOpacity style={styles.options}
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("🍿 Movie Night")
+                  }}
+                >
                   <ThemedText>🍿 Movie Night</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.options}>
+                <TouchableOpacity style={styles.options}
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("🎨 Enjoy A Hobby Or Craft")
+                  }}
+                >
                   <ThemedText>🎨 Enjoy A Hobby Or Craft</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={{justifyContent: 'space-between', flexDirection:"row"}}>
+                <TouchableOpacity style={{justifyContent: 'space-between', flexDirection:"row"}}
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("🚗 Explore A New Place")
+                  }}
+                >
                   <ThemedText>🚗 Explore A New Place</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
@@ -268,42 +350,82 @@ const ScheduleRoutineModal = ({isVisible, onClose} : ActivityInputModalProps) =>
             >
               <View style={styles.optionsContainer}>
 
-                <TouchableOpacity style={styles.options}>            
+                <TouchableOpacity style={styles.options}
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("🏋🏾‍♀️ Workout or Exercise")
+                  }}
+                >            
                   <ThemedText>🏋🏾‍♀️ Workout or Exercise</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.options}>
+                <TouchableOpacity style={styles.options}
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("⚽ Play Sports")
+                  }}
+                >
                   <ThemedText>⚽ Play Sports</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.options}>
+                <TouchableOpacity style={styles.options}
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("💊 Take Vitamins or Supplements")
+                  }}
+                >
                   <ThemedText>💊 Take Vitamins or Supplements</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.options}>
+                <TouchableOpacity style={styles.options}
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("💧 Drink Water")
+                  }}
+                >
                   <ThemedText>💧 Drink Water</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.options}>
+                <TouchableOpacity style={styles.options}
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("🛌🏾 Sleep Early")
+                  }}
+                >
                   <ThemedText>🛌🏾 Sleep Early</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.options}>
+                <TouchableOpacity style={styles.options}
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("🧘🏾‍♂️ Meditate")
+                  }}
+                >
                   <ThemedText>🧘🏾‍♂️ Meditate</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.options}>
+                <TouchableOpacity style={styles.options}
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("👟 Go Walking")
+                  }}
+                >
                   <ThemedText>👟 Go Walking</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={{justifyContent: 'space-between', flexDirection:"row"}}>
+                <TouchableOpacity style={{justifyContent: 'space-between', flexDirection:"row"}}
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("🏃🏾‍♀️ Go Running")
+                  }}
+                >
                   <ThemedText>🏃🏾‍♀️ Go Running</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
@@ -338,42 +460,83 @@ const ScheduleRoutineModal = ({isVisible, onClose} : ActivityInputModalProps) =>
             >
               <View style={styles.optionsContainer}>
 
-                <TouchableOpacity style={styles.options}>            
+                <TouchableOpacity style={styles.options}
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("🏦 Check Bank Account Balances")
+                  }}
+                  
+                >            
                   <ThemedText>🏦 Check Bank Account Balances</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.options}>
+                <TouchableOpacity style={styles.options} 
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("📈 Review Investment Performance")
+                  }}
+                >
                   <ThemedText>📈 Review Investment Performance</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.options}>
+                <TouchableOpacity style={styles.options} 
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("📊 Invest Or Research Investment")
+                  }}
+                >
                   <ThemedText>📊 Invest Or Research Investment</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.options}>
+                <TouchableOpacity style={styles.options} 
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("📋 Review Financial Plan")
+                  }}
+                >
                   <ThemedText>📋 Review Financial Plan</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.options}>
+                <TouchableOpacity style={styles.options} 
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("💳 Pay Bills")
+                  }}
+                >
                   <ThemedText>💳 Pay Bills</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.options}>
+                <TouchableOpacity style={styles.options} 
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("🎯 Set Up Finacial Goals")
+                  }}
+                >
                   <ThemedText>🎯 Set Up Finacial Goals</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.options}>
+                <TouchableOpacity style={styles.options} 
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("💵 Track Expenses")
+                  }}
+                >
                   <ThemedText>💵 Track Expenses</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={{justifyContent: 'space-between', flexDirection:"row"}}>
+                <TouchableOpacity style={{justifyContent: 'space-between', flexDirection:"row"}} 
+                  onPress={() => {
+                    setShowRoutineInputModal(true)
+                    setSelectedOption("👐🏽 Donate To Charity")
+                  }}
+                >
                   <ThemedText>👐🏽 Donate To Charity</ThemedText>
                   <ChevronRight stroke={theme.tabIconColor}/>
                 </TouchableOpacity>
@@ -385,13 +548,17 @@ const ScheduleRoutineModal = ({isVisible, onClose} : ActivityInputModalProps) =>
 
         </ScrollView>
 
-        <ThemedButton  style={{alignSelf:"center", marginTop: 10}}>
+        <ThemedButton  style={{alignSelf:"center", marginTop: 10}} onPress={handleCreateMyOwn}>
           <ThemedText>
             Create My Own
           </ThemedText>
         </ThemedButton>
+        
 
       </ThemedView>
+
+      <RoutineInputModal isVisible={showRoutineInputModal} onClose={() => setShowRoutineInputModal(false)} selectedOption={selectedOption} />
+                
     </Modal>
   )
 }
