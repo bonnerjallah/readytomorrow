@@ -70,8 +70,9 @@ const Home = () => {
 
     const [selectedIncludeOption, setSelectedIncludeOption] = useState<("Recently Missed Activities" | "Skipped Routine")[]>(["Recently Missed Activities"]);
 
-
     // 🔹fetch data state
+    const [allRoutines, setAllRoutines] = useState<ActivityType[]>([])
+
     const [allActivities, setAllActivities] = useState<ActivityType[]>([]);
 
     // 🔹 Dropdowns state array
@@ -135,6 +136,32 @@ const Home = () => {
         return () => unsubscribe();
     }, []);
 
+
+    // 🔹Fetch user routines
+    useEffect(() => {
+        const userId = auth.currentUser?.uid;
+        if (!userId) return;
+
+        const routineCol = collection(db, "users", userId, "routines");
+        const q = query(routineCol, orderBy("createdAt", "asc"));
+
+        const unsubscribe = onSnapshot(
+            q,
+            (snapshot) => {
+                const routineData: ActivityType[] = snapshot.docs.map((doc) => ({
+                    id: doc.id,
+                    ...doc.data()
+                })) as ActivityType[];
+
+                setAllRoutines(routineData);
+            },
+            (error) => console.log("Error fetching user routine", error)
+        );
+
+        return () => unsubscribe(); 
+    }, []);
+
+
     //🔹 Helper: format date as YYYY-MM-DD local
     const formatLocalDate = (date: Date) => {
         const y = date.getFullYear();
@@ -175,20 +202,7 @@ const Home = () => {
     },[allActivities])
 
 
-    //🔹Delete task
-    const deleteTask = async (id:string) => {
 
-        const userId = auth.currentUser?.uid
-        if(!userId) return
-
-        try {
-            const docRef = doc(db, "users", userId, "activities", id)
-            await deleteDoc(docRef)
-        } catch (error) {
-            console.log("Error deleting task", error)
-        }
-
-    }
 
 
     useEffect(() => {

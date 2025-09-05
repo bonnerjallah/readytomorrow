@@ -20,6 +20,7 @@
 
   // 🧩 COMPONENTS
   import CustomWheelPicker from '../components/CustomePicker';
+import Checkbox from 'expo-checkbox';
 
   // 🔤 TYPES
   type ActivityInputModalProps = {
@@ -46,6 +47,12 @@
     const [durationDays, setDurationDays] = useState<number>(0);
     const [durationHours, setDurationHours] = useState<number>(0);
     const [durationMinutes, setDurationMinutes] = useState<number>(0);
+    const [recurringOption, setRecurringOption] = useState<"Daily" | "Weekly" | "Monthly" | null>("Daily");
+    const [dayOfTheWeek, setDayOfTheWeek] = useState<string[]>(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]);
+    const [selectedDays, setSelectedDays] = useState<number[]>([]);
+    const [timesPerWeek, setTimesPerWeek] = useState<number>(1)
+
+
 
     // 🔹 Dropdowns state array
     const [dropdowns, setDropdowns] = useState([
@@ -115,12 +122,17 @@
       const userId = auth.currentUser?.uid;
       if (!userId) return;
 
+      const cleanActivity = activity.trim();
+
+      // Optional: remove hidden characters that may break Hermes because of emojis
+      const sanitizedActivity = cleanActivity.replace(/[\u200B-\u200D\uFEFF]/g, ''); 
+
       try {
         const activitiesCol = collection(db, "users", userId, "routines");
         const activityRef = doc(activitiesCol);
 
         await setDoc(activityRef, {
-          activity: activity.trim(),
+          routine: sanitizedActivity,
           note: note?.trim(),
           selectedDate: selectedDate?.trim(),
           selectedTime,
@@ -132,9 +144,14 @@
           durationDays,
           durationHours,
           durationMinutes,
+          recurringOption,
+          dayOfTheWeek,
+          selectedDays,
+          timesPerWeek,
           createdAt: new Date(),
           done: false
         });
+
 
 
         // Reset
@@ -153,6 +170,10 @@
         setDurationDays(0);
         setDurationHours(0);
         setDurationMinutes(0);
+        setRecurringOption(null);
+        setDayOfTheWeek(["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]); 
+        setSelectedDays([]); 
+        setTimesPerWeek(1); 
         onClose();
       } catch (error) {
         console.log(error);
@@ -209,25 +230,138 @@
                     <ThemedText variant='subtitle'>Recurring</ThemedText>
                     <Switch value={isRecurring} onValueChange={setIsRecurring} />
                   </View>
+
                   <Spacer height={10} />
-                  <DateTimePicker
-                    value={selectedDate ? (() => {
-                      const [year, month, day] = selectedDate.split("-").map(Number);
-                      return new Date(year, month - 1, day);
-                    })() : new Date()}
-                    mode="date"
-                    display={Platform.OS === "ios" ? "inline" : "spinner"}
-                    textColor={darkMode === "dark" ? "white" : "black"}
-                    onChange={(_e, date) => {
-                      if (_e.type === "set" && date) {
-                        const year = date.getFullYear();
-                        const month = String(date.getMonth() + 1).padStart(2, "0");
-                        const day = String(date.getDate()).padStart(2, "0");
-                        setSelectedDate(`${year}-${month}-${day}`);
-                      }
-                    }}
-                    style={{ alignSelf: "center" }}
-                  />
+
+                  {isRecurring ? (
+                    <View>
+                      {/* Recurring Options */}
+                      <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 10 }}>
+                        {(["Daily", "Weekly", "Monthly"] as const).map(option => (
+                          <ThemedText
+                            key={option}
+                            onPress={() => setRecurringOption(option)}
+                            style={{
+                              paddingVertical: 6,
+                              paddingHorizontal: 12,
+                              backgroundColor: recurringOption === option ? theme.primary : theme.button,
+                              borderRadius: 6,
+                              textAlign: "center",
+                              width:"30%"
+                            }}
+                          >
+                            {option}
+                          </ThemedText>
+                        ))}
+                      </View>
+
+                      {/* Daily */}
+                      {recurringOption === "Daily" && (
+                        <View style={{ flexDirection: "row", flexWrap: "wrap", justifyContent:'space-between' }}>
+                          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(day => (
+                            <View key={day} style={{ alignItems: "center", margin: 4}}>
+                              <ThemedText style={{marginBottom: 10}}>{day}</ThemedText>
+                              <Checkbox 
+                                value={dayOfTheWeek.includes(day)}
+                                onValueChange={() => {
+                                  if(dayOfTheWeek.includes(day)){
+                                    setDayOfTheWeek(dayOfTheWeek.filter(d => d !== day));
+                                  } else {
+                                    setDayOfTheWeek([...dayOfTheWeek, day]);
+                                  }
+                                }}
+                                style={{ width: 24, height: 24, marginRight: 8 }}
+                              />
+                            </View>
+                          ))}
+                        </View>
+                      )}
+
+                      {/* Monthly */}
+                      {recurringOption === "Monthly" && (
+                        <View style={{ flexDirection: "row", flexWrap: "wrap", marginTop: 10, gap: 10}}>
+                          {Array.from({ length: 31 }, (_, i) => i + 1).map(num => {
+                            const isSelected = selectedDays.includes(num);
+                            return (
+                              <TouchableOpacity
+                                key={num}
+                                onPress={() => {
+                                  setSelectedDays(prev => prev.includes(num) ? prev.filter(n => n !== num) : [...prev, num]);
+                                }}
+                                style={{
+                                  width: "10%",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  borderRadius: 8,
+                                  borderWidth: 1,
+                                  borderColor: "#ccc",
+                                  backgroundColor: isSelected ? theme.primary : "white",
+                                  margin: 2
+                                }}
+                              >
+                                <ThemedText style={{ color: isSelected ? "white" : "black" }}>{num}</ThemedText>
+                              </TouchableOpacity>
+                            );
+                          })}
+                        </View>
+                      )}
+
+                      {/* Weekly (optional, you can add weekdays similar to Daily) */}
+                      {recurringOption === "Weekly" && (
+                        <View>
+                          <ThemedText variant='smallertitle' style={{alignSelf:"center"}}>Frequency per week</ThemedText>
+                          <ScrollView 
+                            showsVerticalScrollIndicator={false} 
+                            style={{ marginTop: 10, maxHeight: 210, width:"30%", alignSelf:"center"}} 
+                          >
+                            {Array.from({ length: 7 }, (_, i) => i + 1).map(num => {
+                              const selected = num === timesPerWeek;
+                              return (
+                                <TouchableOpacity
+                                  key={num}
+                                  onPress={() => setTimesPerWeek(num)}
+                                  style={{
+                                    padding: 15,
+                                    marginVertical: 5,
+                                    borderRadius: 8,
+                                    alignItems: "center",
+                                    backgroundColor: selected ? theme.primary : theme.button,
+                                  }}
+                                >
+                                  <ThemedText style={{ color: selected ? "white" : "black", fontSize: 16 }}>
+                                    {num}
+                                  </ThemedText>
+                                </TouchableOpacity>
+                              );
+                            })}
+                          </ScrollView>
+                        </View>
+                      )}
+                    </View>
+                  ) : (
+                    <DateTimePicker
+                      value={selectedDate ? (() => {
+                        const [year, month, day] = selectedDate.split("-").map(Number);
+                        return new Date(year, month - 1, day);
+                      })() : new Date()}
+                      mode="date"
+                      display={Platform.OS === "ios" ? "inline" : "spinner"}
+                      textColor={darkMode === "dark" ? "white" : "black"}
+                      onChange={(_e, date) => {
+                        if (_e.type === "set" && date) {
+                          const year = date.getFullYear();
+                          const month = String(date.getMonth() + 1).padStart(2, "0");
+                          const day = String(date.getDate()).padStart(2, "0");
+                          setSelectedDate(`${year}-${month}-${day}`);
+                        }
+                      }}
+                      style={{ alignSelf: "center" }}
+                    />
+                  )}
+
+
+                 
+
                 </Animated.View>
               </View>
             </TouchableWithoutFeedback>
