@@ -50,7 +50,7 @@ import Checkbox from 'expo-checkbox';
     const [recurringOption, setRecurringOption] = useState<"Daily" | "Weekly" | "Monthly" | null>("Daily");
     const [dayOfTheWeek, setDayOfTheWeek] = useState<string[]>(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]);
     const [selectedDays, setSelectedDays] = useState<number[]>([]);
-    const [timesPerWeek, setTimesPerWeek] = useState<number>(1)
+    const [timesPerWeek, setTimesPerWeek] = useState<number>(0)
 
 
 

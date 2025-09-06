@@ -22,7 +22,7 @@ const ThemedTextInput = ({
   ...props
 }: ThemedTextInputProps) => {
   const { theme } = useTheme();
-  const [height, setHeight] = useState(40); // base height
+  const [height, setHeight] = useState(40); 
 
   return (
     <View style={[styles.inputWrapper, style]}>
@@ -33,9 +33,10 @@ const ThemedTextInput = ({
           { color: theme.text, height: Math.max(40, height) },
         ]}
         placeholderTextColor={placeholderTextColor || theme.placeholder}
-        multiline
         onContentSizeChange={(e) => {
-          setHeight(e.nativeEvent.contentSize.height); // expands + shrinks
+          if (props.multiline) {
+            setHeight(e.nativeEvent.contentSize.height);
+          }        
         }}
         {...props}
       />

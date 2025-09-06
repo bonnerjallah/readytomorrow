@@ -18,18 +18,19 @@ import ShowDailyRitualModal from "../../components/ShowDailyRitualModal"
 import EditDeleteModal from "../../components/EditDeleteModal"
 import Taskcard from "../../components/Taskcard"
 import RescheduleModal from "../../components/RescheduleModal"
+import ScheduleRoutineModal from '../../components/ScheduleRoutineModal'
+
 
 
 // ⚛️ STATE MANAGEMENT
 import { useTheme } from '../../components/ThemeContext'
-import ScheduleRoutineModal from '../../components/ScheduleRoutineModal'
 import { useSetAtom } from 'jotai';
 import {taskAtom} from "../../atoms/selectedTaskAtom"
 
 
 // 💾 FIREBASE
 import {auth, db} from "../../firebaseConfig"
-import { collection, getDocs, doc, query, orderBy, updateDoc, onSnapshot, deleteDoc} from 'firebase/firestore'
+import { collection, getDocs, doc, query, orderBy, updateDoc, onSnapshot} from 'firebase/firestore'
 
 
 // 🔤 TYPES
@@ -200,6 +201,8 @@ const Home = () => {
         if(!allActivities.length) return [];
         return allActivities.filter((elem) => elem.done)
     },[allActivities])
+
+    // 🔹
 
 
 

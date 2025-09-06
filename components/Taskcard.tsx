@@ -54,7 +54,7 @@ const TaskCard = ({ elem, darkMode, theme, backgroundColor, textStyle, setSelect
                 
 
                 <EllipsisVertical
-                    stroke={darkMode === 'dark' ? theme.primary : 'black'}
+                    color={darkMode === 'dark' ? theme.primary : 'black'}
                     onPress={() => {
                         setSelectedTask(elem);
                         setShowEditModal(true);
@@ -77,7 +77,7 @@ const TaskCard = ({ elem, darkMode, theme, backgroundColor, textStyle, setSelect
                         onPress={() => handleTaskComplete(elem.id, !elem.done)}
                     />
                     <ThemedText variant="subtitleBold" style={[textStyle, { width: '90%' }]}>
-                        {elem.activity}
+                        {elem.activity || elem.routine}
                     </ThemedText>
                 </View>
 
