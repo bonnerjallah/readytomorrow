@@ -4,12 +4,10 @@ import { useEffect, useState, useRef } from 'react'
 import React from 'react'
 
 
-
 // ⚛️ STATEMENT MANAGEMENT
 import { useTheme } from 'components/ThemeContext'
 import {taskAtom} from "../../atoms/selectedTaskAtom"
 import { useSetAtom } from 'jotai';
-
 
 
 // 🎨 UI
@@ -25,6 +23,7 @@ import DisplayOptionsModal from "../../components/DisplayOptionsModal"
 import TaskCard from 'components/Taskcard'
 import RescheduleModal from "../../components/RescheduleModal"
 import EditDeleteModal from 'components/EditDeleteModal'
+import ActivitiesProgressModal from "components/ActivitiesProgressModal"
 
 
 // 💾 FIREBASE
@@ -49,6 +48,7 @@ type ActivityType = {
   durationMinutes?: number;
   createdAt: any;
   done: boolean;
+  routine: string
 };
 
 
@@ -67,8 +67,10 @@ const Activities = () => {
   const [allRoutines, setAllRoutines] = useState<ActivityType[]>([])
   const [showEditModal, setShowEditModal] = useState(false)
   const [showRedoModal, setShowRedoModal] = useState(false)
-  const [sortedData, setSortatedData] = useState<ActivityType[] | null>(null)
-  
+  const [sortedActivities, setSortedActivities] = useState<ActivityType[]>([]);
+  const [sortedRoutines, setSortedRoutines] = useState<ActivityType[]>([]);
+  const [showActivitiesProgressModal, setShowActivitiesProgressModal] = useState(false)
+    
 
   //🔹Component slide in animation
   const routinesAnim = useRef(new Animated.Value(showRoutines ? 1 : 0)).current;
@@ -133,101 +135,123 @@ const Activities = () => {
   // 🔹 Update user task complete
   const handleTaskComplete = async (id:string, newValue:boolean) => {
 
-      const userId = auth.currentUser?.uid
-      
-      if(!userId) return
+    const userId = auth.currentUser?.uid
+    
+    if(!userId) return
 
 
-      try {
-          const docRef = doc(db, "users", userId, "activities", id)
-          await updateDoc(docRef, {done: newValue})
-          
-      } catch (error) {
-          console.log("Error updating user task", error)
-      }
+    try {
+        const docRef = doc(db, "users", userId, "activities", id)
+        await updateDoc(docRef, {done: newValue})
+        
+    } catch (error) {
+        console.log("Error updating user task", error)
+    }
   }
 
   // 🔹Sorting functions
   const selectSortBy = (value: "A-Z" | "Time" | "Date") => {
 
-      let sorted = [...allActivities, ...allRoutines];
+    let baseData = showRoutines ? [...allRoutines] : [...allActivities]
 
-      if (value === "A-Z") {
-          sorted.sort((a, b) => a.activity.localeCompare(b.activity));
-      }
+    if (value === "A-Z") {
+      baseData.sort((a, b) => {
+        const aText = (showRoutines ? a.routine : a.activity ?? "").replace(/^[^\p{L}\p{N}]+/u, "");
+        const bText = (showRoutines ? b.routine : b.activity ?? "").replace(/^[^\p{L}\p{N}]+/u, "");
+        return aText.localeCompare(bText);
+      });
+    }
 
-      if (value === "Time") {
-          sorted.sort((a, b) => {
-          const atime = a.selectedTime ? new Date(a.selectedTime).getTime() : Infinity;
-          const btime = b.selectedTime ? new Date(b.selectedTime).getTime() : Infinity;
-          return atime - btime;
-          });
-      }
+    if (value === "Time") {
+      baseData.sort((a, b) => {
+      const atime = a.selectedTime ? new Date(a.selectedTime).getTime() : Infinity;
+      const btime = b.selectedTime ? new Date(b.selectedTime).getTime() : Infinity;
+      return atime - btime;
+      });
+    }
 
-      if (value === "Date") {
-          sorted.sort((a, b) => {
-              const aDate = a.selectedDate ? new Date(a.selectedDate) : null;
-              const bDate = b.selectedDate ? new Date(b.selectedDate) : null;
+    if (value === "Date") {
+      baseData.sort((a, b) => {
+        const aDate = a.selectedDate ? new Date(a.selectedDate) : null;
+        const bDate = b.selectedDate ? new Date(b.selectedDate) : null;
 
-              const aDay = aDate ? new Date(aDate.getFullYear(), aDate.getMonth(), aDate.getDate()).getTime() : Infinity;
-              const bDay = bDate ? new Date(bDate.getFullYear(), bDate.getMonth(), bDate.getDate()).getTime() : Infinity;
+        const aDay = aDate ? new Date(aDate.getFullYear(), aDate.getMonth(), aDate.getDate()).getTime() : Infinity;
+        const bDay = bDate ? new Date(bDate.getFullYear(), bDate.getMonth(), bDate.getDate()).getTime() : Infinity;
 
-              return aDay - bDay;
-          });
-      }
-
-      setSortatedData(sorted)
+        return aDay - bDay;
+      });
+    }
+    if (showRoutines) {
+      setSortedRoutines(baseData);
+    } else {
+      setSortedActivities(baseData);
+    }
   };
 
 
   const selectGroupBy = (value: "Days" | "Priority" | "No Grouping") => {
+    let baseGroup = showRoutines ? [...allRoutines] : [...allActivities];
 
-      if (value === "No Grouping") {
-          setSortatedData(allActivities); 
-          return;
+    if (value === "No Grouping") {
+      if (showRoutines) {
+        setSortedRoutines(baseGroup);
+      } else {
+        setSortedActivities(baseGroup);
       }
+      return;
+    }
 
-      let group = [...allActivities, ...allRoutines]
+    type GroupedActivity = ActivityType & { groupKey: string };
+    let grouped: GroupedActivity[] = [];
 
-      type GroupedActivity = ActivityType & { groupKey: string };
+    if (value === "Days") {
+      grouped = baseGroup.map((elem) => {
+        const day = elem.selectedDate
+          ? new Date(elem.selectedDate).toDateString()
+          : "No Data";
+        return { ...elem, groupKey: day };
+      });
+    }
 
-      if (value === "Days") {
-          const grouped: GroupedActivity[] = [];
+    if (value === "Priority") {
+      const priorityOrder = ["Highest", "High", "Normal"];
+      baseGroup.sort((a, b) => {
+        const aIndex = priorityOrder.indexOf(a.selectedPriority ?? "Unknown");
+        const bIndex = priorityOrder.indexOf(b.selectedPriority ?? "Unknown");
+        return aIndex - bIndex;
+      });
 
-          group.forEach((elem) => {
-              const day = elem.selectedDate
-              ? new Date(elem.selectedDate).toDateString()
-              : "No Data";
+      grouped = baseGroup.map((elem) => ({
+        ...elem,
+        groupKey: elem.selectedPriority ?? "Unknown",
+      }));
+    }
 
-              grouped.push({ ...elem, groupKey: day });
-          });
+    if (showRoutines) {
+      setSortedRoutines(grouped);
+    } else {
+      setSortedActivities(grouped);
+    }
+  };
 
-          setSortatedData(grouped); // still an array ✅
-      }
+  //🔹Search function
+  const handleSearch = (query: string) => {
+    if(showRoutines) {
+      const filtered = allRoutines.filter(elem => (
+        (elem.routine).toLocaleLowerCase().includes(query.toLocaleLowerCase())
+      ))
+      setSortedRoutines(filtered)
+    } else {
+      const filtered = allActivities.filter(elem => (
+        (elem.activity).toLocaleLowerCase().includes(query.toLocaleLowerCase())
+      ))
+      setSortedActivities(filtered)
+    }
+    setSearchData(query)
+  };
 
-      if (value === "Priority") {
 
-          const priorityOrder = ["Highest", "High", "Normal"]
 
-          const grouped: (ActivityType & { groupKey: string })[] = [];
-
-          // sort first based on priorityOrder
-          group.sort((a, b) => {
-              const aIndex = priorityOrder.indexOf(a.selectedPriority ?? "Unknown");
-              const bIndex = priorityOrder.indexOf(b.selectedPriority ?? "Unknown");
-              return aIndex - bIndex;
-          });
-
-            // add groupKey for each activity
-          group.forEach((elem) => {
-              const priority = elem.selectedPriority ?? "Unknown";
-              grouped.push({ ...elem, groupKey: priority });
-          });
-
-          setSortatedData(grouped);
-      }
-
-  }
 
 
   
@@ -238,7 +262,7 @@ const Activities = () => {
   return (
     <ThemedView style={styles.container} safe>
       <View style={{flexDirection:"row", justifyContent:"space-between", marginTop: 10}}>
-        <TouchableOpacity>
+        <TouchableOpacity onPress={() => setShowActivitiesProgressModal(true)}>
           {darkMode === "dark" ? (
             <ChartNoAxesColumn size={35} stroke="#34a0a4" />
           ) : (
@@ -264,13 +288,13 @@ const Activities = () => {
       <View style={{flexDirection:"row", justifyContent:"space-between"}}>
         <ThemedButton
           onPress={() => setShowRoutines(false)}
-          style={{width:'45%', backgroundColor: !showRoutines ? theme.primary : theme.button}}
+          style={{width:'45%', backgroundColor: !showRoutines ? theme.primary : "#e9ecef"}}
         >
           <ThemedText>To-Dos</ThemedText>
         </ThemedButton>
         <ThemedButton
           onPress={() => setShowRoutines(true)}
-          style={{width:'45%', backgroundColor: showRoutines ? theme.primary: theme.button}}
+          style={{width:'45%', backgroundColor: showRoutines ? theme.primary: "#e9ecef"}}
         >
           <ThemedText>Routines</ThemedText>
         </ThemedButton>
@@ -282,7 +306,9 @@ const Activities = () => {
         <ThemedTextInput
           placeholder='Search'
           value={searchData} 
-          onChangeText={setSearchData} 
+          onChangeText={handleSearch} 
+          keyboardType="default"
+          returnKeyType='search'
         >
           <Search  style={{marginTop: 9}} />
         </ThemedTextInput>
@@ -297,7 +323,6 @@ const Activities = () => {
         <View style={{ flex: 1 }}>
           {/* Routines */}
           <Animated.View
-            pointerEvents={showRoutines ? 'auto' : 'none'}
             style={{
               opacity: routinesAnim,
               transform: [
@@ -313,7 +338,7 @@ const Activities = () => {
             }}
           >
             <View>
-              {(sortedData ?? allRoutines).map((elem, idx) => (
+              {(sortedRoutines.length > 0 ? sortedRoutines : allRoutines).map((elem, idx) => (
                 <TaskCard 
                   key={elem.id ?? idx}
                   elem={elem}
@@ -330,7 +355,6 @@ const Activities = () => {
 
           {/* Activities */}
           <Animated.View
-            pointerEvents={showRoutines ? 'none' : 'auto'}          
             style={{
               opacity: activitiesAnim,
               transform: [
@@ -345,7 +369,7 @@ const Activities = () => {
             }}
           >
             <View>
-              {(sortedData ?? allActivities).map((elem, idx) => (
+              {(sortedActivities.length > 0 ? sortedActivities : allActivities).map((elem, idx) => (
                 <TaskCard
                   key={elem.id ?? idx}
                   elem={elem}
@@ -373,6 +397,7 @@ const Activities = () => {
       />
       <RescheduleModal isVisible={showRedoModal} onClose={() => setShowRedoModal(false)} />
       <EditDeleteModal isVisible={showEditModal} onClose={() => setShowEditModal(false)} />
+      <ActivitiesProgressModal isVisible={showActivitiesProgressModal} onClose={() => setShowActivitiesProgressModal(false)}/>        
 
 
     </ThemedView>

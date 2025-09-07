@@ -244,7 +244,7 @@ import Checkbox from 'expo-checkbox';
                             style={{
                               paddingVertical: 6,
                               paddingHorizontal: 12,
-                              backgroundColor: recurringOption === option ? theme.primary : theme.button,
+                              backgroundColor: recurringOption === option ? theme.primary : "#adb5bd",
                               borderRadius: 6,
                               textAlign: "center",
                               width:"30%"
@@ -325,7 +325,7 @@ import Checkbox from 'expo-checkbox';
                                     marginVertical: 5,
                                     borderRadius: 8,
                                     alignItems: "center",
-                                    backgroundColor: selected ? theme.primary : theme.button,
+                                    backgroundColor: selected ? theme.primary : "#adb5bd",
                                   }}
                                 >
                                   <ThemedText style={{ color: selected ? "white" : "black", fontSize: 16 }}>
