@@ -1,6 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import Svg, { Circle } from "react-native-svg";
+import ThemedText from "./ThemedText";
 
 // 🔤 Types
 type PercentageCircleType = {
@@ -43,7 +44,7 @@ const PercentageCircle = ({percent, radius = 30, strokeWidth = 8, color = "#3498
       </Svg>
       {/* Percent label */}
       <View style={styles.label}>
-        <Text style={styles.text}>{percent}%</Text>
+        <ThemedText style={styles.text}>{percent}%</ThemedText>
       </View>
     </View>
   );

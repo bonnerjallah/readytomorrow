@@ -44,6 +44,13 @@ type ActivityType = {
   routine: string
 };
 
+type DayStats = {
+  date: string;
+  total: number;
+  completed: number;
+  percent: number;
+};
+
 
 const ActivitiesProgressModal = ({isVisible, onClose}: ProgressModalType) => {
 
@@ -51,9 +58,14 @@ const ActivitiesProgressModal = ({isVisible, onClose}: ProgressModalType) => {
 
     const [showProgressBy, setShowProgressBy] = useState<"Last 7 Days" | "Last 30 Days" | "Last 6 Months" | null>("Last 7 Days")
     const [lastSevenDays, setLastSevenDays] = useState<string[]>([])
+    const [lastThirtyDays, setlastThirtyDays] = useState<string[]>([])
+    const [lastSixMonth, setLastSixMonth] = useState<string[]>([])
     const [allActivities, setAllActivities] = useState<ActivityType[]>([])
-    const [progressByDay, setProgressByDay] = useState<number[]>([]);
+    const [progress7Days, setProgress7Days] = useState<number[]>([]);
+    const [progress30Days, setProgress30Days] = useState<DayStats[]>([]);
     const [dateRange, setDateRange] = useState<string | undefined>();
+    const [progress6Months, setProgress6Months] = useState<DayStats[]>([]);
+
 
 
     //🔹Activities fetch
@@ -105,7 +117,7 @@ const ActivitiesProgressModal = ({isVisible, onClose}: ProgressModalType) => {
 
         // calculate progress
         if (!allActivities.length) {
-            setProgressByDay(new Array(7).fill(0));
+            setProgress7Days(new Array(7).fill(0));
             return;
         }
 
@@ -117,30 +129,127 @@ const ActivitiesProgressModal = ({isVisible, onClose}: ProgressModalType) => {
             return total > 0 ? Math.round((completed / total) * 100) : 0;
         });
 
-        setProgressByDay(progress);
+        setProgress7Days(progress);
 
     }, [allActivities]);
 
 
+    //🔹Hader date display
     useEffect(() => {
-        if (!lastSevenDays.length) return;
+        const today = new Date();
+        let startDate: Date;
+        let endDate: Date = today;
 
-        const last7DaysDates = Array.from({ length: 7 }, (_, i) => {
-            const d = new Date();
-            d.setDate(new Date().getDate() - i);
-            return d.toISOString().split("T")[0]; // "YYYY-MM-DD"
-        }).reverse();
-
-        const firstDate = new Date(last7DaysDates[0]);
-        const lastDate = new Date(last7DaysDates[last7DaysDates.length - 1]);
+        if (showProgressBy === "Last 7 Days") {
+            startDate = new Date(today);
+            startDate.setDate(today.getDate() - 6); // 7 days total
+        } else if (showProgressBy === "Last 30 Days") {
+            startDate = new Date(today);
+            startDate.setDate(today.getDate() - 29); // 30 days total
+        } else if (showProgressBy === "Last 6 Months") {
+            startDate = new Date(today);
+            startDate.setMonth(today.getMonth() - 5); // 6 months total
+        } else return;
 
         const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
-
-        setDateRange(`${firstDate.toLocaleDateString(undefined, options)} – ${lastDate.toLocaleDateString(undefined, options)}`);
-    }, [lastSevenDays]);
-
+        setDateRange(`${startDate.toLocaleDateString(undefined, options)} – ${endDate.toLocaleDateString(undefined, options)}`);
+    }, [showProgressBy]);
 
 
+    //🔹Last 30 days
+    useEffect(() => {
+        const today = new Date()
+        
+        // Get full date
+        const lastThirtyDate = Array.from({length: 30}, (_, i) => {
+            const d = new Date(today)
+            d.setDate(today.getDate() - i)
+            d.setHours(0, 0, 0, 0)
+            return d
+        }).reverse()
+
+
+        //Get days
+        const lastThirtDays = lastThirtyDate.map(elem => {
+            const isToday =
+            elem.getDate() === today.getDate() &&
+            elem.getMonth() === today.getMonth() &&
+            elem.getFullYear() === today.getFullYear()
+            return isToday ? "Today" : elem.toLocaleDateString(undefined, {  month: "long", day: "numeric" });
+        })
+
+        setlastThirtyDays(lastThirtDays)
+
+        // calculate progress
+       if (!allActivities.length) {
+            setProgress30Days(
+                Array.from({ length: 30 }, (_, i) => ({
+                date: lastThirtyDate[i].toISOString().split("T")[0],
+                total: 0,
+                completed: 0,
+                percent: 0
+                }))
+            );
+            return;
+        }
+
+        const progress = lastThirtyDate.map((d) => {
+            const dateStr = d.toISOString().split("T")[0]; // "YYYY-MM-DD"
+            const activitiesForDay = allActivities.filter(act => act.selectedDate === dateStr);
+            console.log("activities for the day", activitiesForDay)
+            const total = activitiesForDay.length;
+            console.log("total", total)
+            const completed = activitiesForDay.filter(act => act.done).length;
+            return {
+                date: dateStr,
+                total,
+                completed,
+                percent: total > 0 ? Math.round((completed / total) * 100) : 0
+            }
+        });
+
+        setProgress30Days(progress);
+
+    }, [allActivities])
+
+    // 🔹Last 6 months
+    useEffect(() => {
+        const today = new Date();
+
+        // Generate the last 6 months
+        const lastSixMonthsDates = Array.from({ length: 6 }, (_, i) => {
+            const d = new Date(today);
+            d.setMonth(today.getMonth() - i);
+            d.setDate(1); // start of month
+            d.setHours(0, 0, 0, 0);
+            return d;
+        }).reverse();
+
+        // Labels: month names
+        setLastSixMonth(lastSixMonthsDates.map(d =>
+            d.toLocaleDateString(undefined, { month: "long" })
+        ));
+
+        // Calculate total activities and completion per month
+        const progress = lastSixMonthsDates.map((d) => {
+            const month = d.getMonth();
+            const year = d.getFullYear();
+
+            const activitiesForMonth = allActivities.filter(act => {
+                if (!act.selectedDate) return false;
+                const actDate = new Date(act.selectedDate);
+                return actDate.getMonth() === month && actDate.getFullYear() === year;
+            });
+
+            const total = activitiesForMonth.length;
+            const completed = activitiesForMonth.filter(act => act.done).length;
+
+            return { date: `${year}-${month + 1}`, total, completed, percent: total > 0 ? Math.round((completed / total) * 100) : 0 };
+        });
+
+        setProgress6Months(progress);
+
+    }, [allActivities]);
 
 
 
@@ -194,21 +303,40 @@ const ActivitiesProgressModal = ({isVisible, onClose}: ProgressModalType) => {
                 {showProgressBy === "Last 7 Days" ? (
                     <View style={{alignItems:"flex-start", marginLeft: 10, rowGap: 10}}>
                         {lastSevenDays.map((day, idx) => (
-                            <View key={day} style={{flexDirection:"row", alignItems:"center", columnGap:10 }}>
-                                <PercentageCircle percent={progressByDay[idx] || 0} />
+                            <View key={idx} style={{flexDirection:"row", alignItems:"center", columnGap:10, borderBottomWidth:.3,  borderBottomColor: theme.placeholder, width:"100%" , paddingBottom:15 }}>
+                                <PercentageCircle percent={progress7Days[idx] || 0} />
                                 <ThemedText>{day}</ThemedText>
                             </View>
                         )).reverse()}
                     </View>
 
                 ) : showProgressBy === "Last 30 Days" ? (
-                    <View>
-
+                    <View style={{alignItems:"flex-start", marginLeft: 10, rowGap: 10}}>
+                       {lastThirtyDays.map((day, idx) => (
+                        <View key={idx} style={{flexDirection:"row", alignItems:"center", borderBottomWidth:.3, width:"100%", paddingBottom:15, columnGap: 15, borderBottomColor: theme.placeholder}}>
+                            <PercentageCircle percent={progress30Days[idx]?.percent ?? 0} />
+                            <View style={{columnGap:10 }}>
+                                <ThemedText>{day}</ThemedText>
+                                <ThemedText> {progress30Days[idx]?.completed ?? 0} of {progress30Days[idx]?.total ?? 0} Activities</ThemedText>
+                            </View>
+                        </View>
+                       )).reverse()} 
                     </View>
                 ) : (
-                    <View>
-
+                    <View style={{alignItems:"flex-start", marginLeft: 10, rowGap: 10}}>
+                        {lastSixMonth.map((day, idx) => (
+                            <View key={idx} style={{flexDirection:"row", alignItems:"center", borderBottomWidth:.3, width:"100%", paddingBottom:15, columnGap: 15, borderBottomColor: theme.placeholder}}>
+                                <PercentageCircle percent={progress6Months[idx]?.percent ?? 0} />
+                                <View style={{columnGap:10 }}>
+                                    <ThemedText>{day}</ThemedText>
+                                    <ThemedText>
+                                        {progress6Months[idx]?.completed ?? 0} of {progress6Months[idx]?.total ?? 0}
+                                    </ThemedText>
+                                </View>
+                            </View>
+                        )).reverse()}
                     </View>
+
                 )}
 
             </ScrollView>
