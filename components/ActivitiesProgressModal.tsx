@@ -91,7 +91,6 @@ const ActivitiesProgressModal = ({isVisible, onClose}: ProgressModalType) => {
         return () => unsubscribe()
     }, [])
 
-
     // 🔹Last seven days function
     useEffect(() => {
         const today = new Date();
@@ -133,7 +132,6 @@ const ActivitiesProgressModal = ({isVisible, onClose}: ProgressModalType) => {
 
     }, [allActivities]);
 
-
     //🔹Hader date display
     useEffect(() => {
         const today = new Date();
@@ -154,7 +152,6 @@ const ActivitiesProgressModal = ({isVisible, onClose}: ProgressModalType) => {
         const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
         setDateRange(`${startDate.toLocaleDateString(undefined, options)} – ${endDate.toLocaleDateString(undefined, options)}`);
     }, [showProgressBy]);
-
 
     //🔹Last 30 days
     useEffect(() => {
@@ -196,9 +193,7 @@ const ActivitiesProgressModal = ({isVisible, onClose}: ProgressModalType) => {
         const progress = lastThirtyDate.map((d) => {
             const dateStr = d.toISOString().split("T")[0]; // "YYYY-MM-DD"
             const activitiesForDay = allActivities.filter(act => act.selectedDate === dateStr);
-            console.log("activities for the day", activitiesForDay)
             const total = activitiesForDay.length;
-            console.log("total", total)
             const completed = activitiesForDay.filter(act => act.done).length;
             return {
                 date: dateStr,
@@ -336,11 +331,8 @@ const ActivitiesProgressModal = ({isVisible, onClose}: ProgressModalType) => {
                             </View>
                         )).reverse()}
                     </View>
-
                 )}
-
             </ScrollView>
-
         </ThemedView>
     </Modal>
    

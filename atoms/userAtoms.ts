@@ -5,7 +5,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 export interface AppUser {
   id: string;
   email: string | null;
-  createdAt: Date
+  createdAt?: Date
   [key: string]: any; // ✅ allows extra fields like settings
 }
 

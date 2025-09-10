@@ -1,18 +1,16 @@
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import React from 'react';
-import ThemedView from '../components/ThemedView';
 import ThemedText from '../components/ThemedText';
 import { Clock, EllipsisVertical, RedoDot } from 'lucide-react-native';
 
 import { useSetAtom } from 'jotai';
 import { selectedItemTypeAtom } from '../atoms/selectedTaskAtom'; // adjust the path
 
-interface TaskCardProps {
-  elem: any; // Replace with ActivityType if you have one
+interface RoutineTaskCardProps {
+  elem: any; // Replace with RoutineType if you have one
   darkMode: string;
   theme: any;
-  setSelectedTask?: (task: any) => void;
-  setSelectedRoutine?: (task: any) => void; // optional
+  setSelectedRoutine?: (task: any) => void;
   setShowEditModal: (show: boolean) => void;
   handleTaskComplete: (id: string, done: boolean) => void;
   setShowRedoModal: (show: boolean) => void;
@@ -32,33 +30,34 @@ const getPriorityColor = (priority: "Normal" | "High" | "Highest" = "Normal") =>
   }
 };
 
-const TaskCard: React.FC<TaskCardProps> = ({
+const RoutineTaskCard: React.FC<RoutineTaskCardProps> = ({
   elem,
   darkMode,
   theme,
   backgroundColor,
   textStyle,
-  setSelectedTask,
+  setSelectedRoutine,
   setShowEditModal,
   handleTaskComplete,
   setShowRedoModal,
 }) => {
 
   const setSelectedItemType = useSetAtom(selectedItemTypeAtom);
-  
+
+
   const onEditPress = () => {
-    setSelectedTask?.(elem);
-    setSelectedItemType('task');
+    if (setSelectedRoutine) setSelectedRoutine(elem);
+    setSelectedItemType('routine');
     setShowEditModal(true);
   };
 
-    const onRedoPress = () => {
-    setSelectedTask?.(elem);
+  const onRedoPress = () => {
+    if (setSelectedRoutine) setSelectedRoutine(elem);
     setShowRedoModal(true);
   };
 
   const onCompletePress = () => {
-    handleTaskComplete(elem.id, !elem.done);
+    if (handleTaskComplete) handleTaskComplete(elem.id, !elem.done);
   };
 
   return (
@@ -76,6 +75,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
         {elem.selectedPriority && (
           <ThemedText variant="smallertitle">{elem.selectedPriority} Priority</ThemedText>
         )}
+
         <EllipsisVertical
           color={darkMode === 'dark' ? theme.primary : 'black'}
           onPress={onEditPress}
@@ -97,7 +97,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
             onPress={onCompletePress}
           />
           <ThemedText variant="subtitleBold" style={[textStyle, { width: '90%' }]}>
-            {elem.activity}
+            {elem.routine}
           </ThemedText>
         </View>
 
@@ -113,8 +113,14 @@ const TaskCard: React.FC<TaskCardProps> = ({
         </TouchableOpacity>
         <View style={{ flexDirection: 'row', columnGap: 5 }}>
           <Clock size={15} stroke={darkMode === 'dark' ? theme.primary : 'black'} />
-          <ThemedText variant="smallertitle">
-            {elem.isAllDay ? 'All Day' : elem.selectedPart || 'Any Time'}
+          <ThemedText>
+            {elem.isAllDay ? (
+              <ThemedText variant="smallertitle">All Day</ThemedText>
+            ) : elem.selectedPart ? (
+              <ThemedText variant="smallertitle">{elem.selectedPart}</ThemedText>
+            ) : (
+              <ThemedText variant="smallertitle">Any Time</ThemedText>
+            )}
           </ThemedText>
         </View>
       </View>
@@ -122,7 +128,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
   );
 };
 
-export default TaskCard;
+export default RoutineTaskCard;
 
 const styles = StyleSheet.create({
   taskCard: {
