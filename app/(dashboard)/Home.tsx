@@ -178,7 +178,7 @@ const Home = () => {
    const todayActivities = useMemo(() => {
         return allActivities.filter(task => {
             if (task.done) return false;
-            if (!task.selectedDate) return false;
+            if (task.isRecurring) return true;
 
             return task.selectedDate === todayStr;
         });

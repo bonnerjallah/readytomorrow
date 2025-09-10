@@ -1,5 +1,5 @@
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
-import React from 'react';
+import React, { useEffect } from 'react';
 import ThemedView from '../components/ThemedView';
 import ThemedText from '../components/ThemedText';
 import { Clock, EllipsisVertical, RedoDot } from 'lucide-react-native';
@@ -61,6 +61,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
     handleTaskComplete(elem.id, !elem.done);
   };
 
+
   return (
     <View
       style={[
@@ -108,9 +109,17 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
       {/* Footer */}
       <View style={[styles.taskCardBottom, { backgroundColor: darkMode === 'dark' ? '#495057' : '#e9ecef' }]}>
-        <TouchableOpacity onPress={onRedoPress}>
-          <RedoDot size={15} stroke={darkMode === 'dark' ? theme.primary : 'black'} />
-        </TouchableOpacity>
+
+        {elem.isRecurring ? (
+          <TouchableOpacity onPress={onRedoPress} style={{backgroundColor: theme.primary, borderRadius:10, padding: 5}}>
+            <RedoDot size={15} stroke="yellow" />
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity onPress={onRedoPress} >
+            <RedoDot size={15}  />
+          </TouchableOpacity>
+        )}
+        
         <View style={{ flexDirection: 'row', columnGap: 5 }}>
           <Clock size={15} stroke={darkMode === 'dark' ? theme.primary : 'black'} />
           <ThemedText variant="smallertitle">

@@ -1,5 +1,5 @@
 // 🌱 ROOT IMPORTS
-import { StyleSheet, Text, View, Modal, TouchableOpacity, Platform, Alert} from 'react-native'  
+import { StyleSheet, Text, View, Modal, TouchableOpacity, Platform, Alert, Switch} from 'react-native'  
 import DateTimePicker from "@react-native-community/datetimepicker";
 
 
@@ -47,6 +47,7 @@ const RescheduleModal = ({isVisible, onClose}: RescheduleModalProps) => {
     const [durationDays, setDurationDays] = useState<number>(0);
     const [durationHours, setDurationHours] = useState<number>(0);
     const [durationMinutes, setDurationMinutes] = useState<number>(0);
+    
 
     useEffect(() => {
         if (isVisible && selectedTask) {
@@ -81,6 +82,8 @@ const RescheduleModal = ({isVisible, onClose}: RescheduleModalProps) => {
         setDurationMinutes(selectedTask.durationMinutes ?? 0);
         }
     }, [selectedTask, isVisible]);
+
+
 
     const formatDate = (dateStr?: string) => {
       const dateObj = dateStr ? (() => {
@@ -173,20 +176,30 @@ const RescheduleModal = ({isVisible, onClose}: RescheduleModalProps) => {
                 <Spacer height={50} />
 
                 <View>
-                    <View style={{flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 15}}>
-                        <ThemedText variant='subtitle'>Date</ThemedText>
-                        <View  style={{ flexDirection: "row", columnGap: 5, alignItems: "center" }}>
-                            {(() => {
-                                const { weekday, formatedDate } = formatDate(selectedDate);
-                                return (
-                                    <>
-                                    <ThemedText variant="smallertitle">{weekday}</ThemedText>
-                                    <ThemedText>|</ThemedText>
-                                    <ThemedText variant="smallertitle">{formatedDate}</ThemedText>
-                                    </>
-                                );
-                            })()}
+                    <View >
+                        <View style={{flexDirection: "row", justifyContent:"space-between", marginBottom: 20, paddingHorizontal: 10}}>
+                            <ThemedText variant='subtitle'>Recurring</ThemedText>
+                            <Switch 
+                                value={isRecurring}
+                                onValueChange={setIsRecurring}
+                            />
                         </View>
+                        <View style={{flexDirection: "row", justifyContent: "space-between", paddingHorizontal: 15}}>
+                            <ThemedText variant='subtitle'>Date</ThemedText>
+                            <View  style={{ flexDirection: "row", columnGap: 5, alignItems: "center" }}>
+                                {(() => {
+                                    const { weekday, formatedDate } = formatDate(selectedDate);
+                                    return (
+                                        <>
+                                        <ThemedText variant="smallertitle">{weekday}</ThemedText>
+                                        <ThemedText>|</ThemedText>
+                                        <ThemedText variant="smallertitle">{formatedDate}</ThemedText>
+                                        </>
+                                    );
+                                })()}
+                            </View>
+                        </View>
+
                     </View>
                     <DateTimePicker
                         value={selectedDate ? (() => {

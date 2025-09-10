@@ -30,6 +30,7 @@ const ScheduleRoutineModal = ({isVisible, onClose} : ActivityInputModalProps) =>
   const [showRoutineInputModal, setShowRoutineInputModal] = useState(false)
   const [selectedOption, setSelectedOption] = useState<string>("")
 
+  
   const [droupDowns, setDroupDown] = useState([
     {open: false, height: new Animated.Value(0), opacity: new Animated.Value(0)},
     {open: false, height: new Animated.Value(0), opacity: new Animated.Value(0)},

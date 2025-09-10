@@ -105,8 +105,6 @@ const Activities = () => {
     const today = new Date()
     const dateString = today.toISOString().split("T")[0]
 
-    console.log("todays date", dateString)
-
 
     const unsubscribe = onSnapshot(
       q,
@@ -115,7 +113,7 @@ const Activities = () => {
           .map(doc => ({ id: doc.id, ...doc.data() } as TaskType))
           .filter(elem => {
             return(
-              !elem.done 
+              !elem.done
             )
           })
         setAllActivities(activitiesData)

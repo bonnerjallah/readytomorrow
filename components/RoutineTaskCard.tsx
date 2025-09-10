@@ -2,6 +2,7 @@ import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import React from 'react';
 import ThemedText from '../components/ThemedText';
 import { Clock, EllipsisVertical, RedoDot } from 'lucide-react-native';
+import { useState } from 'react';
 
 import { useSetAtom } from 'jotai';
 import { selectedItemTypeAtom } from '../atoms/selectedTaskAtom'; // adjust the path
@@ -43,6 +44,9 @@ const RoutineTaskCard: React.FC<RoutineTaskCardProps> = ({
 }) => {
 
   const setSelectedItemType = useSetAtom(selectedItemTypeAtom);
+  
+  const [isRecurring, setIsRecurring] = useState(false);
+  
 
 
   const onEditPress = () => {

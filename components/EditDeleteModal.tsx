@@ -1,5 +1,5 @@
 // 🌱 ROOT IMPORTS
-import { ArrowBigLeft, ChevronRight, CircleX, Logs, PencilLine, Trash2 } from "lucide-react-native";
+import { ArrowBigLeft, ChevronRight, CircleX, Logs, PencilLine, Trash2,  } from "lucide-react-native";
 import { useState, useRef } from "react";
 import {
   StyleSheet,
@@ -10,6 +10,7 @@ import {
   Animated,
   Easing,
   ScrollView,
+  Alert 
 } from "react-native";
 
 
@@ -24,6 +25,9 @@ import EditActivityModal from "../components/EditActivityModal"
 import { useTheme } from "./ThemeContext";
 import { useAtomValue } from "jotai";
 import { taskAtom } from "atoms/selectedTaskAtom";
+import { selectedItemTypeAtom } from "atoms/selectedTaskAtom";
+import { routineAtom as selectedRoutineAtom } from "atoms/selectedTaskAtom";
+
 
 
 // 🔤 TYPES
@@ -45,26 +49,45 @@ const EditDeleteModal = ({isVisible, onClose}: DisplayOptionsModalProps) => {
     const {theme, darkMode} = useTheme()
     
     const selectedTask = useAtomValue(taskAtom)
+    const selectedRoutine = useAtomValue(selectedRoutineAtom);
+
+    const selectedItemType = useAtomValue(selectedItemTypeAtom)
+    
+
 
     const [showEditActivityModal, setEditActivityModal] = useState(false)
 
 
-    const handleDeleteTask = async () => {
-        const userId = auth.currentUser?.uid
-        if(!userId) return
+  const handleDeleteTask = async () => {
+  const userId = auth.currentUser?.uid;
+  if (!userId) return;
 
-        const taskId = selectedTask?.id
-        if(!taskId) return
+  let itemToEdit;
+  let collectionName: string;
 
-        try {
-            const docRef = doc(db, "users", userId, "activities", taskId)
-            await deleteDoc(docRef)
-            onClose()
-            
-        } catch (error) {
-            console.log('Error deleting task', error)
-        }
-    }
+  if (selectedItemType === "task") {
+    itemToEdit = selectedTask;
+    console.log("itemtoedit", itemToEdit)
+    collectionName = "activities";
+  } else if (selectedItemType === "routine") {
+    itemToEdit = selectedRoutine;
+    collectionName = "routines";
+  } else {
+    return Alert.alert("No item type selected");
+  }
+
+  if (!itemToEdit?.id) return Alert.alert("No item selected to delete");
+
+  try {
+    const docRef = doc(db, "users", userId, collectionName, itemToEdit.id);
+    await deleteDoc(docRef);
+    onClose();
+  } catch (error) {
+    console.log("Error deleting item", error);
+    Alert.alert("Error", "Could not delete the item");
+  }
+};
+
 
 
   return (
