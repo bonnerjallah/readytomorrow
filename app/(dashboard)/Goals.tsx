@@ -1,6 +1,6 @@
 //🌱 ROOT IMPORTS
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Pressable } from 'react-native'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { router } from 'expo-router'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 
@@ -21,15 +21,54 @@ import { CirclePlus } from 'lucide-react-native'
 //🧩 COMPONENTS
 import GoalsLayout from "../../components/GoalsLayout"
 
+//🔥 FIREBASE
+import { auth, db } from 'firebaseConfig'
+import { collection, query, orderBy, onSnapshot, Timestamp,  } from 'firebase/firestore'
 
-type Props = {}
+type GoalType = {
+  id?: string; // optional, since you’re adding doc.id
+  categoryImage: string | null;
+  category: string;
+  goalName: string;
+  note: string;
+  targetDate: Timestamp;
+  longTerm: boolean;
+  startdate: Timestamp;
+  createdAt: Timestamp | null; // serverTimestamp resolves to this
+};
 
-const Goals = (props: Props) => {
+
+const Goals = () => {
 
   const {theme, darkMode} = useTheme()
 
   const [showWeekLyObjectivies, setShowWeekLyObjectivies] = useState(false)
+  const [allGoals, setGoals] = useState<GoalType[]>([])
 
+  useEffect(() => {
+    const userId = auth.currentUser?.uid
+    if(!userId) return
+
+    
+    const goalCol = collection(db, "users", userId, "goals")
+    const q = query(goalCol, orderBy("createdAt", "asc"))
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const goalsData : GoalType[] = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }))as GoalType[]
+
+        setGoals(goalsData)
+      },
+      (error) => console.log("Error fetching goals", error)
+    )
+      return () => unsubscribe()
+  }, [])
+
+  console.log("goals", allGoals)
 
 
 

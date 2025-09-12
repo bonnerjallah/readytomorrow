@@ -3,7 +3,7 @@
   import { useState, useEffect } from 'react';
   import DateTimePicker from "@react-native-community/datetimepicker";
 
-  // 💾 FIREBASE
+  // 🔥 FIREBASE
   import { auth, db } from '../firebaseConfig'
   import { collection, doc, setDoc } from 'firebase/firestore'
 
