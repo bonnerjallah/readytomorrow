@@ -18,30 +18,38 @@ const ThemedView = ({ style, safe = false, children, ...props } : ThemedViewProp
     typeof child === 'string' ? <Text style={{ color: theme.text }}>{child}</Text> : child
   );
 
+  const baseStyle = {
+    flex: 1, // <-- ensure it fills parent height
+    backgroundColor: theme.background,
+  };
+
+  const safeStyle = {
+    flex: 1, // <-- again, fill parent
+    backgroundColor: theme.background,
+    paddingTop: insets.top,
+    paddingBottom: insets.bottom,
+    paddingLeft: 10,
+    paddingRight: 10,
+  };
+
   if(!safe) return (
     <View 
-      style = {[{backgroundColor: theme.background}, style]}
+      style = {[baseStyle, style]}
       {...props}
-    />
+    >
+      {renderChildren}
+    </View>
   );
 
   return (
     <View
-      style={[
-        {
-          backgroundColor: theme.background,
-          paddingTop: insets.top,
-          paddingBottom: insets.bottom,
-          paddingLeft: 10,
-          paddingRight: 10,
-        },
-        style,
-      ]}
+      style={[safeStyle, style]}
       {...props}
     >
       {renderChildren}
     </View>
   );
 };
+
 
 export default ThemedView;

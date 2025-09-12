@@ -277,8 +277,9 @@ const Activities = () => {
         onChangeText={handleSearch}
         keyboardType="default"
         returnKeyType="search"
+        style={{backgroundColor:theme.background}}
       >
-        <Search style={{ marginTop: 9 }} />
+        <Search style={{ marginTop: 9 }} stroke={theme.tabIconColor} />
       </ThemedTextInput>
 
       <Spacer height={20} />

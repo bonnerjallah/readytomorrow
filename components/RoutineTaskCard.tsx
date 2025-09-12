@@ -112,9 +112,7 @@ const RoutineTaskCard: React.FC<RoutineTaskCardProps> = ({
 
       {/* Footer */}
       <View style={[styles.taskCardBottom, { backgroundColor: darkMode === 'dark' ? '#495057' : '#e9ecef' }]}>
-        <TouchableOpacity onPress={onRedoPress}>
-          <RedoDot size={15} stroke={darkMode === 'dark' ? theme.primary : 'black'} />
-        </TouchableOpacity>
+        
         <View style={{ flexDirection: 'row', columnGap: 5 }}>
           <Clock size={15} stroke={darkMode === 'dark' ? theme.primary : 'black'} />
           <ThemedText>

@@ -2,6 +2,7 @@
 import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Pressable } from 'react-native'
 import React, { useState } from 'react'
 import { router } from 'expo-router'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
 
 // ⚛️ STATE MANAGEMENT
 import { useTheme } from '../../components/ThemeContext'
@@ -18,7 +19,8 @@ import { CirclePlus } from 'lucide-react-native'
 
 
 //🧩 COMPONENTS
-import GoalsCard from "../../components/GoalsCard"
+import GoalsLayout from "../../components/GoalsLayout"
+
 
 type Props = {}
 
@@ -66,16 +68,16 @@ const Goals = (props: Props) => {
       <Spacer  height={20}/>
 
       <ThemedTextInput 
-        style={{alignItems:"center"}}
+        style={{backgroundColor:theme.background, alignItems:"center"}}
         placeholder='Search'
       >
-        <Search />
+        <Search  stroke={theme.tabIconColor}/>
       </ThemedTextInput>
 
       <Spacer height={20} />
 
       <ScrollView>
-        <GoalsCard />
+        <GoalsLayout />
       </ScrollView>
 
       <Pressable

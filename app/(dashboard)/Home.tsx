@@ -190,6 +190,8 @@ const Home = () => {
         return allActivities.filter(task => {
             if (task.done) return false;
             if (!task.selectedDate) return false;
+            if (task.isRecurring) return false;
+
 
             return task.selectedDate < todayStr;
         });
