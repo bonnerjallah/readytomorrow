@@ -4,9 +4,7 @@ import { Modal, ScrollView, StyleSheet, Text, Touchable, TouchableOpacity, View 
 import { useTheme } from './ThemeContext'
 
 // 🎨 UI
-import ThemedButton from '../components/ThemedButton'
 import Spacer from '../components/Spacer'
-import ThemedTextInput from '../components/ThemedTextInput'
 import ThemedText from '../components/ThemedText'
 import ThemedView from '../components/ThemedView'
 import { CircleX } from 'lucide-react-native'

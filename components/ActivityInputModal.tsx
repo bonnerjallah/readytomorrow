@@ -54,7 +54,7 @@
       { open: false, height: new Animated.Value(0), opacity: new Animated.Value(0) }, // Duration
       { open: false, height: new Animated.Value(0), opacity: new Animated.Value(0) }, // Priority
     ]);
-    const dropdownHeights = [350, 240, 350, 200, 80];
+    const dropdownHeights = [380, 240, 350, 200, 80];
 
     const toggleDropDown = (index: number) => {
       const current = dropdowns[index];
@@ -220,7 +220,11 @@
                         setSelectedDate(`${year}-${month}-${day}`);
                       }
                     }}
-                    style={{ alignSelf: "center" }}
+                    style={{
+                      alignSelf: "center",
+                      backgroundColor: darkMode === "dark" ? theme.primary : "white",
+                      borderRadius: 10
+                    }}
                   />
                 </Animated.View>
               </View>

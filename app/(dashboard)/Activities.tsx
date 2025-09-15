@@ -87,8 +87,6 @@ const Activities = () => {
   const routinesAnim = useRef(new Animated.Value(showRoutines ? 1 : 0)).current
   const activitiesAnim = useRef(new Animated.Value(showRoutines ? 0 : 1)).current
 
-  // console.log("sorted routine", sortedRoutines)
-
   useEffect(() => {
     Animated.timing(routinesAnim, { toValue: showRoutines ? 1 : 0, duration: 300, useNativeDriver: true }).start()
     Animated.timing(activitiesAnim, { toValue: showRoutines ? 0 : 1, duration: 300, useNativeDriver: true }).start()

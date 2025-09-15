@@ -1,11 +1,12 @@
 //🌱 ROOT IMPORTS
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Pressable } from 'react-native'
-import React, { useEffect, useState } from 'react'
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Pressable, Animated } from 'react-native'
+import React, { useEffect, useRef, useState } from 'react'
 import { router } from 'expo-router'
-import { GestureHandlerRootView } from 'react-native-gesture-handler'
 
 // ⚛️ STATE MANAGEMENT
 import { useTheme } from '../../components/ThemeContext'
+import { useSetAtom } from 'jotai'
+import { GoalsAtom } from '../../atoms/GoalCategoryAtom';
 
 
 // 🎨 UI
@@ -19,11 +20,15 @@ import { CirclePlus } from 'lucide-react-native'
 
 
 //🧩 COMPONENTS
-import GoalsLayout from "../../components/GoalsLayout"
+import GoalsCard from "../../components/GoalsCard"
+import DisplayGoalsOptionModal from "../../components/DisplayGoalsOptionModal" 
+import GoalProgressModal from "../../components/GoalProgressModal"
+
+//
 
 //🔥 FIREBASE
 import { auth, db } from 'firebaseConfig'
-import { collection, query, orderBy, onSnapshot, Timestamp,  } from 'firebase/firestore'
+import { collection, getDocs, onSnapshot, Timestamp,  } from 'firebase/firestore'
 
 type GoalType = {
   id?: string; // optional, since you’re adding doc.id
@@ -35,6 +40,8 @@ type GoalType = {
   longTerm: boolean;
   startdate: Timestamp;
   createdAt: Timestamp | null; // serverTimestamp resolves to this
+  selectedPriority?: 'Normal' | 'High' | 'Highest' | ''
+
 };
 
 
@@ -42,34 +49,168 @@ const Goals = () => {
 
   const {theme, darkMode} = useTheme()
 
+    const setGoals = useSetAtom(GoalsAtom);
+
   const [showWeekLyObjectivies, setShowWeekLyObjectivies] = useState(false)
-  const [allGoals, setGoals] = useState<GoalType[]>([])
+  const [showDisplayOptionModal, setShowDisplayOptionModal] = useState(false)
+  const [longTermGoals, setLongTermGoals] = useState<GoalType[]>([])
+  const [shortTermGoals, setShortTermGoals] = useState<GoalType[]>([])
+  const [showGoalsProgressModal, setShowGoalsProgressModal] = useState(false)
+
+
+
+  //🔹Animations
+  const shortTermAnim = useRef(new Animated.Value(showWeekLyObjectivies ? 1 : 0)).current
+  const longTermAnim = useRef(new Animated.Value(showWeekLyObjectivies ? 0 : 1)).current
 
   useEffect(() => {
-    const userId = auth.currentUser?.uid
-    if(!userId) return
+    Animated.parallel([
+      Animated.timing(shortTermAnim, {
+        toValue: showWeekLyObjectivies ? 1 : 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(longTermAnim, {
+        toValue: showWeekLyObjectivies ? 0 : 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [showWeekLyObjectivies]);
 
-    
-    const goalCol = collection(db, "users", userId, "goals")
-    const q = query(goalCol, orderBy("createdAt", "asc"))
+  //🔹Fetch goals
+  useEffect(() => {
+    const userId = auth.currentUser?.uid;
+    if (!userId) return;
 
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const goalsData : GoalType[] = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }))as GoalType[]
+    const unsubscribes: (() => void)[] = [];
 
-        setGoals(goalsData)
-      },
-      (error) => console.log("Error fetching goals", error)
-    )
-      return () => unsubscribe()
-  }, [])
+    const fetchCategoriesRealtime = async () => {
+      try {
+        const categoriesCol = collection(db, "users", userId, "goals");
+        const categorySnapshot = await getDocs(categoriesCol);
 
-  console.log("goals", allGoals)
+        categorySnapshot.docs.forEach((catDoc) => {
+          const goalsCol = collection(catDoc.ref, "goal");
+          const unsubscribe = onSnapshot(goalsCol, (snapshot) => {
+            const goalsData: (GoalType & { startdateFormatted: string; targetDateFormatted: string })[] = snapshot.docs.map((goalDoc) => {
+              const data = goalDoc.data() as GoalType;
 
+              const startdateFormatted = data.startdate instanceof Timestamp
+                ? data.startdate.toDate().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                : '';
+
+              const targetDateFormatted = data.targetDate instanceof Timestamp
+                ? data.targetDate.toDate().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                : '';
+
+              return {
+                id: goalDoc.id,
+                ...data,
+                startdateFormatted,
+                targetDateFormatted,
+              };
+            });
+
+            // Update the atom with all goals from all categories
+            setGoals(prev => {
+              // remove previous goals from this category
+              const otherGoals = prev.filter(g => g.category !== catDoc.id);
+              return [...otherGoals, ...goalsData];
+            });
+
+            setLongTermGoals(prev => {
+              const otherGoals = prev.filter(g => g.category !== catDoc.id); // remove previous goals from this category
+              return [...otherGoals, ...goalsData.filter(g => g.longTerm)];
+            });
+
+            setShortTermGoals(prev => {
+              const otherGoals = prev.filter(g => g.category !== catDoc.id);
+              return [...otherGoals, ...goalsData.filter(g => !g.longTerm)];
+            });
+
+          });
+
+          unsubscribes.push(unsubscribe);
+        });
+      } catch (error) {
+        console.log("Error fetching goals in real-time:", error);
+      }
+    };
+
+    fetchCategoriesRealtime();
+
+    // Cleanup all listeners on unmount
+    return () => unsubscribes.forEach(unsub => unsub());
+  }, []);
+
+
+
+
+  //🔹Sorting goals by a-z
+  // const selectSortBy = (value: 'A-Z' | 'Time' | 'Date') => {
+  //   let baseData = [...allGoals]; // shallow copy
+
+  //   if (value === 'A-Z') {
+  //     baseData.sort((a: GoalType, b: GoalType) => 
+  //       a.goalName.localeCompare(b.goalName)
+  //     );
+  //   }
+
+  //   if (value === 'Time') {
+  //     baseData.sort((a: GoalType, b: GoalType) => {
+  //       const aTime = a.createdAt?.toMillis ? a.createdAt.toMillis() : Infinity;
+  //       const bTime = b.createdAt?.toMillis ? b.createdAt.toMillis() : Infinity;
+  //       return aTime - bTime;
+  //     });
+  //   }
+
+
+  //   if (value === 'Date') {
+  //     baseData.sort((a: GoalType, b: GoalType) => {
+  //       const aDate = a.startdate?.toMillis ? a.startdate.toMillis() : Infinity;
+  //       const bDate = b.startdate?.toMillis ? b.startdate.toMillis() : Infinity;
+  //       return aDate - bDate;
+  //     });
+  //   }
+
+
+  //   setSortedGoals(baseData)
+  // };
+
+  // const selectGroupBy = (value: 'Days' | 'Priority' | 'No Grouping') => {
+  //   let baseGroup = [...allGoals]
+
+  //   if (value === 'No Grouping') {
+  //     setSortedGoals(baseGroup)
+  //     return
+  //   }
+
+  //   type GroupGoals<T> = T & { groupKey: string }
+  //   let grouped: GroupGoals<GoalType>[] = []
+
+  //   if (value === 'Days') {
+  //     grouped = baseGroup.map(elem => ({
+  //       ...elem,
+  //       groupKey: elem.startdate
+  //         ? elem.startdate.toDate().toDateString() // ✅ convert Timestamp to Date
+  //         : 'No Data'
+  //     }))
+  //   }
+
+  //   if (value === 'Priority') {
+  //     const priorityOrder = ['Highest', 'High', 'Normal']
+  //     baseGroup.sort((a, b) => {
+  //       const aIndex = priorityOrder.indexOf(a.selectedPriority ?? 'Normal')
+  //       const bIndex = priorityOrder.indexOf(b.selectedPriority ?? 'Normal')
+  //       return aIndex - bIndex
+  //     })
+  //     grouped = baseGroup.map(elem => ({ ...elem, groupKey: elem.selectedPriority ?? 'Normal' }))
+  //   }
+
+  //   setGoals(grouped)
+
+  // }
 
 
 
@@ -79,13 +220,13 @@ const Goals = () => {
   return (
     <ThemedView style={styles.container} safe>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 10 }}>
-        <TouchableOpacity >
+        <TouchableOpacity onPress={() => setShowGoalsProgressModal(true)} >
           <ChartNoAxesColumn size={35} stroke={darkMode === 'dark' ? '#34a0a4' : 'black'} />
         </TouchableOpacity>
 
         <ThemedText variant="heading">My Goals</ThemedText>
 
-        <TouchableOpacity >
+        <TouchableOpacity onPress={() => setShowDisplayOptionModal(true)}>
           <SlidersHorizontal size={35} stroke={darkMode === 'dark' ? '#34a0a4' : 'black'} />
         </TouchableOpacity>
       </View>
@@ -116,7 +257,44 @@ const Goals = () => {
       <Spacer height={20} />
 
       <ScrollView>
-        <GoalsLayout />
+          <Animated.View
+            style={{
+              opacity: shortTermAnim,
+              transform:[
+                {translateX: shortTermAnim.interpolate({inputRange: [0, 1], outputRange:[200, 0]})}
+              ],
+              position:"absolute"
+            }}
+          >
+            {shortTermGoals.map((elem, idx) => (
+              <GoalsCard 
+                key={elem.id ?? idx}
+                elem={elem}
+                darkMode={darkMode ?? 'light'}
+                theme={theme}
+
+              />
+            ))}
+          </Animated.View>
+          < Animated.View
+            style={{
+              opacity: longTermAnim,
+              transform:[
+                {translateX: longTermAnim.interpolate({inputRange: [0, 1], outputRange: [-200, 0]})}
+              ]
+            }}
+          >
+            {longTermGoals.map((elem, idx) => (
+              <GoalsCard 
+                key={elem.id ?? idx}
+                elem={elem}
+                darkMode={darkMode ?? 'light'}
+                theme={theme}
+
+              />
+            ))}
+          </Animated.View>
+        
       </ScrollView>
 
       <Pressable
@@ -142,8 +320,18 @@ const Goals = () => {
           },
         ]}
       >
-  <CirclePlus size={28} color="white" strokeWidth={2} />
-</Pressable>
+        <CirclePlus size={28} color="white" strokeWidth={2} />
+      </Pressable>
+
+        <DisplayGoalsOptionModal
+        isVisible={showDisplayOptionModal}
+        onClose={() => setShowDisplayOptionModal(false)}
+        // selectSortBy={selectSortBy}
+        // selectGroupBy={selectGroupBy}
+      />
+
+      <GoalProgressModal isVisible={showGoalsProgressModal} onClose={() => setShowGoalsProgressModal(false)} />
+
 
     </ThemedView>
   )

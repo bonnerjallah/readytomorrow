@@ -1,24 +1,20 @@
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Image, ActivityIndicator } from 'react-native'
-import { router, useLocalSearchParams } from 'expo-router'
-import { useRef, useState, ReactNode, useEffect } from 'react'
+import { StyleSheet, View, TouchableOpacity, ScrollView, Image, ActivityIndicator } from 'react-native'
+import { router } from 'expo-router'
+import { useRef, useState, ReactNode } from 'react'
 import React from 'react'
 
 // 🎨 UI
 import ThemedButton from 'components/ThemedButton'
 import Spacer from 'components/Spacer'
-import ThemedTextInput from 'components/ThemedTextInput'
-import { ChartNoAxesColumn, SlidersHorizontal, Search, SearchIcon, ArrowBigLeft, ChevronRight } from 'lucide-react-native'
+import { ArrowBigLeft, ChevronRight } from 'lucide-react-native'
 import ThemedText from 'components/ThemedText'
 import ThemedView from 'components/ThemedView'
-import { CirclePlus } from 'lucide-react-native'
 
 //⚛️ STATE MANAGEMENT
 import { useTheme } from 'components/ThemeContext'
-import GoalsLayout from 'components/GoalsLayout'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { GoalCategoryAtom, GoalIdeaAtom } from 'atoms/GoalCategoryAtom'
 
-import GoalsBottomSheet from "../../components/GoalsBottomSheet"
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import BottomSheet, { BottomSheetScrollView} from '@gorhom/bottom-sheet'
 
@@ -90,214 +86,214 @@ const SelectedGoalOption = ({ children, snapPoints = ["90%"], index = -1 }: Prop
     const [loadingImages, setLoadingImages] = useState<{ [key: string]: boolean }>({});
 
    
-    
+    console.log("goal category", goalCatogory)
 
     
 
     return (
         <GestureHandlerRootView style={{ flex: 1 }}>
 
-                <ThemedView style={styles.container} safe>
-                    <TouchableOpacity 
-                        onPress={() => router.back()}
-                        style={{top:20, left: 10,  
-                            justifyContent: "center",
-                            alignItems: "center",
-                            borderRadius: 40,
-                            width:"10%"
-                        }}
-                    >
-                        <ArrowBigLeft size={40} stroke="#77d1d2ff" />
-                    </TouchableOpacity>
+            <ThemedView style={styles.container} safe>
+                <TouchableOpacity 
+                    onPress={() => router.back()}
+                    style={{top:20, left: 10,  
+                        justifyContent: "center",
+                        alignItems: "center",
+                        borderRadius: 40,
+                        width:"10%"
+                    }}
+                >
+                    <ArrowBigLeft size={40} stroke="#77d1d2ff" />
+                </TouchableOpacity>
 
 
-                    <ThemedText variant='title' style={{textAlign:"center"}}>Add Goal</ThemedText>
+                <ThemedText variant='title' style={{textAlign:"center"}}>Add Goal</ThemedText>
 
 
-                    <Spacer height={20} />
+                <Spacer height={20} />
 
-                    {goalCatogory?.title === "Work & Career" ? (
-                        <View>
-                            <View style={{ width: "100%", flexDirection: "row", alignItems: "center", columnGap: 10, borderBottomWidth:0.4, paddingBottom: 15 }}>
-                                <Image
-                                    source={goalCatogory.image}
-                                    style={{ width: "15%", height: undefined, aspectRatio: 1, borderRadius: 10 }}
-                                    onLoadStart={() =>
-                                        setLoadingImages(prev => ({ ...prev, [goalCatogory.title]: true }))
-                                    }
-                                    onLoadEnd={() =>
-                                        setLoadingImages(prev => ({ ...prev, [goalCatogory.title  ]: false }))
-                                    }
-                                />
-                                {loadingImages[goalCatogory.title] && (
-                                    <ActivityIndicator
-                                        size="small"
-                                        color={theme.primary}
-                                        style={{ position: "absolute" }} // overlay
-                                    />
-                                )}
-                                <ThemedText variant='subtitle'>{goalCatogory.title}</ThemedText>
-                            </View>
-
-                            <Spacer height={10} />
-
-                            <ScrollView>
-                                {workCareerGoals.map((elem, index) => (
-                                    <View key={index}>
-                                        <TouchableOpacity style={styles.selectionWrapper}
-                                            onPress={() => {
-                                                setGoalIdea(elem)
-                                                router.push("/(goalscreen)/PowerByAI")
-                                            }}
-                                            
-                                        >
-                                            <ThemedText>{elem}</ThemedText>
-                                            <ChevronRight size={25} stroke={theme.button} />
-                                        </TouchableOpacity>
-                                    </View>
-                                ))}
-                            </ScrollView>
-                        </View>
-                    ) : goalCatogory?.title === "Health & Wellness" ? (
-                        <View>
-                            <View style={{ width: "100%", flexDirection: "row", alignItems: "center", columnGap: 10, borderBottomWidth:0.4, paddingBottom: 15 }}>
-                                <Image
-                                    source={goalCatogory.image}
-                                    style={{ width: "15%", height: undefined, aspectRatio: 1, borderRadius: 10 }}
-                                    onLoadStart={() =>
-                                        setLoadingImages(prev => ({ ...prev, [goalCatogory.title]: true }))
-                                    }
-                                    onLoadEnd={() =>
-                                        setLoadingImages(prev => ({ ...prev, [goalCatogory.title  ]: false }))
-                                    }
-                                />
-                                {loadingImages[goalCatogory.title] && (
-                                    <ActivityIndicator
+                {goalCatogory?.title === "Work & Career" ? (
+                    <View>
+                        <View style={{ width: "100%", flexDirection: "row", alignItems: "center", columnGap: 10, borderBottomWidth:0.4, paddingBottom: 15 }}>
+                            <Image
+                                source={goalCatogory.image}
+                                style={{ width: "15%", height: undefined, aspectRatio: 1, borderRadius: 10 }}
+                                onLoadStart={() =>
+                                    setLoadingImages(prev => ({ ...prev, [goalCatogory.title]: true }))
+                                }
+                                onLoadEnd={() =>
+                                    setLoadingImages(prev => ({ ...prev, [goalCatogory.title  ]: false }))
+                                }
+                            />
+                            {loadingImages[goalCatogory.title] && (
+                                <ActivityIndicator
                                     size="small"
                                     color={theme.primary}
                                     style={{ position: "absolute" }} // overlay
-                                    />
-                                )}
-                                <ThemedText variant='subtitle'>{goalCatogory.title}</ThemedText>
-                            </View>
-
-                            <Spacer height={30} />
-
-                            <ScrollView>
-                                {healthWellnessGoals.map((elem, index) => (
-                                    <View key={index}>
-                                        <TouchableOpacity style={styles.selectionWrapper}
-                                            onPress={() => {
-                                                setGoalIdea(elem)
-                                                router.push("/(goalscreen)/PowerByAI")
-                                            }}
-                                        >
-                                            <ThemedText>{elem}</ThemedText>
-                                            <ChevronRight size={25} stroke={theme.button} />
-                                        </TouchableOpacity>
-                                    </View>
-                                ))}
-                            </ScrollView>
-                        </View>
-                    ) : goalCatogory?.title === "Money & Finances" ? (
-                        <View>
-                            <View style={{ width: "100%", flexDirection: "row", alignItems: "center", columnGap: 10, borderBottomWidth:0.4, paddingBottom: 15 }}>
-                                <Image
-                                    source={goalCatogory.image}
-                                    style={{ width: "15%", height: undefined, aspectRatio: 1, borderRadius: 10 }}
-                                    onLoadStart={() =>
-                                        setLoadingImages(prev => ({ ...prev, [goalCatogory.title]: true }))
-                                    }
-                                    onLoadEnd={() =>
-                                        setLoadingImages(prev => ({ ...prev, [goalCatogory.title  ]: false }))
-                                    }
                                 />
-                                {loadingImages[goalCatogory.title] && (
-                                    <ActivityIndicator
-                                        size="small"
-                                        color={theme.primary}
-                                        style={{ position: "absolute" }} // overlay
-                                    />
-                                )}
-                                <ThemedText variant='subtitle'>{goalCatogory.title}</ThemedText>            
-                            </View>
-
-                            <Spacer height={30} />
-
-                            <ScrollView>
-                                {moneyFinanceGoals.map((elem, index) => (
-                                    <View key={index}>
-                                        <TouchableOpacity style={styles.selectionWrapper}
-                                            onPress={() => {
-                                                setGoalIdea(elem)
-                                                router.push("/(goalscreen)/PowerByAI")
-                                            }}
-                                        >
-                                            <ThemedText>{elem}</ThemedText>
-                                            <ChevronRight size={25} stroke={theme.button} />
-                                        </TouchableOpacity>
-                                    </View>
-                                ))}
-                            </ScrollView>
+                            )}
+                            <ThemedText variant='subtitle'>{goalCatogory.title}</ThemedText>
                         </View>
-                        
-                    ) : (
-                        <View>
-                            <View style={{ width: "100%", flexDirection: "row", alignItems: "center", columnGap: 10, borderBottomWidth:0.4, paddingBottom: 15 }}>
-                                <Image
-                                    source={require("../../assets/images/Flux.png")}
-                                    style={{ width: "15%", height: undefined, aspectRatio: 1, borderRadius: 10 }}
-                                    onLoadStart={() =>
-                                        setLoadingImages(prev => ({ ...prev, Flux: true }))
-                                    }
-                                    onLoadEnd={() =>
-                                        setLoadingImages(prev => ({ ...prev, Flux: false }))
-                                    }
+
+                        <Spacer height={10} />
+
+                        <ScrollView>
+                            {workCareerGoals.map((elem, index) => (
+                                <View key={index}>
+                                    <TouchableOpacity style={styles.selectionWrapper}
+                                        onPress={() => {
+                                            setGoalIdea(elem)
+                                            router.push("/(goalscreen)/PowerByAI")
+                                        }}
+                                        
+                                    >
+                                        <ThemedText>{elem}</ThemedText>
+                                        <ChevronRight size={25} stroke={theme.button} />
+                                    </TouchableOpacity>
+                                </View>
+                            ))}
+                        </ScrollView>
+                    </View>
+                ) : goalCatogory?.title === "Health & Wellness" ? (
+                    <View>
+                        <View style={{ width: "100%", flexDirection: "row", alignItems: "center", columnGap: 10, borderBottomWidth:0.4, paddingBottom: 15 }}>
+                            <Image
+                                source={goalCatogory.image}
+                                style={{ width: "15%", height: undefined, aspectRatio: 1, borderRadius: 10 }}
+                                onLoadStart={() =>
+                                    setLoadingImages(prev => ({ ...prev, [goalCatogory.title]: true }))
+                                }
+                                onLoadEnd={() =>
+                                    setLoadingImages(prev => ({ ...prev, [goalCatogory.title  ]: false }))
+                                }
+                            />
+                            {loadingImages[goalCatogory.title] && (
+                                <ActivityIndicator
+                                size="small"
+                                color={theme.primary}
+                                style={{ position: "absolute" }} // overlay
                                 />
-                                {loadingImages.Flux && (
-                                    <ActivityIndicator
-                                        size="small"
-                                        color={theme.primary}
-                                        style={{ position: "absolute" }} // overlay
-                                    />
-                                )}
-                                <ThemedText variant='subtitle'>{goalCatogory?.title}</ThemedText>            
-                            </View>
-
-                            <Spacer height={30} />
-
-                            <ScrollView>
-                                {newGoalIdeas.map((elem, index) => (
-                                    <View key={index}>
-                                        <TouchableOpacity style={styles.selectionWrapper}
-                                            onPress={() => {
-                                                setGoalIdea(elem)
-                                                router.push("/(goalscreen)/PowerByAI")
-                                            }}
-                                        >
-                                            <ThemedText>{elem}</ThemedText>
-                                            <ChevronRight size={25} stroke={theme.button} />
-                                        </TouchableOpacity>
-                                    </View>
-                                ))}
-                            </ScrollView>
+                            )}
+                            <ThemedText variant='subtitle'>{goalCatogory.title}</ThemedText>
                         </View>
-                    )}
+
+                        <Spacer height={30} />
+
+                        <ScrollView>
+                            {healthWellnessGoals.map((elem, index) => (
+                                <View key={index}>
+                                    <TouchableOpacity style={styles.selectionWrapper}
+                                        onPress={() => {
+                                            setGoalIdea(elem)
+                                            router.push("/(goalscreen)/PowerByAI")
+                                        }}
+                                    >
+                                        <ThemedText>{elem}</ThemedText>
+                                        <ChevronRight size={25} stroke={theme.button} />
+                                    </TouchableOpacity>
+                                </View>
+                            ))}
+                        </ScrollView>
+                    </View>
+                ) : goalCatogory?.title === "Money & Finances" ? (
+                    <View>
+                        <View style={{ width: "100%", flexDirection: "row", alignItems: "center", columnGap: 10, borderBottomWidth:0.4, paddingBottom: 15 }}>
+                            <Image
+                                source={goalCatogory.image}
+                                style={{ width: "15%", height: undefined, aspectRatio: 1, borderRadius: 10 }}
+                                onLoadStart={() =>
+                                    setLoadingImages(prev => ({ ...prev, [goalCatogory.title]: true }))
+                                }
+                                onLoadEnd={() =>
+                                    setLoadingImages(prev => ({ ...prev, [goalCatogory.title  ]: false }))
+                                }
+                            />
+                            {loadingImages[goalCatogory.title] && (
+                                <ActivityIndicator
+                                    size="small"
+                                    color={theme.primary}
+                                    style={{ position: "absolute" }} // overlay
+                                />
+                            )}
+                            <ThemedText variant='subtitle'>{goalCatogory.title}</ThemedText>            
+                        </View>
+
+                        <Spacer height={30} />
+
+                        <ScrollView>
+                            {moneyFinanceGoals.map((elem, index) => (
+                                <View key={index}>
+                                    <TouchableOpacity style={styles.selectionWrapper}
+                                        onPress={() => {
+                                            setGoalIdea(elem)
+                                            router.push("/(goalscreen)/PowerByAI")
+                                        }}
+                                    >
+                                        <ThemedText>{elem}</ThemedText>
+                                        <ChevronRight size={25} stroke={theme.button} />
+                                    </TouchableOpacity>
+                                </View>
+                            ))}
+                        </ScrollView>
+                    </View>
+                    
+                ) : (
+                    <View>
+                        <View style={{ width: "100%", flexDirection: "row", alignItems: "center", columnGap: 10, borderBottomWidth:0.4, paddingBottom: 15 }}>
+                            <Image
+                                source={require("../../assets/images/Flux.png")}
+                                style={{ width: "15%", height: undefined, aspectRatio: 1, borderRadius: 10 }}
+                                onLoadStart={() =>
+                                    setLoadingImages(prev => ({ ...prev, Flux: true }))
+                                }
+                                onLoadEnd={() =>
+                                    setLoadingImages(prev => ({ ...prev, Flux: false }))
+                                }
+                            />
+                            {loadingImages.Flux && (
+                                <ActivityIndicator
+                                    size="small"
+                                    color={theme.primary}
+                                    style={{ position: "absolute" }} // overlay
+                                />
+                            )}
+                            <ThemedText variant='subtitle'>{goalCatogory?.title}</ThemedText>            
+                        </View>
+
+                        <Spacer height={30} />
+
+                        <ScrollView>
+                            {newGoalIdeas.map((elem, index) => (
+                                <View key={index}>
+                                    <TouchableOpacity style={styles.selectionWrapper}
+                                        onPress={() => {
+                                            setGoalIdea(elem)
+                                            router.push("/(goalscreen)/PowerByAI")
+                                        }}
+                                    >
+                                        <ThemedText>{elem}</ThemedText>
+                                        <ChevronRight size={25} stroke={theme.button} />
+                                    </TouchableOpacity>
+                                </View>
+                            ))}
+                        </ScrollView>
+                    </View>
+                )}
 
 
-                    <Spacer height={10} />
+                <Spacer height={10} />
 
-                    <ThemedButton style={{width:"70%", marginBottom: 10, alignSelf:"center"}} onPress={() => router.push("/(goalscreen)/SetGoals")}>
-                        <ThemedText style={{color:theme.buttontitle}}>Create My Own</ThemedText>
-                    </ThemedButton>
+                <ThemedButton style={{width:"70%", marginBottom: 10, alignSelf:"center"}} onPress={() => router.push("/(goalscreen)/SetGoals")}>
+                    <ThemedText style={{color:theme.buttontitle}}>Create My Own</ThemedText>
+                </ThemedButton>
 
-                    <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={index} enablePanDownToClose>
-                        <BottomSheetScrollView contentContainerStyle={{ flexGrow: 1 }}>
-                            <ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>{children}</ThemedView>
-                        </BottomSheetScrollView>
-                    </BottomSheet>
+                <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={index} enablePanDownToClose>
+                    <BottomSheetScrollView contentContainerStyle={{ flexGrow: 1 }}>
+                        <ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>{children}</ThemedView>
+                    </BottomSheetScrollView>
+                </BottomSheet>
 
-                </ThemedView>
+            </ThemedView>
         </GestureHandlerRootView>
          
     )
@@ -319,7 +315,7 @@ const styles = StyleSheet.create({
         backgroundColor:"hsla(225, 18%, 39%, 0.4)",
 
         shadowColor: "#000",
-        shadowOpacity: 0.3,
+        shadowOpacity: 0.25,
         shadowOffset: { width: 0, height: 5 },
         shadowRadius: 4,
         elevation: 5,

@@ -26,7 +26,7 @@ const { width, height } = Dimensions.get('window');
 const PowerByAI = () => {
 
   const goalIdea = useAtomValue(GoalIdeaAtom)
-  const {theme} = useTheme()
+  const {theme, darkMode} = useTheme()
 
 
 
@@ -92,15 +92,13 @@ const PowerByAI = () => {
         
         <ThemedButton 
           style={{
-            backgroundColor:"white", 
-            borderWidth: 1, 
-            borderColor: theme.primary, 
+            backgroundColor: darkMode === "dark" ? "white" : theme.tabIconColor, 
             width:"70%"
           }}
           onPress={() => router.push("(goalscreen)/SetGoals")}
         >
-          <ThemedText>No, I'll create it myself</ThemedText>
-        </ThemedButton>
+          <ThemedText style={{color: theme.buttontitle}}>No, I'll create it myself</ThemedText>
+        </ThemedButton >
       </ThemedView>
     </SelectedGoalOption>
         

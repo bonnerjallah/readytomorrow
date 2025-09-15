@@ -1,5 +1,5 @@
-import { StyleSheet, Text, View, TouchableOpacity, Platform, ScrollView, Image, Animated, TouchableWithoutFeedback, Easing, ActivityIndicator, Alert } from 'react-native'
-import React from 'react'
+import { StyleSheet, Text, View, TouchableOpacity, Platform, ScrollView, Image, Animated, TouchableWithoutFeedback, Easing, ActivityIndicator, Alert, Pressable } from 'react-native'
+import React, { useEffect } from 'react'
 import { router } from 'expo-router'
 import { useState } from 'react'
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -17,25 +17,38 @@ import ThemedView from 'components/ThemedView'
 
 //⚛️ STATE MANAGEMENT
 import { useTheme } from 'components/ThemeContext'
+import { useAtomValue, useAtom } from 'jotai';
+import { GoalIdeaAtom, GoalCategoryAtom } from 'atoms/GoalCategoryAtom';
 
 // 🔥 FIREBASE
 import { auth, db } from 'firebaseConfig';
 import { collection, doc, setDoc, Timestamp, serverTimestamp } from 'firebase/firestore';
 
-
+//🔤TYPES
 type GoalType = {
   categoryImage: string | null;
   category: string;
   goalName: string;
   note: string;
+  selectedPriority: string;
   targetDate: Timestamp;
   startdate: Timestamp;
   longTerm: boolean;
   createdAt?: Timestamp | ReturnType<typeof serverTimestamp>; // allow serverTimestamp
 };
 
+type CategoryType = {
+    id?: number;
+    title: string;
+    image?: any; // ImageSourcePropType if using react-native images
+    backgroundColor?: string;
+}
+
 
 const SetGoals = () => {
+
+    // const preSelectedGoalIdea = useAtomValue(GoalIdeaAtom)
+    // const preSelectedCategory = useAtomValue(GoalCategoryAtom) as CategoryType | null
 
     const {theme, darkMode} = useTheme()
 
@@ -51,21 +64,25 @@ const SetGoals = () => {
     const [longTerm, setLongTerm] = useState(true)
     const [goalName, setGoalName] = useState<string>("")
     const [note, setNote] = useState<string>("")
-    
+    const [selectedPriority, setSelectedPriority] = useState<"Normal" | "High" | "Highest" | "">("Normal");
     const [goalImage, setGoalImage] = useState<string | null>(null)
+    const [sugestedGoalIdea, setSugestedGoalIdeaAtom] = useAtom(GoalIdeaAtom);
+    const [suggestedCategory, setSuggestedCategoryAtom] = useAtom(GoalCategoryAtom);
 
     const [loadingImages, setLoadingImages] = useState<{ [key: string]: boolean }>({});
+
+    console.log("suggested category", suggestedCategory)
+    console.log("suggested goal idea", sugestedGoalIdea)
     
 
     //🔹Dropdown
     const [dropdowns, setDropdowns] = useState([
-        { open: false, height: new Animated.Value(0), opacity: new Animated.Value(0) }, // Date
-        { open: false, height: new Animated.Value(0), opacity: new Animated.Value(0) }, // Part of day
-        { open: false, height: new Animated.Value(0), opacity: new Animated.Value(0) }, // Time picker
-        { open: false, height: new Animated.Value(0), opacity: new Animated.Value(0) }, // Duration
-        { open: false, height: new Animated.Value(0), opacity: new Animated.Value(0) }, // Priority
+        { open: false, height: new Animated.Value(0), opacity: new Animated.Value(0) }, 
+        { open: false, height: new Animated.Value(0), opacity: new Animated.Value(0) }, 
+        { open: false, height: new Animated.Value(0), opacity: new Animated.Value(0) }, 
+       
     ]);
-    const dropdownHeights = [330, 330, 350, 200, 80];
+    const dropdownHeights = [395, 390, 80];
 
     const toggleDropDown = (index: number) => {
     const currentDropdown = dropdowns[index]; // this is the object with open, height, opacity
@@ -111,6 +128,8 @@ const SetGoals = () => {
         }
     };
 
+    //🔹Pressable helper function
+    const handlePriority = (priority: "Normal" | "High" | "Highest") => setSelectedPriority(priority);
 
     //🔹Date Format
     const formatDate = (dateStr?: string) => {
@@ -142,37 +161,56 @@ const SetGoals = () => {
 
     //🔹Submit Goal
     const handleGoalSubmit = async () => {
-        console.log("submiting goals")
-
-        const userId = auth.currentUser?.uid
-        if(!userId) return
+        const userId = auth.currentUser?.uid;
+        if (!userId) return;
 
         try {
-
-            if (!category.trim() || !goalName.trim() || !note.trim()) {
+            const chosenCategory = suggestedCategory?.title.trim() || category.trim();
+            if (!chosenCategory || !(sugestedGoalIdea || goalName.trim())) {
                 Alert.alert("All fields are required");
-            return;
-    }
+                return;
+            }
 
-            const goalCol = collection(db, "users", userId, "goals")
-            const goalRef = doc(goalCol)
+            // Reference to "goals" collection (categories collection)
+            const goalsCol = collection(db, "users", userId, "goals");
+
+            // Category document reference (doc ID = category name)
+            const categoryRef = doc(goalsCol, chosenCategory);
+
+            // Upsert category doc
+            await setDoc(
+            categoryRef,
+            {
+                category: category.trim(),
+                categoryImage: goalImage || null,
+                createdAt: serverTimestamp(),
+            },
+            { merge: true } // 👈 merge ensures existing category is not overwritten
+            );
+
+            // Add goal under this category
+            const categoryGoalsCol = collection(categoryRef, "goal");
+            const goalRef = doc(categoryGoalsCol); // auto-ID for each goal
 
             const goalData: GoalType = {
-                categoryImage: goalImage,
-                category: category.trim(),
-                goalName: goalName.trim(),
+                category: chosenCategory,
+                categoryImage: suggestedCategory?.image ||  goalImage || null,
+                goalName: sugestedGoalIdea || goalName.trim(),
                 note: note.trim(),
+                selectedPriority,
                 targetDate: Timestamp.fromDate(new Date(targetDate)),
                 startdate: Timestamp.fromDate(new Date(selectedStartDate)),
                 longTerm,
                 createdAt: serverTimestamp(),
             };
 
+            await setDoc(goalRef, goalData);
 
-            await setDoc(goalRef, goalData)
-
+            // Reset fields
             const today = new Date();
-            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+            const todayStr = `${today.getFullYear()}-${String(
+            today.getMonth() + 1
+            ).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
             setGoalImage(null);
             setCategory("");
@@ -181,13 +219,36 @@ const SetGoals = () => {
             setTargetDate(todayStr);
             setSelectedStartDate(todayStr);
             setLongTerm(true);
+            setSelectedPriority("");
+            setSugestedGoalIdeaAtom("");
+            setSuggestedCategoryAtom(null );
 
-            router.replace("/Goals")
-            
+            router.replace("/Goals");
+
         } catch (error) {
-            console.log("Error submiting goals", error)
+            console.log("Error submitting goals", error);
         }
-    }
+    };
+
+
+
+    const handleClearInputField = () => {
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+        setGoalImage(null);
+        setCategory("");
+        setGoalName("");
+        setNote("");
+        setTargetDate(todayStr);
+        setSelectedStartDate(todayStr);
+        setLongTerm(true);
+        setSelectedPriority("");
+        setSugestedGoalIdeaAtom("");
+        setSuggestedCategoryAtom(null );
+    };
+
+
 
 
 
@@ -195,8 +256,13 @@ const SetGoals = () => {
   return (
     <ThemedView style={styles.container} safe>
         <TouchableOpacity 
-            onPress={() => router.back()}
-            style={{top:20, left: 10, 
+            onPress={() => {
+                handleClearInputField()
+                router.back()
+            }}
+            style={{
+                top:20, 
+                left: 10, 
                 justifyContent: "center",
                 alignItems: "center",
                 borderRadius: 40,
@@ -213,7 +279,7 @@ const SetGoals = () => {
         <ScrollView style={{paddingHorizontal: 10}}>
             <View style={{width: "100%", height:100, alignSelf:"center",}}>
                 <Image 
-                    source={goalImage ? goalImage : require("../../assets/images/manwriting.png")} 
+                    source={suggestedCategory ? suggestedCategory.image : goalImage ? goalImage : require("../../assets/images/manwriting.png")} 
                     style={{ width: "100%", height: 200, borderRadius: 10 }}
                     resizeMode="cover"
                     onLoadStart={() => {
@@ -241,21 +307,20 @@ const SetGoals = () => {
 
             <View>
 
-                <View >
-                    <ThemedTextInput
-                        placeholder="Category"
-                        style={[styles.inputStyle,{backgroundColor:theme.background}]}
-                        value={category}
-                        onChangeText={(text) => setCategory(String(text))}
-                    />
-                </View>
+                <ThemedTextInput
+                    placeholder="Category"
+                    style={[styles.inputStyle,{backgroundColor:theme.background}]}
+                    value={category || suggestedCategory?.title || ""}
+                    onChangeText={text => setCategory(text)}
+
+                />
 
                 <Spacer height={15} />
 
                 <ThemedTextInput 
                     placeholder='Enter Goal Name'
                     style={[styles.inputStyle,{backgroundColor:theme.background}]}
-                    value={goalName}
+                    value={ goalName || sugestedGoalIdea || ""}
                     onChangeText={(text) => setGoalName(String(text))}
                 />
 
@@ -271,6 +336,36 @@ const SetGoals = () => {
                 <Spacer height={15} />
 
                 <TouchableWithoutFeedback>
+                    <View style={[styles.inputStyle, { backgroundColor: theme.inputBackground, borderRadius: 20 }]}>
+                        <TouchableOpacity style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }} onPress={() => toggleDropDown(2)}>
+                        <ThemedText variant='subtitle'>Priority</ThemedText>
+                        <ThemedText variant='smallertitle'>{selectedPriority}</ThemedText>
+                        </TouchableOpacity>
+
+                        <Spacer height={15} />
+
+                        <Animated.View style={{ height: dropdowns[2].height, opacity: dropdowns[2].opacity, overflow: "hidden" }}>
+                            <View style={{ flexDirection: "row", justifyContent: "space-between", borderTopWidth: 0.2 }}>
+                                {["Normal", "High", "Highest"].map((p) => (
+                                <Pressable key={p} onPress={() => handlePriority(p as any)} style={({ pressed }) => ({
+                                    ...styles.timeOfDaySelector,
+                                    marginTop: 20,
+                                    borderWidth: 0.2,
+                                    borderColor: theme.text,
+                                    backgroundColor: pressed || selectedPriority === p ? theme.dropdownBackground : theme.inputBackground
+                                })}>
+                                    <ThemedText variant="smallertitle">{p}</ThemedText>
+                                </Pressable>
+                                ))}
+                            </View>
+                        </Animated.View>
+                    </View>
+                </TouchableWithoutFeedback>
+
+                <Spacer height={15} />
+
+
+                <TouchableWithoutFeedback>
                     <View >
                         <View style={[styles.inputStyle, { backgroundColor: theme.inputBackground, borderRadius: 20 }]}>
                             <TouchableOpacity 
@@ -278,7 +373,24 @@ const SetGoals = () => {
                                 onPress={() => toggleDropDown(0)}
                                 >
                                 <ThemedText>Target Date</ThemedText>
-                                <Plus size={20} stroke={theme.tabIconColor}/>
+
+                                {targetDate.length > 0 ? (
+                                    <View style={{ flexDirection: "row", columnGap: 5, alignItems: "center" }}>
+                                        {(() => {
+                                        const { weekday, formatedDate } = formatDate(targetDate);
+                                        return (
+                                            <>
+                                            <ThemedText variant="smallertitle">{weekday}</ThemedText>
+                                            <ThemedText>|</ThemedText>
+                                            <ThemedText variant="smallertitle">{formatedDate}</ThemedText>
+                                            </>
+                                        );
+                                        })()}
+                                    </View>
+                                    ) : (
+                                    <Plus size={20} stroke={theme.tabIconColor}/>
+                                )}
+
                             </TouchableOpacity>
 
 
@@ -288,35 +400,38 @@ const SetGoals = () => {
 
                                 <View style={{flexDirection:"row", justifyContent:"space-between"}}>
 
-                                <ThemedButton 
-                                    style={{
-                                        width: "45%",
-                                        height: 45,
-                                        alignItems: "center",
-                                        backgroundColor: longTerm ? theme.primary : "#ced4da",
-                                    }}
-                                    onPress={() => setLongTerm(true)}
-                                    >
-                                    <ThemedText style={{ color: theme.buttontitle, fontSize: 15 }}>
-                                        Long Term
-                                    </ThemedText>
-                                </ThemedButton>
+                                    <ThemedButton 
+                                        style={{
+                                            width: "45%",
+                                            height: 45,
+                                            alignItems: "center",
+                                            backgroundColor: longTerm ? theme.primary : "#ced4da",
+                                        }}
+                                        onPress={() => setLongTerm(true)}
+                                        >
+                                        <ThemedText style={{ color: theme.buttontitle, fontSize: 15 }}>
+                                            Long Term
+                                        </ThemedText>
+                                    </ThemedButton>
 
-                                <ThemedButton 
-                                    style={{
-                                        width: "45%",
-                                        height: 45,
-                                        alignItems: "center",
-                                        backgroundColor: !longTerm ? theme.primary : "#ced4da",
-                                    }}
-                                    onPress={() => setLongTerm(false)}
-                                    >
-                                    <ThemedText style={{ color: theme.buttontitle, fontSize: 15 }}>
-                                        Weekly Objectives
-                                    </ThemedText>
-                                </ThemedButton>
+                                    <ThemedButton 
+                                        style={{
+                                            width: "45%",
+                                            height: 45,
+                                            alignItems: "center",
+                                            backgroundColor: !longTerm ? theme.primary : "#ced4da",
+                                        }}
+                                        onPress={() => setLongTerm(false)}
+                                        >
+                                        <ThemedText style={{ color: theme.buttontitle, fontSize: 15 }}>
+                                            Weekly Objectives
+                                        </ThemedText>
+                                    </ThemedButton>
 
                                 </View>
+
+                                <Spacer height={15} />
+
                                 <DateTimePicker 
                                     value={targetDate ? (() => {
                                         const [year, month, day] = targetDate.split("-").map(Number);
@@ -324,7 +439,6 @@ const SetGoals = () => {
                                     })() : new Date()}
                                     mode="date"
                                     display={Platform.OS === "ios" ? "inline" : "spinner"}
-                                    textColor={darkMode === "dark" ? "white" : "black"}
                                     onChange={(_e, date) => {
                                         if (_e.type === "set" && date) {
                                         const year = date.getFullYear();
@@ -333,7 +447,11 @@ const SetGoals = () => {
                                         setTargetDate(`${year}-${month}-${day}`);
                                         }
                                     }}
-                                    style={{ alignSelf: "center", }}
+                                    style={{
+                                        alignSelf: "center",
+                                        backgroundColor: darkMode === "dark" ? theme.primary : "white",
+                                        borderRadius: 10
+                                    }}
                                 />
                             </Animated.View>
                         </View>
@@ -348,7 +466,7 @@ const SetGoals = () => {
                                 <ThemedText>Start Date</ThemedText>
                                 <View style={{ flexDirection: "row", columnGap: 5, alignItems: "center" }}>
                                     {(() => {
-                                    const { weekday, formatedDate } = formatDate(targetDate);
+                                    const { weekday, formatedDate } = formatDate(selectedStartDate);
                                     return (
                                         <>
                                         <ThemedText variant="smallertitle">{weekday}</ThemedText>
@@ -365,7 +483,7 @@ const SetGoals = () => {
                             <Animated.View style={{ height: dropdowns[1].height, opacity: dropdowns[1].opacity, overflow: "hidden" }}>
                                 <DateTimePicker 
                                     value={selectedStartDate ? (() => {
-                                        const [year, month, day] = targetDate.split("-").map(Number);
+                                        const [year, month, day] = selectedStartDate.split("-").map(Number);
                                         return new Date(year, month - 1, day);
                                     })() : new Date()}
                                     mode="date"
@@ -379,7 +497,11 @@ const SetGoals = () => {
                                         setSelectedStartDate(`${year}-${month}-${day}`);
                                         }
                                     }}
-                                    style={{ alignSelf: "center" }}
+                                    style={{
+                                        alignSelf: "center",
+                                        backgroundColor: darkMode === "dark" ? theme.primary : "white",
+                                        borderRadius: 10
+                                    }}                                
                                 />
                             </Animated.View>
                         </View>
@@ -424,5 +546,14 @@ const styles = StyleSheet.create({
         borderRadius: 20, 
         padding: 10 
     },
+
+    timeOfDaySelector: { 
+        borderRadius: 10, 
+        width: "30%", 
+        height: 30, 
+        alignItems: "center", 
+        justifyContent: "center" 
+    }
+
 
 })

@@ -1,6 +1,6 @@
 import { ActivityIndicator, Image, ImageBackground, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { router } from 'expo-router'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import BottomSheet, { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 
 
@@ -23,6 +23,19 @@ import { useTheme } from 'components/ThemeContext'
 import { useSetAtom } from 'jotai';
 import { GoalCategoryAtom } from '../../atoms/GoalCategoryAtom';
 
+//🔥FIREBASE
+import { auth, db } from 'firebaseConfig';
+import { collection, orderBy, onSnapshot, query, Timestamp } from 'firebase/firestore';
+
+//🔤 TYPE
+
+type CategoryType = {
+  id: string;
+  category: string;
+  categoryImage: string | null;
+  createdAt?: any; // optional serverTimestamp
+};
+
 // Add metadata for each image
 const goalCategoriesOptions = [
   { id: 1, title: "Work & Career", image: businessMan,  backgroundColor:"rgba(204, 227, 222, 0.3)" },
@@ -38,9 +51,31 @@ const AddGoals = () => {
     const {theme} = useTheme()
 
     const [loadingImages, setLoadingImages] = useState<{ [key: string]: boolean }>({});
-    const [customCatogery, setCustomCatogery] = useState([])
+    const [customCategory, setCustomCatogery] = useState<CategoryType[]>([]);
 
     const setGoalCategory = useSetAtom(GoalCategoryAtom)
+
+    //🔹Fetch custom categories
+    useEffect(() => {
+        const userId = auth.currentUser?.uid;
+        if (!userId) return;
+
+        const categoriesCol = collection(db, "users", userId, "goals"); // categories live here
+        const unsubscribe = onSnapshot(categoriesCol, (snapshot) => {
+            const categoriesData = snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+            })) as CategoryType[];
+
+            setCustomCatogery(categoriesData);
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+
+
+
 
   return (
     <ThemedView style={styles.container} safe>
@@ -68,6 +103,7 @@ const AddGoals = () => {
                 key={goal.id}
                 style={[styles.goalOptionWrapper, {backgroundColor: goal.backgroundColor, padding:5}]}
                 onPress={() => {
+                    console.log("goal", goal)
                    setGoalCategory(goal)
                    router.push("(goalscreen)/SelectedGoalOption")
                 }}
@@ -84,10 +120,10 @@ const AddGoals = () => {
                             }}
                             resizeMode="contain"
                             onLoadStart={() =>
-                            setLoadingImages(prev => ({ ...prev, [goal.id]: true }))
+                                setLoadingImages(prev => ({ ...prev, [goal.id]: true }))
                             }
                             onLoadEnd={() =>
-                            setLoadingImages(prev => ({ ...prev, [goal.id]: false }))
+                                setLoadingImages(prev => ({ ...prev, [goal.id]: false }))
                             }
                         />
 
@@ -110,9 +146,9 @@ const AddGoals = () => {
             </TouchableOpacity>
         ))}
 
-        {customCatogery.length > 0 && customCatogery.map(elem => (
+        {customCategory.length > 0 && customCategory.map((elem, idx)=> (
             <TouchableOpacity
-                key={elem}
+                key={idx}
                 style={[styles.goalOptionWrapper, {backgroundColor:"#cbc0d3", padding:5}]}
             >
                 <View style={{flexDirection:"row", width:"85%", alignItems:"center"}}>
@@ -144,7 +180,7 @@ const AddGoals = () => {
                     </View>
 
                     <View style={{marginLeft: 10}}>
-                        <ThemedText variant='subtitle'>{elem}</ThemedText>
+                        <ThemedText variant='subtitle'>{elem.category}</ThemedText>
                     </View>
                </View>
                 

@@ -22,7 +22,7 @@ import { doc, updateDoc } from "firebase/firestore";
 
 // ⚛️ STATE MANAGEMENT
 import { useTheme } from "./ThemeContext";
-import { useAtom, useAtomValue, useSetAtom } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { taskAtom } from "atoms/selectedTaskAtom";
 import { routineAtom } from "atoms/selectedTaskAtom";
 import { selectedItemTypeAtom } from "../atoms/selectedTaskAtom";

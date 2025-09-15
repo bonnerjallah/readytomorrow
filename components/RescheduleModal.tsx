@@ -217,7 +217,12 @@ const RescheduleModal = ({isVisible, onClose}: RescheduleModalProps) => {
                             setSelectedDate(`${year}-${month}-${day}`);
                         }
                         }}
-                        style={{ alignSelf: "center" }}
+                        style={{
+                            alignSelf: "center",
+                            backgroundColor: darkMode === "dark" ? theme.primary : "white",
+                            borderRadius: 10,
+                            marginTop: 15
+                        }} 
                     />
                 </View>
 

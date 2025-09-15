@@ -135,10 +135,21 @@ export default TaskCard;
 
 const styles = StyleSheet.create({
   taskCard: {
-    borderWidth: 1,
+    borderWidth: 0.4,
     borderRadius: 10,
-    marginBottom: 10,
+    marginBottom: 15,
     minHeight: 60,
+
+    backgroundColor: "hsla(225, 18%, 39%, 0.4)",
+    
+    // Android shadow
+    elevation: 5,
+
+    // iOS shadow
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
   },
   taskCardBottom: {
     flexDirection: "row",
