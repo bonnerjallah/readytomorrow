@@ -154,7 +154,6 @@ const Activities = () => {
     }
   }
 
-
   // 🔹 Sorting
   const selectSortBy = (value: 'A-Z' | 'Time' | 'Date') => {
     let baseData = showRoutines ? [...allRoutines] : [...allActivities]

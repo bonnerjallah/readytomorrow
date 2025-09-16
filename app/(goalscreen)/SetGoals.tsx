@@ -5,8 +5,6 @@ import { useState } from 'react'
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as ImagePicker from 'expo-image-picker';
 
-
-
 // 🎨 UI
 import ThemedButton from 'components/ThemedButton'
 import Spacer from 'components/Spacer'
@@ -37,18 +35,9 @@ type GoalType = {
   createdAt?: Timestamp | ReturnType<typeof serverTimestamp>; // allow serverTimestamp
 };
 
-type CategoryType = {
-    id?: number;
-    title: string;
-    image?: any; // ImageSourcePropType if using react-native images
-    backgroundColor?: string;
-}
 
 
 const SetGoals = () => {
-
-    // const preSelectedGoalIdea = useAtomValue(GoalIdeaAtom)
-    // const preSelectedCategory = useAtomValue(GoalCategoryAtom) as CategoryType | null
 
     const {theme, darkMode} = useTheme()
 
@@ -70,9 +59,6 @@ const SetGoals = () => {
     const [suggestedCategory, setSuggestedCategoryAtom] = useAtom(GoalCategoryAtom);
 
     const [loadingImages, setLoadingImages] = useState<{ [key: string]: boolean }>({});
-
-    console.log("suggested category", suggestedCategory)
-    console.log("suggested goal idea", sugestedGoalIdea)
     
 
     //🔹Dropdown
@@ -146,18 +132,33 @@ const SetGoals = () => {
 
     //🔹Image Picker
     const pickImage = async () => {
-        const result = await ImagePicker.launchImageLibraryAsync({
-            mediaTypes: ["images"],
-            allowsEditing: true,
-            aspect: [1, 1],
-            quality: 1
-        })
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            alert('Permission denied!');
+            return;
+        }
 
-         if (!result.canceled) {
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            quality: 1,
+        });
+
+        if (!result.canceled) {
             const selectedImage = result.assets[0].uri
             setGoalImage(selectedImage);
         }
     }
+
+    //🔹selected image value
+    const imageSource = (image: string | number | null | undefined) => {
+        if (!image) return require("../../assets/images/manwriting.png");
+        return typeof image === "number" ? image : { uri: image };
+    };
+
+    // store the current image in a variable
+    const currentImage = suggestedCategory?.image || goalImage;
+
 
     //🔹Submit Goal
     const handleGoalSubmit = async () => {
@@ -165,6 +166,8 @@ const SetGoals = () => {
         if (!userId) return;
 
         try {
+            const backupImage = require("../../assets/images/manwriting.png")
+
             const chosenCategory = suggestedCategory?.title.trim() || category.trim();
             if (!chosenCategory || !(sugestedGoalIdea || goalName.trim())) {
                 Alert.alert("All fields are required");
@@ -179,13 +182,13 @@ const SetGoals = () => {
 
             // Upsert category doc
             await setDoc(
-            categoryRef,
-            {
-                category: category.trim(),
-                categoryImage: goalImage || null,
-                createdAt: serverTimestamp(),
-            },
-            { merge: true } // 👈 merge ensures existing category is not overwritten
+                categoryRef,
+                {
+                    category: category.trim(),
+                    categoryImage: suggestedCategory?.image || goalImage || backupImage,
+                    createdAt: serverTimestamp(),
+                },
+                { merge: true } // 👈 merge ensures existing category is not overwritten
             );
 
             // Add goal under this category
@@ -230,8 +233,7 @@ const SetGoals = () => {
         }
     };
 
-
-
+    //🔹Clear input filed on back
     const handleClearInputField = () => {
         const today = new Date();
         const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
@@ -248,10 +250,7 @@ const SetGoals = () => {
         setSuggestedCategoryAtom(null );
     };
 
-
-
-
-
+    
 
   return (
     <ThemedView style={styles.container} safe>
@@ -266,7 +265,7 @@ const SetGoals = () => {
                 justifyContent: "center",
                 alignItems: "center",
                 borderRadius: 40,
-                width:"10%"
+                width:50,
             }}
         >
             <ArrowBigLeft size={40} stroke="#77d1d2ff" />
@@ -279,18 +278,18 @@ const SetGoals = () => {
         <ScrollView style={{paddingHorizontal: 10}}>
             <View style={{width: "100%", height:100, alignSelf:"center",}}>
                 <Image 
-                    source={suggestedCategory ? suggestedCategory.image : goalImage ? goalImage : require("../../assets/images/manwriting.png")} 
+                    source={imageSource(currentImage)} 
                     style={{ width: "100%", height: 200, borderRadius: 10 }}
                     resizeMode="cover"
                     onLoadStart={() => {
-                        setLoadingImages(prev => ({ ...prev, flux: true }))
+                        setLoadingImages(prev => ({ ...prev, [currentImage]: true }))
                     }}
                     onLoadEnd={() => {
-                        setLoadingImages(prev => ({ ...prev, flux: false }))
+                        setLoadingImages(prev => ({ ...prev, [currentImage]: false }))
                     }}
                 />
 
-                {loadingImages.flux && (
+                {loadingImages[currentImage] && (
                     <ActivityIndicator
                         size="large"
                         color={theme.primary}
@@ -367,6 +366,56 @@ const SetGoals = () => {
 
                 <TouchableWithoutFeedback>
                     <View >
+                        <View style={[styles.inputStyle, { backgroundColor: theme.inputBackground, borderRadius: 20 }]}>
+                            <TouchableOpacity 
+                                style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", height: 20 }}
+                                onPress={() => toggleDropDown(1)}
+                                >
+                                <ThemedText>Start Date</ThemedText>
+                                <View style={{ flexDirection: "row", columnGap: 5, alignItems: "center" }}>
+                                    {(() => {
+                                    const { weekday, formatedDate } = formatDate(selectedStartDate);
+                                    return (
+                                        <>
+                                        <ThemedText variant="smallertitle">{weekday}</ThemedText>
+                                        <ThemedText>|</ThemedText>
+                                        <ThemedText variant="smallertitle">{formatedDate}</ThemedText>
+                                        </>
+                                    );
+                                    })()}
+                                </View>
+                            </TouchableOpacity>
+
+                            <Spacer height={15} />
+
+                            <Animated.View style={{ height: dropdowns[1].height, opacity: dropdowns[1].opacity, overflow: "hidden" }}>
+                                <DateTimePicker 
+                                    value={selectedStartDate ? (() => {
+                                        const [year, month, day] = selectedStartDate.split("-").map(Number);
+                                        return new Date(year, month - 1, day);
+                                    })() : new Date()}
+                                    mode="date"
+                                    display={Platform.OS === "ios" ? "inline" : "spinner"}
+                                    textColor={darkMode === "dark" ? "white" : "black"}
+                                    onChange={(_e, date) => {
+                                        if (_e.type === "set" && date) {
+                                        const year = date.getFullYear();
+                                        const month = String(date.getMonth() + 1).padStart(2, "0");
+                                        const day = String(date.getDate()).padStart(2, "0");
+                                        setSelectedStartDate(`${year}-${month}-${day}`);
+                                        }
+                                    }}
+                                    style={{
+                                        alignSelf: "center",
+                                        backgroundColor: darkMode === "dark" ? theme.primary : "white",
+                                        borderRadius: 10
+                                    }}                                
+                                />
+                            </Animated.View>
+                        </View>
+
+                        <Spacer height={15} />
+
                         <View style={[styles.inputStyle, { backgroundColor: theme.inputBackground, borderRadius: 20 }]}>
                             <TouchableOpacity 
                                 style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", height: 25 }}
@@ -458,63 +507,11 @@ const SetGoals = () => {
 
                         <Spacer height={15} />
 
-                        <View style={[styles.inputStyle, { backgroundColor: theme.inputBackground, borderRadius: 20 }]}>
-                            <TouchableOpacity 
-                                style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", height: 20 }}
-                                onPress={() => toggleDropDown(1)}
-                                >
-                                <ThemedText>Start Date</ThemedText>
-                                <View style={{ flexDirection: "row", columnGap: 5, alignItems: "center" }}>
-                                    {(() => {
-                                    const { weekday, formatedDate } = formatDate(selectedStartDate);
-                                    return (
-                                        <>
-                                        <ThemedText variant="smallertitle">{weekday}</ThemedText>
-                                        <ThemedText>|</ThemedText>
-                                        <ThemedText variant="smallertitle">{formatedDate}</ThemedText>
-                                        </>
-                                    );
-                                    })()}
-                                </View>
-                            </TouchableOpacity>
-
-                            <Spacer height={15} />
-
-                            <Animated.View style={{ height: dropdowns[1].height, opacity: dropdowns[1].opacity, overflow: "hidden" }}>
-                                <DateTimePicker 
-                                    value={selectedStartDate ? (() => {
-                                        const [year, month, day] = selectedStartDate.split("-").map(Number);
-                                        return new Date(year, month - 1, day);
-                                    })() : new Date()}
-                                    mode="date"
-                                    display={Platform.OS === "ios" ? "inline" : "spinner"}
-                                    textColor={darkMode === "dark" ? "white" : "black"}
-                                    onChange={(_e, date) => {
-                                        if (_e.type === "set" && date) {
-                                        const year = date.getFullYear();
-                                        const month = String(date.getMonth() + 1).padStart(2, "0");
-                                        const day = String(date.getDate()).padStart(2, "0");
-                                        setSelectedStartDate(`${year}-${month}-${day}`);
-                                        }
-                                    }}
-                                    style={{
-                                        alignSelf: "center",
-                                        backgroundColor: darkMode === "dark" ? theme.primary : "white",
-                                        borderRadius: 10
-                                    }}                                
-                                />
-                            </Animated.View>
-                        </View>
-
-                        <Spacer height={15} />
-
-                        
-
                     </View>
-                    
-                    
                 </TouchableWithoutFeedback> 
+
             </View>
+
         </ScrollView>
 
         <Spacer height={40} />

@@ -32,4 +32,4 @@ export const GoalCategoryAtom = atom<Goal | null>(null);
 // ✅ Atom to hold all goals
 export const GoalsAtom = atom<GoalType[]>([]);
 
-export const SelectedGoalAtom = atom<GoalType[]>([])
+export const SelectedGoalAtom = atom<GoalType | null>(null)

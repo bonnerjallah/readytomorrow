@@ -49,7 +49,7 @@ const Goals = () => {
 
   const {theme, darkMode} = useTheme()
 
-    const setGoals = useSetAtom(GoalsAtom);
+  const setGoals = useSetAtom(GoalsAtom);
 
   const [showWeekLyObjectivies, setShowWeekLyObjectivies] = useState(false)
   const [showDisplayOptionModal, setShowDisplayOptionModal] = useState(false)
@@ -256,23 +256,21 @@ const Goals = () => {
 
       <Spacer height={20} />
 
-      <ScrollView>
+      <ScrollView  contentContainerStyle={{ alignItems: 'center'}}>
           <Animated.View
             style={{
               opacity: shortTermAnim,
               transform:[
                 {translateX: shortTermAnim.interpolate({inputRange: [0, 1], outputRange:[200, 0]})}
               ],
-              position:"absolute"
+              position:"absolute",
+              width:'100%'
             }}
           >
             {shortTermGoals.map((elem, idx) => (
               <GoalsCard 
                 key={elem.id ?? idx}
                 elem={elem}
-                darkMode={darkMode ?? 'light'}
-                theme={theme}
-
               />
             ))}
           </Animated.View>
@@ -281,16 +279,14 @@ const Goals = () => {
               opacity: longTermAnim,
               transform:[
                 {translateX: longTermAnim.interpolate({inputRange: [0, 1], outputRange: [-200, 0]})}
-              ]
+              ],
+              width:'100%'
             }}
           >
             {longTermGoals.map((elem, idx) => (
               <GoalsCard 
                 key={elem.id ?? idx}
                 elem={elem}
-                darkMode={darkMode ?? 'light'}
-                theme={theme}
-
               />
             ))}
           </Animated.View>

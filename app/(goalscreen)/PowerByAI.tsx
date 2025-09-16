@@ -52,7 +52,7 @@ const PowerByAI = () => {
               justifyContent: "center",
               alignItems: "center",
               borderRadius: 40,
-              width:"10%",
+              width:50,
               position:'absolute'
           }}
       >

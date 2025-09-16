@@ -10,6 +10,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 // ⚛️STATE MANAGEMENT
 import { useSetAtom } from 'jotai';
 import { SelectedGoalAtom } from 'atoms/GoalCategoryAtom';
+import { useTheme } from './ThemeContext';
 
 
 //🎨 COMPONENT
@@ -21,17 +22,23 @@ import ThemedView from './ThemedView';
 // 🔤 TYPE
 type GoalsCardProps = {
   elem: any;         
-  darkMode: string
-  theme: any;   
+  
 };
 
-const GoalsCard: React.FC<GoalsCardProps> = ({elem, darkMode, theme}) => {
+const GoalsCard: React.FC<GoalsCardProps> = ({elem}) => {
+
+    const {theme, darkMode} = useTheme()
 
     const setSelectedAtom = useSetAtom(SelectedGoalAtom)
 
 
     const [loadingImage, setLoadingImages] = useState<{[key: string] : boolean}>()
 
+    const imageSource  = (image: string | number | null | undefined) => {
+        if (!image) return require("../assets/images/manwriting.png");
+
+        return typeof image === "number" ? image : { uri: image };
+    };
 
 
   return (
@@ -50,7 +57,7 @@ const GoalsCard: React.FC<GoalsCardProps> = ({elem, darkMode, theme}) => {
                     <View style={{flexDirection:"row", justifyContent:"space-between", borderBottomWidth: 0.5, paddingBottom: 5,  borderColor: theme.tabIconColor}}>
                         <View style={{width: "10%"}}>
                             <Image 
-                                source={elem.categoryImage ? elem.categoryImage : require("../assets/images/manwriting.png")}
+                                source={imageSource(elem.categoryImage)}
                                 style={{width:"100%", height: undefined, aspectRatio: 1, resizeMode:"contain", borderRadius: 10}}
 
                                 onLoadStart={() => {
@@ -61,8 +68,6 @@ const GoalsCard: React.FC<GoalsCardProps> = ({elem, darkMode, theme}) => {
                                     const key = typeof elem.categoryImage === "string" ? elem.categoryImage : "fallback";
                                     setLoadingImages(prev => ({ ...prev, [key]: false }));
                                 }}
-                                
-
                             />
 
                             {loadingImage?.[elem.id] && (
@@ -82,7 +87,16 @@ const GoalsCard: React.FC<GoalsCardProps> = ({elem, darkMode, theme}) => {
                                 {elem.goalName}
                             </ThemedText>
                         </View>
-                        <EllipsisVertical stroke={theme.tabIconColor} />
+                        <TouchableOpacity
+                            onPress={() => {
+                                setSelectedAtom(elem)
+                                router.push("(goalscreen)/EditDeleteGoals")}
+                            }
+                            style={{zIndex: 3}}
+                        >
+                            <EllipsisVertical stroke={theme.tabIconColor} />
+                        </TouchableOpacity>
+                        
                     </View>
                     <View style={{flexDirection:"row", justifyContent:"space-between"}}>
                         <View style={{flexDirection:"row", columnGap: 20}}>

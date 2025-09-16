@@ -33,6 +33,7 @@ type CategoryType = {
   id: string;
   category: string;
   categoryImage: string | null;
+  title: string;
   createdAt?: any; // optional serverTimestamp
 };
 
@@ -51,7 +52,7 @@ const AddGoals = () => {
     const {theme} = useTheme()
 
     const [loadingImages, setLoadingImages] = useState<{ [key: string]: boolean }>({});
-    const [customCategory, setCustomCatogery] = useState<CategoryType[]>([]);
+    const [customCategory, setCustomCategory] = useState<CategoryType[]>([]);
 
     const setGoalCategory = useSetAtom(GoalCategoryAtom)
 
@@ -60,21 +61,27 @@ const AddGoals = () => {
         const userId = auth.currentUser?.uid;
         if (!userId) return;
 
-        const categoriesCol = collection(db, "users", userId, "goals"); // categories live here
+        const defaultCategory = goalCategoriesOptions.map(elem => elem.title)
+
+        const categoriesCol = collection(db, "users", userId, "goals"); 
+
         const unsubscribe = onSnapshot(categoriesCol, (snapshot) => {
             const categoriesData = snapshot.docs.map((doc) => ({
             id: doc.id,
             ...doc.data(),
-            })) as CategoryType[];
+            } as CategoryType)).filter(elem => !defaultCategory.includes(elem.id))
 
-            setCustomCatogery(categoriesData);
+            setCustomCategory(categoriesData);
         });
 
         return () => unsubscribe();
     }, []);
 
-
-
+    //🔹Image source
+    const imageSource = (img: string | number | null | undefined) => {
+        if (!img) return require("../../assets/images/manwriting.png"); // fallback
+        return typeof img === "number" ? img : { uri: img };
+    };
 
 
   return (
@@ -86,7 +93,7 @@ const AddGoals = () => {
                     justifyContent: "center",
                     alignItems: "center",
                     borderRadius: 40,
-                    width:"10%"
+                    width:50
                 }}            
             >
                 <ArrowBigLeft size={40} stroke="#77d1d2ff" />
@@ -146,15 +153,34 @@ const AddGoals = () => {
             </TouchableOpacity>
         ))}
 
-        {customCategory.length > 0 && customCategory.map((elem, idx)=> (
+        {customCategory.length ? (
+            <View
+                style={{borderTopWidth: 0.4, margin: 10, borderColor: theme.tabIconColor}}
+            >
+                <ThemedText variant='subtitleBold'>Custom Category</ThemedText>
+
+            </View>
+        ) : (
+            <></>
+        )}
+
+        {customCategory.length > 0 && customCategory.map((elem)=> (
             <TouchableOpacity
-                key={idx}
+                key={elem.id}
                 style={[styles.goalOptionWrapper, {backgroundColor:"#cbc0d3", padding:5}]}
+                onPress={() => {
+                    setGoalCategory({
+                        id: Date.now(),
+                        title: elem.id,
+                        image: elem.categoryImage ? elem.categoryImage : require("../../assets/images/manwriting.png"),                        backgroundColor: "#cbc0d3"
+                    })
+                    router.push("/(goalscreen)/SetGoals")}
+                }
             >
                 <View style={{flexDirection:"row", width:"85%", alignItems:"center"}}>
                     <View style={{ width: "20%", justifyContent: "center", alignItems: "center" }}>
                         <Image
-                            source={require("../../assets/images/manwriting.png")}
+                            source={imageSource(elem.categoryImage)}
                             style={{
                             width: "100%",
                             height: undefined,
@@ -162,15 +188,16 @@ const AddGoals = () => {
                             borderRadius: 10,
                             }}
                             resizeMode="contain"
+
                             onLoadStart={() =>
-                            setLoadingImages(prev => ({ ...prev, manwriting: true }))
+                                setLoadingImages(prev => ({ ...prev, [elem.id] : true }))
                             }
                             onLoadEnd={() =>
-                            setLoadingImages(prev => ({ ...prev, manwriting: false }))
+                                setLoadingImages(prev => ({ ...prev,  [elem.id] : false }))
                             }
                         />
 
-                        {loadingImages.manwriting && (
+                        {loadingImages[elem.id] && (
                             <ActivityIndicator
                             size="small"
                             color={theme.primary}
@@ -180,7 +207,7 @@ const AddGoals = () => {
                     </View>
 
                     <View style={{marginLeft: 10}}>
-                        <ThemedText variant='subtitle'>{elem.category}</ThemedText>
+                        <ThemedText variant='subtitle'>{elem.id}</ThemedText>
                     </View>
                </View>
                 

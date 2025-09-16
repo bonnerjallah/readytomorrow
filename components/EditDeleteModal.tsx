@@ -46,47 +46,46 @@ import { doc, deleteDoc} from 'firebase/firestore'
 
 const EditDeleteModal = ({isVisible, onClose}: DisplayOptionsModalProps) => {
 
-    const {theme, darkMode} = useTheme()
-    
-    const selectedTask = useAtomValue(taskAtom)
-    const selectedRoutine = useAtomValue(selectedRoutineAtom);
+  const {theme, darkMode} = useTheme()
+  
+  const selectedTask = useAtomValue(taskAtom)
+  const selectedRoutine = useAtomValue(selectedRoutineAtom);
 
-    const selectedItemType = useAtomValue(selectedItemTypeAtom)
-    
+  const selectedItemType = useAtomValue(selectedItemTypeAtom)
+  
 
 
-    const [showEditActivityModal, setEditActivityModal] = useState(false)
+  const [showEditActivityModal, setEditActivityModal] = useState(false)
 
 
   const handleDeleteTask = async () => {
-  const userId = auth.currentUser?.uid;
-  if (!userId) return;
+    const userId = auth.currentUser?.uid;
+    if (!userId) return;
 
-  let itemToEdit;
-  let collectionName: string;
+    let itemToEdit;
+    let collectionName: string;
 
-  if (selectedItemType === "task") {
-    itemToEdit = selectedTask;
-    console.log("itemtoedit", itemToEdit)
-    collectionName = "activities";
-  } else if (selectedItemType === "routine") {
-    itemToEdit = selectedRoutine;
-    collectionName = "routines";
-  } else {
-    return Alert.alert("No item type selected");
-  }
+    if (selectedItemType === "task") {
+      itemToEdit = selectedTask;
+      collectionName = "activities";
+    } else if (selectedItemType === "routine") {
+      itemToEdit = selectedRoutine;
+      collectionName = "routines";
+    } else {
+      return Alert.alert("No item type selected");
+    }
 
-  if (!itemToEdit?.id) return Alert.alert("No item selected to delete");
+    if (!itemToEdit?.id) return Alert.alert("No item selected to delete");
 
-  try {
-    const docRef = doc(db, "users", userId, collectionName, itemToEdit.id);
-    await deleteDoc(docRef);
-    onClose();
-  } catch (error) {
-    console.log("Error deleting item", error);
-    Alert.alert("Error", "Could not delete the item");
-  }
-};
+    try {
+      const docRef = doc(db, "users", userId, collectionName, itemToEdit.id);
+      await deleteDoc(docRef);
+      onClose();
+    } catch (error) {
+      console.log("Error deleting item", error);
+      Alert.alert("Error", "Could not delete the item");
+    }
+  };
 
 
 
@@ -135,7 +134,17 @@ const EditDeleteModal = ({isVisible, onClose}: DisplayOptionsModalProps) => {
                 <Spacer height={15} />
 
                 <TouchableOpacity
-                    onPress={() => handleDeleteTask()}
+                    onPress={() => {
+                      Alert.alert(
+                        "Delete Task",
+                        "Are you sure you want to delete task?", 
+                        [
+                          {text: "NO", style:"cancel"},
+                          {text: "Yes", onPress: () => handleDeleteTask(), style:"destructive"}
+                        ],
+                        {cancelable: true}
+                      )
+                    }}
                 >
                     <View style={[styles.optionsWrapper, {borderColor: darkMode === "dark" ? "gray" : "black"}]}>
                         <Trash2 size={20} stroke= "red"/>

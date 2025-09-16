@@ -1,6 +1,5 @@
 import { StyleSheet, View, TouchableOpacity } from 'react-native';
 import React, { useEffect } from 'react';
-import ThemedView from '../components/ThemedView';
 import ThemedText from '../components/ThemedText';
 import { Clock, EllipsisVertical, RedoDot } from 'lucide-react-native';
 
