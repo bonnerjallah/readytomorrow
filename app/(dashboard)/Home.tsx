@@ -204,11 +204,6 @@ const Home = () => {
         return allActivities.filter((elem) => elem.done)
     },[allActivities])
 
-    // 🔹
-
-
-
-
 
     useEffect(() => {
         setSortatedData(todayActivities); 

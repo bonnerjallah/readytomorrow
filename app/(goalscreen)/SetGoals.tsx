@@ -337,8 +337,8 @@ const SetGoals = () => {
                 <TouchableWithoutFeedback>
                     <View style={[styles.inputStyle, { backgroundColor: theme.inputBackground, borderRadius: 20 }]}>
                         <TouchableOpacity style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }} onPress={() => toggleDropDown(2)}>
-                        <ThemedText variant='subtitle'>Priority</ThemedText>
-                        <ThemedText variant='smallertitle'>{selectedPriority}</ThemedText>
+                            <ThemedText variant='subtitle'>Priority</ThemedText>
+                            <ThemedText variant='smallertitle'>{selectedPriority}</ThemedText>
                         </TouchableOpacity>
 
                         <Spacer height={15} />
