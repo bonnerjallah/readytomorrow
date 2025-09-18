@@ -2,6 +2,8 @@ import { StyleSheet, View, TouchableOpacity, ScrollView, Image, ActivityIndicato
 import { router } from 'expo-router'
 import { useRef, useState, ReactNode } from 'react'
 import React from 'react'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import BottomSheet, { BottomSheetScrollView} from '@gorhom/bottom-sheet'
 
 // 🎨 UI
 import ThemedButton from 'components/ThemedButton'
@@ -15,8 +17,7 @@ import { useTheme } from 'components/ThemeContext'
 import { useAtomValue, useSetAtom } from 'jotai'
 import { GoalCategoryAtom, GoalIdeaAtom } from 'atoms/GoalCategoryAtom'
 
-import { GestureHandlerRootView } from 'react-native-gesture-handler'
-import BottomSheet, { BottomSheetScrollView} from '@gorhom/bottom-sheet'
+
 
 const workCareerGoals = [
   "Earn a promotion",
@@ -71,10 +72,9 @@ const newGoalIdeas = [
 ];
 
 
-type Props = { children: ReactNode; snapPoints?: string[]; index?: number; };
 
 
-const SelectedGoalOption = ({ children, snapPoints = ["90%"], index = -1 }: Props) => {
+const SelectedGoalOption = () => {
 
     const {theme} = useTheme()
     const bottomSheetRef = useRef<BottomSheet>(null)
@@ -286,12 +286,6 @@ const SelectedGoalOption = ({ children, snapPoints = ["90%"], index = -1 }: Prop
                 <ThemedButton style={{width:"70%", marginBottom: 10, alignSelf:"center"}} onPress={() => router.push("/(goalscreen)/SetGoals")}>
                     <ThemedText style={{color:theme.buttontitle}}>Create My Own</ThemedText>
                 </ThemedButton>
-
-                <BottomSheet ref={bottomSheetRef} snapPoints={snapPoints} index={index} enablePanDownToClose>
-                    <BottomSheetScrollView contentContainerStyle={{ flexGrow: 1 }}>
-                        <ThemedView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>{children}</ThemedView>
-                    </BottomSheetScrollView>
-                </BottomSheet>
 
             </ThemedView>
         </GestureHandlerRootView>

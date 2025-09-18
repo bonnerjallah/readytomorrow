@@ -240,7 +240,7 @@ const Goals = () => {
         </ThemedButton>
 
         <ThemedButton style={{width: "50%", height: 40, backgroundColor: showWeekLyObjectivies ? theme.primary : '#adb5bd'}} onPress={() => setShowWeekLyObjectivies(prev => !prev)}>
-          <ThemedText variant='smallertitle'>Weekly Objectives</ThemedText>
+          <ThemedText variant='smallertitle'>Short-Term</ThemedText>
         </ThemedButton>
         
       </View>

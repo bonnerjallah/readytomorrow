@@ -1,13 +1,6 @@
-import { StyleSheet, Text, View, Modal, TouchableOpacity, Animated, Platform, Easing, Keyboard } from 'react-native'
-import React, { useState, useRef } from 'react'
+import { StyleSheet, Text, View, Modal, TouchableOpacity, Animated, Platform, Easing, TouchableWithoutFeedback, Keyboard } from 'react-native'
+import React, { useState, useRef, useEffect } from 'react'
 import DateTimePicker from "@react-native-community/datetimepicker";
-
-
-//⚛️STATE MANAGEMENT
-import { useTheme} from './ThemeContext'
-import { useAtomValue } from 'jotai';
-import { SelectedGoalAtom } from 'atoms/GoalCategoryAtom';
-
 
 //🎨UI
 import { ChevronDown, CircleX } from 'lucide-react-native'
@@ -17,21 +10,27 @@ import Spacer from './Spacer'
 import ThemedTextInput from './ThemedTextInput'
 import ThemedButton from './ThemedButton'
 
+//⚛️STATE MANAGEMENT
+import { useTheme} from './ThemeContext'
+import { useAtomValue } from 'jotai';
+import { SelectedGoalAtom } from 'atoms/GoalCategoryAtom';
+
 //🔥FIREBASE
-import {auth, db} from "firebaseConfig"
-import { collection, addDoc, serverTimestamp} from 'firebase/firestore';
-import { TouchableWithoutFeedback } from '@gorhom/bottom-sheet';
+import { auth, db } from 'firebaseConfig'
+import { collection, addDoc, serverTimestamp, Timestamp} from 'firebase/firestore'
 
 //🔤 TYPES
-type MileStoneInputType = {
+type WeeklyGoalObjectiveModalType = {
     isVisible: boolean,
     onClose: () => void
 }
 
-const MileStoneInput = ({isVisible, onClose}: MileStoneInputType) => {
+
+
+const WeeklyGoalObjectiveModal = ({isVisible, onClose}: WeeklyGoalObjectiveModalType) => {
 
     const {theme, darkMode} = useTheme()
-    
+        
     const selectedGoal = useAtomValue(SelectedGoalAtom)
 
     const [targetDate, setTargetDate] = useState(() => {
@@ -39,8 +38,9 @@ const MileStoneInput = ({isVisible, onClose}: MileStoneInputType) => {
         return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
     });
 
-    const [mileStoneName, setMileStoneName] = useState<string>("")
-    const [mileStoneNote, setMileStoneNote] = useState<string>("")
+    const [weekObjective, setWeekObjective] = useState<string>("")
+    const [objectiveNote, setObjectiveNote] = useState<string>("")
+    const [lastDayOfTheWeek, setLastdayOfTheWeek] = useState<Date>(new Date());
 
     //🔹Animation state
     const [dropdowns, setDropdowns] = useState([
@@ -95,45 +95,54 @@ const MileStoneInput = ({isVisible, onClose}: MileStoneInputType) => {
         }
     };
 
+    //🔹Date marker
+    useEffect(() => {
+        const getThisWeekSaturday = () => {
+            const today = new Date();
+            const dayOfWeek = today.getDay(); 
+            const diffToSaturday = 6 - dayOfWeek;
+            const saturday = new Date(today);
+            saturday.setDate(today.getDate() + diffToSaturday);
+            
+            setLastdayOfTheWeek(saturday)
+        }
+        getThisWeekSaturday()
+    },[])
 
+    //🔹Submit Objective
+    const handleObjectiveSubmit = async () => {
+        const userId = auth.currentUser?.uid
+        if(!userId || !selectedGoal?.id) return
 
-    const handleMileStoneSubmit = async () => {
-        const userId = auth.currentUser?.uid;
-        if (!userId || !selectedGoal?.id) return; // category is not needed
 
         try {
-            // Collection path: users/{userId}/goals/{goalId}/milestones
-            const milestoneCol = collection(db, "users", userId, "goals", selectedGoal.id, "milestones");
 
-            await addDoc(milestoneCol, {
-                mileStoneName,
-                mileStoneNote,
-                targetDate,
+            const objectiviesCol = collection(db, "users", userId, "goals", selectedGoal.id, "goalObjectives")
+
+            
+            await addDoc(objectiviesCol, {
+                weekObjective,
+                objectiveNote,
+                lastDayOfTheWeek: Timestamp.fromDate(lastDayOfTheWeek),
                 completed: false,
-                createdAt: serverTimestamp(),
-            });
+                createdAt: serverTimestamp(), 
+            })
 
-            // Reset fields
-            const today = new Date();
-            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+            setWeekObjective("")
+            setObjectiveNote("")
 
-            setMileStoneName("");
-            setMileStoneNote("");
-            setTargetDate(todayStr);
-
-            onClose();
-
+            onClose()
+            
         } catch (error) {
-            console.log("Error submitting goal milestone", error);
+            console.log("Error submiting objective", error)
         }
-    };
-
+    }
 
 
 
 
   return (
-    <Modal visible={isVisible} onRequestClose={onClose} transparent animationType='slide'>
+    <Modal transparent visible={isVisible} onRequestClose={onClose} animationType='slide'>
 
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
             <ThemedView style={styles.container} safe>
@@ -141,16 +150,16 @@ const MileStoneInput = ({isVisible, onClose}: MileStoneInputType) => {
 
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                     <CircleX size={40} stroke="#77d1d2ff" onPress={onClose} />
-                    <ThemedText style={{ textAlign: "center", width: "83%" }} variant='title'>Add Milestone</ThemedText>
+                    <ThemedText style={{ textAlign: "center", width: "83%" }} variant='title'>Add Weekly Objectivies</ThemedText>
                 </View>
 
                 <Spacer height={40} />
 
                 <ThemedTextInput
-                    placeholder='Enter Milestone Name'
+                    placeholder='Enter Objective'
                     style={[styles.inputStyle,{backgroundColor:theme.background}]}
-                    value={mileStoneName}
-                    onChangeText={setMileStoneName}
+                    value={weekObjective}
+                    onChangeText={setWeekObjective}
                 />
 
                 <Spacer height={20} />
@@ -158,8 +167,8 @@ const MileStoneInput = ({isVisible, onClose}: MileStoneInputType) => {
                 <ThemedTextInput 
                     placeholder='Enter Note'
                     style={[styles.inputStyle,{backgroundColor:theme.background}]}
-                    value={mileStoneNote}
-                    onChangeText={setMileStoneNote}
+                    value={objectiveNote}
+                    onChangeText={setObjectiveNote}
                 />
 
                 <Spacer height={20} />
@@ -201,10 +210,7 @@ const MileStoneInput = ({isVisible, onClose}: MileStoneInputType) => {
                             }}
                         >
                             <DateTimePicker
-                                value={targetDate ? (() => {
-                                    const [year, month, day] = targetDate.split("-").map(Number);
-                                    return new Date(year, month - 1, day);
-                                })() : new Date()}
+                                value={lastDayOfTheWeek}
                                 mode="date"
                                 display={Platform.OS === "ios" ? "inline" : "spinner"}
                                 textColor={darkMode === "dark" ? "white" : "black"}
@@ -229,24 +235,25 @@ const MileStoneInput = ({isVisible, onClose}: MileStoneInputType) => {
                 
 
                 <ThemedButton style={styles.buttonStyle}
-                    onPress={handleMileStoneSubmit}
+                    onPress={handleObjectiveSubmit}
                 >
                     <ThemedText style={{color: theme.buttontitle}} variant='button'>Save</ThemedText>
                 </ThemedButton>
-            </ThemedView>
+
+            </ThemedView> 
         </TouchableWithoutFeedback>
-        
+           
     </Modal>
   )
 }
 
-export default MileStoneInput
+export default WeeklyGoalObjectiveModal
 
 const styles = StyleSheet.create({
-    container:{
+    container: {
         flex: 1
     },
-    buttonStyle:{
+     buttonStyle:{
         position:"absolute",
         bottom: 50, 
         alignSelf: "center",

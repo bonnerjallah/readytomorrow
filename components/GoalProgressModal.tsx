@@ -14,7 +14,7 @@ import { collection, getDocs, onSnapshot, Timestamp } from 'firebase/firestore'
 
 //⚛️STATE MAMAGEMENT
 import { useAtomValue } from 'jotai'
-import { GoalsAtom } from 'atoms/GoalCategoryAtom'
+import { GoalsAtom } from '../atoms/GoalCategoryAtom'
 
 //🔤TYPES
 type GoalsProgressModalType  ={
@@ -25,8 +25,6 @@ type GoalsProgressModalType  ={
 const GoalProgressModal = ({isVisible, onClose}: GoalsProgressModalType) => {
 
     const allGoals = useAtomValue(GoalsAtom)
-
-    console.log("all the goals", allGoals)
 
 
   return (
