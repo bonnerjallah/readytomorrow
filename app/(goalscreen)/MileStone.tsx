@@ -1,4 +1,4 @@
-import { StyleSheet, View, TouchableOpacity, Image, ActivityIndicator, Pressable, Animated, ScrollView, FlatList } from 'react-native'
+import { StyleSheet, View, TouchableOpacity, Image, ActivityIndicator, Pressable, Animated, ScrollView, FlatList, Alert } from 'react-native'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { router } from 'expo-router'
 import React, { useEffect, useRef, useState } from 'react'
@@ -24,6 +24,7 @@ import AddMilestonesModal from '../../components/AddMilestonesModal'
 import MileStoneInput from "../../components/MileStoneInput"
 import WeeklyGoalObjectiveModal from "../../components/WeeklyGoalObjectiveModal"
 import GoalsNoteInputModal from "../../components/GoalsNoteInputModal"
+import ProgressBar from 'components/ProgressBar'
 
 //🔥FIREBASE
 import { auth, db } from 'firebaseConfig'
@@ -59,8 +60,6 @@ type NoteType = {
 
 const MileStone = () => {
   const { theme, darkMode } = useTheme()
-
-  const bottomSheetRef = useRef<BottomSheet>(null)
 
   const selectedGoal = useAtomValue(SelectedGoalAtom)
 
@@ -114,7 +113,7 @@ const MileStone = () => {
     const userId = auth.currentUser?.uid;
     if (!userId || !selectedGoal?.id) return;
 
-    const milestoneCol = collection(db, "users", userId, "goals", selectedGoal.id, "milestones");
+    const milestoneCol = collection(db, "users", userId, "goals", selectedGoal.category, "goal", selectedGoal.id, "milestones");
     const q = query(milestoneCol, orderBy("createdAt", "asc"));
 
     const unsubscribe = onSnapshot(q, snapshot => {
@@ -140,7 +139,7 @@ const MileStone = () => {
     const userId = auth.currentUser?.uid
     if(!userId || !selectedGoal?.id) return
 
-    const objectiviesCol = collection(db, "users", userId, "goals", selectedGoal.id, "goalObjectives")
+    const objectiviesCol = collection(db, "users", userId, "goals", selectedGoal.category, "goal", selectedGoal.id, "goalObjectives")
     const q = query(objectiviesCol, orderBy("createdAt", "asc"));
 
     const unsubscribe = onSnapshot(q, snapshot => {
@@ -162,7 +161,7 @@ const MileStone = () => {
     const userId = auth.currentUser?.uid
     if(!userId || !selectedGoal?.id) return
 
-    const noteCol = collection(db, "users", userId, "goals", selectedGoal?.id, "goalNotes")
+    const noteCol = collection(db, "users", userId, "goals", selectedGoal.category, "goal", selectedGoal?.id, "goalNotes")
     const q = query(noteCol, orderBy("createdAt", "asc"))
 
     const unsubscribe = onSnapshot(q, snapshot => {
@@ -175,6 +174,7 @@ const MileStone = () => {
     })
     
 
+    return () => unsubscribe()
 
   }, [selectedGoal])
 
@@ -198,6 +198,8 @@ const MileStone = () => {
         "users",
         userId,
         "goals",
+        selectedGoal.category,  
+        "goal",
         selectedGoal.id, 
         "milestones",
         milestone.id
@@ -216,13 +218,31 @@ const MileStone = () => {
     setMilestoneCompleted(totalMilestoneDone)
   }, [allMilestoneData])
 
+  //🔹Complete objectities function
+  const handleCompleteObjectivies = async(goalObjectivies: ObjectivesType) => {
+    const newValue = !goalObjectivies.completed
+    setAllWeeklyObjective(prev =>
+      prev.map(elem => 
+        elem.id === goalObjectivies.id ? {...elem, completed: newValue} : elem
+      )
+    )
+    const userId = auth.currentUser?.uid
+    if(!userId || !selectedGoal?.id) return
+    try {
+      const docRef = doc(db, "users", userId, "goals", selectedGoal.category, "goal", selectedGoal?.id, "goalObjectives", goalObjectivies.id)
+      await updateDoc(docRef, {completed: newValue})
+    } catch (error) {
+      console.log("Error updating objective", error)
+    }
+  }
+
   //🔹Delete Milestone
   const handleDeleteMilestone = async (milestone: MilestoneDataType) => {
     const userId = auth.currentUser?.uid
     if(!userId || !selectedGoal?.id) return
 
     try {
-      const docRef = doc(db, "users", userId, "goals", selectedGoal?.id, "milestones", milestone.id )
+      const docRef = doc(db, "users", userId, "goals", selectedGoal.category, "goal", selectedGoal?.id, "milestones", milestone.id )
       await deleteDoc(docRef)
     } catch (error) {
       console.log("Error deleting milestone", error)
@@ -236,7 +256,7 @@ const MileStone = () => {
 
     try {
 
-      const docRef = doc(db, "users", userId, "goals", selectedGoal?.id, "goalObjectives", goalObjectivies.id)
+      const docRef = doc(db, "users", userId, "goals", selectedGoal.category, "goal", selectedGoal?.id, "goalObjectives", goalObjectivies.id)
       await deleteDoc(docRef)
       
     } catch (error) {
@@ -250,17 +270,13 @@ const MileStone = () => {
     if(!userId || !selectedGoal?.id) return
 
     try {
-      const docRef = doc(db, "users", userId, "goals", selectedGoal?.id, "goalNotes", goalNote.id )
+      const docRef = doc(db, "users", userId, "goals", selectedGoal.category, "goal", selectedGoal?.id, "goalNotes", goalNote.id )
       await deleteDoc(docRef)
       
     } catch (error) {
       console.log("Error deleting note", error)
     }
   }
-
-
-
-
 
 
   return (
@@ -331,24 +347,22 @@ const MileStone = () => {
 
           <Spacer height={10} />
 
-          <View>
-            <ThemedText>status bar here</ThemedText>
-          </View>
+          <ProgressBar width={280} height={5} progress={allMilestoneData.length === 0 ? 0 : (mileStoneCompleted.length / allMilestoneData.length)} />
 
           <Spacer height={15} />
 
           <View style={{flexDirection:"row", justifyContent: "space-between"}}>
-            <ThemedButton style={{width: "33%", height: 40, justifyContent:"center", alignItems:"center", backgroundColor: activeTab === "milestones" ? theme.primary : "#adb5bd"}}
+            <ThemedButton style={{width: "30%", height: 40, justifyContent:"center", alignItems:"center", backgroundColor: activeTab === "milestones" ? theme.primary : "#adb5bd"}}
               onPress={() => switchTab("milestones")}
             >
               <ThemedText style={{color: "buttontitle", fontSize: 13}}>Milestones</ThemedText>
             </ThemedButton>
-            <ThemedButton style={{width: "33%", height: 40, justifyContent:"center", alignItems:"center", backgroundColor: activeTab === "weekly" ? theme.primary : "#adb5bd"}}
+            <ThemedButton style={{width: "34%", height: 40, justifyContent:"center", alignItems:"center", backgroundColor: activeTab === "weekly" ? theme.primary : "#adb5bd"}}
               onPress={() => switchTab("weekly")}
             >
               <ThemedText style={{color: "buttontitle", fontSize: 13}}>Weekly Objectivies</ThemedText>
             </ThemedButton>
-            <ThemedButton style={{width: "33%", height: 40, justifyContent:"center", alignItems:"center", backgroundColor: activeTab === "notes" ? theme.primary : "#adb5bd"}}
+            <ThemedButton style={{width: "30%", height: 40, justifyContent:"center", alignItems:"center", backgroundColor: activeTab === "notes" ? theme.primary : "#adb5bd"}}
               onPress={() => switchTab("notes")}
             >
               <ThemedText style={{color: "buttontitle", fontSize: 13}}>Notes</ThemedText>
@@ -389,7 +403,16 @@ const MileStone = () => {
                           <View style={{flexDirection:"row", alignItems:"center", columnGap: 10}}>
                             <Checkbox 
                               value={milestone.completed}           
-                              onValueChange={() => handleMilestoneComplete(milestone)}
+                              onValueChange={() => {
+                                Alert.alert(
+                                  "Complete Milestone",
+                                  "Are you sure you want to mark this milestone as complete?",
+                                  [
+                                    { text: "Cancel", style: "cancel" },
+                                    { text: "Complete", onPress: () => handleMilestoneComplete(milestone) }
+                                  ]
+                                )
+                              }}
                               color={milestone.completed ? "#34a0a4" : undefined}
                               style={{ transform: [{ scale: 1.5 }], borderRadius: 10 }}
                             />
@@ -403,7 +426,16 @@ const MileStone = () => {
                             </View>
                           </View>
                           <TouchableOpacity
-                            onPress={() => handleDeleteMilestone(milestone)}
+                            onPress={() => {
+                              Alert.alert(
+                                "Delete Milestone",
+                                "Are you sure you want to delete this milestone?",
+                                [
+                                  { text: "Cancel", style: "cancel" },
+                                  { text: "Delete", style: "destructive", onPress: () => handleDeleteMilestone(milestone) }
+                                ]
+                              ) 
+                            }}
                           >
                             <Trash2 size={25}  stroke="red"/>
                           </TouchableOpacity>
@@ -441,7 +473,7 @@ const MileStone = () => {
                           <View style={{flexDirection:"row", alignItems:"center", columnGap: 10}}>
                             <Checkbox 
                               value={elem.completed}           
-                              onValueChange={() => handleDeleteObjectivies(elem)}
+                              onValueChange={() => handleCompleteObjectivies(elem)}
                               color={elem.completed ? "#34a0a4" : undefined}
                               style={{ transform: [{ scale: 1.5 }], borderRadius: 10 }}
                             />
@@ -498,12 +530,19 @@ const MileStone = () => {
                         }}
                       >
                         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                          <View style={{ flexDirection: "row", alignItems: "center", columnGap: 10 }}>
-                            <View>
-                              {elem.goalNote && <ThemedText variant="body">{elem.goalNote}</ThemedText>}
-                            </View>
+                          <View style={{width: "90%"}}>
+                            {elem.goalNote && <ThemedText variant="body">{elem.goalNote}</ThemedText>}
                           </View>
-                          <TouchableOpacity onPress={() => handleDeleteNote(elem)}>
+                          <TouchableOpacity onPress={() => {
+                            Alert.alert(
+                              "Delete Note",
+                              "Are you sure you want to delete this note?",
+                              [
+                                { text: "Cancel", style: "cancel" },
+                                { text: "Delete", style: "destructive", onPress: () => handleDeleteNote(elem) }
+                              ]
+                            )
+                          }}>
                             <Trash2 size={25} stroke="red" />
                           </TouchableOpacity>
                         </View>

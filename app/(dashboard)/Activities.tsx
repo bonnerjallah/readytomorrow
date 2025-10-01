@@ -1,6 +1,6 @@
 // 🌱 ROOT IMPORTS
-import React, { useEffect, useState, useRef, useId } from 'react'
-import { Animated, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native'
+import React, { useEffect, useState, useRef } from 'react'
+import { Animated, ScrollView, StyleSheet, TouchableOpacity, View, FlatList } from 'react-native'
 
 // ⚛️ STATE MANAGEMENT
 import { useTheme } from 'components/ThemeContext'
@@ -282,62 +282,78 @@ const Activities = () => {
       <Spacer height={20} />
 
       {/* Scrollable List */}
-      <ScrollView showsVerticalScrollIndicator={false} style={{ padding: 10 }}>
-        <View style={{ flex: 1 }}>
-          {/* Routines */}
-          <Animated.View
-            style={{
-              opacity: routinesAnim,
-              transform: [
-                {
-                  translateX: routinesAnim.interpolate({ inputRange: [0, 1], outputRange: [200, 0] })
-                }
-              ],
-              position: 'absolute',
-              width: '100%'
-            }}
-          >
-            {sortedRoutines.map((elem, idx) => (
+      <View style={{ flex: 1 }}>
+        {/* Routines */}
+        <Animated.View
+          pointerEvents={showRoutines ? "auto" : "none"} // block touches when hidden
+          style={{
+            ...StyleSheet.absoluteFillObject, // full overlap
+            opacity: routinesAnim,
+            transform: [
+              {
+                translateX: routinesAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [200, 0],
+                }),
+              },
+            ],
+          }}
+        >
+          <FlatList
+            data={sortedRoutines}
+            keyExtractor={(item, idx) => item.id?.toString() ?? idx.toString()}
+            renderItem={({ item }) => (
               <RoutineTaskCard
-                key={elem.id ?? idx}
-                elem={elem}
-                darkMode={darkMode ?? 'light'}
+                elem={item}
+                darkMode={darkMode ?? "light"}
                 theme={theme}
                 setSelectedRoutine={setSelectedRoutine}
                 setShowEditModal={setShowEditModal}
                 handleTaskComplete={handleTaskComplete}
                 setShowRedoModal={setShowRedoModal}
               />
-            ))}
-          </Animated.View>
+            )}
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingBottom: 100 }}
+          />
+        </Animated.View>
 
-          {/* Activities */}
-          <Animated.View
-            style={{
-              opacity: activitiesAnim,
-              transform: [
-                {
-                  translateX: activitiesAnim.interpolate({ inputRange: [0, 1], outputRange: [-200, 0] })
-                }
-              ],
-              width: '100%'
-            }}
-          >
-            {sortedActivities.map((elem, idx) => (
+        {/* Activities */}
+        <Animated.View
+          pointerEvents={!showRoutines ? "auto" : "none"}
+          style={{
+            ...StyleSheet.absoluteFillObject,
+            opacity: activitiesAnim,
+            transform: [
+              {
+                translateX: activitiesAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [-200, 0],
+                }),
+              },
+            ],
+          }}
+        >
+          <FlatList
+            data={sortedActivities}
+            keyExtractor={(item, idx) => item.id?.toString() ?? idx.toString()}
+            renderItem={({ item }) => (
               <TaskCard
-                key={elem.id ?? idx}
-                elem={elem}
-                darkMode={darkMode ?? 'light'}
+                elem={item}
+                darkMode={darkMode ?? "light"}
                 theme={theme}
                 setSelectedTask={setSelectedTask}
                 setShowEditModal={setShowEditModal}
                 handleTaskComplete={handleTaskComplete}
                 setShowRedoModal={setShowRedoModal}
               />
-            ))}
-          </Animated.View>
-        </View>
-      </ScrollView>
+            )}
+            style={{ flex: 1 }}
+            contentContainerStyle={{ paddingBottom: 100 }}
+          />
+        </Animated.View>
+      </View>
+
 
       {/* Modals */}
       <DisplayOptionsModal

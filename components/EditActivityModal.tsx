@@ -206,9 +206,6 @@ const EditActivityModal = ({ isVisible, onClose }: ActivityInputModalProps) => {
 
 
 
-
-
-
   // 🔹 Handlers
   const handleTimeOfDay = (part: "Morning" | "Afternoon" | "Evening") =>
     setSelectedPart(part);

@@ -59,7 +59,7 @@ export default () => {
                 name = "Activities"
                 options={{
                     title: "Activities",
-                    tabBarLabel: "Activities",
+                    tabBarLabel: "To-Do",
                     tabBarIcon:({focused}) => (
                         <ClipboardList 
                             size={30}
@@ -77,21 +77,6 @@ export default () => {
                     tabBarLabel: "Goals",
                     tabBarIcon: ({focused}) => (
                         <Goal  
-                            size={30}
-                            stroke={focused ? theme.tabIconSelected : theme.tabIconColor}
-                            strokeWidth={focused ? 3 : 1.5}
-                        />
-                    )
-                }}
-            />
-
-            <Tabs.Screen 
-                name = "Progress"
-                options={{
-                    title: "Progress",
-                    tabBarLabel: "Progress",
-                    tabBarIcon: ({focused}) => (
-                        <TrendingUp 
                             size={30}
                             stroke={focused ? theme.tabIconSelected : theme.tabIconColor}
                             strokeWidth={focused ? 3 : 1.5}

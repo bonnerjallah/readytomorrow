@@ -1,6 +1,6 @@
-import { StyleSheet, Text, View, TouchableOpacity, Platform, ScrollView, Image, Animated, TouchableWithoutFeedback, Easing, ActivityIndicator, Alert, Pressable } from 'react-native'
+import { StyleSheet, Text, View, TouchableOpacity, Platform, ScrollView, Image, Animated, TouchableWithoutFeedback, Easing, ActivityIndicator, Alert, Pressable, } from 'react-native'
 import React, { useEffect } from 'react'
-import { router } from 'expo-router'
+import { router, useLocalSearchParams } from 'expo-router'
 import { useState } from 'react'
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as ImagePicker from 'expo-image-picker';
@@ -32,6 +32,7 @@ type GoalType = {
   targetDate: Timestamp;
   startdate: Timestamp;
   longTerm: boolean;
+  completed: boolean;
   createdAt?: Timestamp | ReturnType<typeof serverTimestamp>; // allow serverTimestamp
 };
 
@@ -40,6 +41,20 @@ type GoalType = {
 const SetGoals = () => {
 
     const {theme, darkMode} = useTheme()
+
+    const params = useLocalSearchParams();
+    const selectedGoal: GoalType | null = params.selectedGoal ? JSON.parse(params.selectedGoal as string) : null;
+
+    useEffect(() => {
+        if (selectedGoal) {
+            setCategory(selectedGoal.category);
+            setGoalName(selectedGoal.goalName);
+            setNote(selectedGoal.note);
+            setSelectedPriority(selectedGoal.selectedPriority as any);
+            setLongTerm(selectedGoal.longTerm);
+            setGoalImage(selectedGoal.categoryImage);
+        }
+    }, [selectedGoal]);
 
     const [targetDate, setTargetDate] = useState(() => {
       const today = new Date();
@@ -71,27 +86,27 @@ const SetGoals = () => {
     const dropdownHeights = [395, 390, 80];
 
     const toggleDropDown = (index: number) => {
-    const currentDropdown = dropdowns[index]; // this is the object with open, height, opacity
+        const currentDropdown = dropdowns[index]; // this is the object with open, height, opacity
 
-    if (currentDropdown.open) {
-        Animated.parallel([
-            Animated.timing(currentDropdown.height, {
-                toValue: 0,
-                duration: 250,
-                easing: Easing.out(Easing.ease),
-                useNativeDriver: false,
-            }),
-            Animated.timing(currentDropdown.opacity, {
-                toValue: 0,
-                duration: 150,
-                useNativeDriver: false,
-            }),
-        ]).start(() => {
-            const updatedDropdowns = [...dropdowns];
-            updatedDropdowns[index].open = false;
-            setDropdowns(updatedDropdowns);
-        });
-        } else {
+        if (currentDropdown.open) {
+            Animated.parallel([
+                Animated.timing(currentDropdown.height, {
+                    toValue: 0,
+                    duration: 250,
+                    easing: Easing.out(Easing.ease),
+                    useNativeDriver: false,
+                }),
+                Animated.timing(currentDropdown.opacity, {
+                    toValue: 0,
+                    duration: 150,
+                    useNativeDriver: false,
+                }),
+            ]).start(() => {
+                const updatedDropdowns = [...dropdowns];
+                updatedDropdowns[index].open = false;
+                setDropdowns(updatedDropdowns);
+            });
+            } else {
             // opening the dropdown
             const targetHeight = dropdownHeights[index];
             Animated.parallel([
@@ -204,6 +219,7 @@ const SetGoals = () => {
                 targetDate: Timestamp.fromDate(new Date(targetDate)),
                 startdate: Timestamp.fromDate(new Date(selectedStartDate)),
                 longTerm,
+                completed: false,
                 createdAt: serverTimestamp(),
             };
 
@@ -429,9 +445,9 @@ const SetGoals = () => {
                                         const { weekday, formatedDate } = formatDate(targetDate);
                                         return (
                                             <>
-                                            <ThemedText variant="smallertitle">{weekday}</ThemedText>
-                                            <ThemedText>|</ThemedText>
-                                            <ThemedText variant="smallertitle">{formatedDate}</ThemedText>
+                                                <ThemedText variant="smallertitle">{weekday}</ThemedText>
+                                                <ThemedText>|</ThemedText>
+                                                <ThemedText variant="smallertitle">{formatedDate}</ThemedText>
                                             </>
                                         );
                                         })()}
@@ -441,6 +457,7 @@ const SetGoals = () => {
                                 )}
 
                             </TouchableOpacity>
+
 
 
                             <Spacer height={15} />
@@ -473,7 +490,7 @@ const SetGoals = () => {
                                         onPress={() => setLongTerm(false)}
                                         >
                                         <ThemedText style={{ color: theme.buttontitle, fontSize: 15 }}>
-                                            Weekly Objectives
+                                            Short Term
                                         </ThemedText>
                                     </ThemedButton>
 

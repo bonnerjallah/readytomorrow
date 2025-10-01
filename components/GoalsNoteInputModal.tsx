@@ -37,7 +37,7 @@ const GoalsNoteInputModal = ({isVisible, onClose}: GoalsNoteInputModalType) => {
         if(!userId || !selectedGoal?.id) return
 
         try {
-            const noteCol = collection(db, "users", userId, "goals", selectedGoal.id, "goalNotes" )
+            const noteCol = collection(db, "users", userId, "goals", selectedGoal.category, "goal", selectedGoal.id, "goalNotes" )
 
             await addDoc(noteCol, {
                 goalNote,

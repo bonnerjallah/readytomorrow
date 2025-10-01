@@ -1,6 +1,8 @@
+//🌱 ROOT IMPORTS
+import { Activity, Calendar, EllipsisVertical, Milestone } from 'lucide-react-native'
 import { Alert, StyleSheet, Text, TouchableOpacity, View,  ActivityIndicator, Image,  Pressable } from 'react-native'
 import { router } from 'expo-router'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 //🎨 UI
 import ThemedView from 'components/ThemedView'
@@ -9,25 +11,41 @@ import { ArrowBigLeft, ChevronRight, ClipboardCheck, PencilLine, Radar, Trash2 }
 
 //⚛️STATE MANAGEMENT
 import { useAtomValue } from 'jotai'
-import { SelectedGoalAtom } from 'atoms/GoalCategoryAtom'
 import { useTheme } from '../../components/ThemeContext';
+import { SelectedGoalAtom} from 'atoms/GoalCategoryAtom'
+import { GoalsAtom, ObjectiviesAtom, MilestonesAtom } from '../../atoms/GoalCategoryAtom';
+
+
 
 
 //🧩COMPONENTS
 import GoalsCard from 'components/GoalsCard'
-
-//🔥FIREBASE
-import { auth, db } from 'firebaseConfig'
-import { collection, deleteDoc, doc, getDocs} from 'firebase/firestore'
-import ThemedButton from 'components/ThemedButton'
 import Spacer from 'components/Spacer'
 
 
-//🌱 ROOT IMPORTS
-import { Activity, Calendar, EllipsisVertical, Milestone } from 'lucide-react-native'
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+//🔥FIREBASE
+import { auth, db } from 'firebaseConfig'
+import { collection, deleteDoc, doc, getDocs, updateDoc, onSnapshot, query, orderBy, Timestamp,} from 'firebase/firestore'
+import ThemedButton from 'components/ThemedButton'
 
+//🔤TYPES
+type MilestoneDataType = {
+  id: string;
+  mileStoneName: string;
+  mileStoneNote: string;
+  targetDate: string;
+  completed: boolean;
+  createdAt: Timestamp | null;
+}
 
+type ObjectivesType = {
+  id: string
+  weekObjective: string,
+  objectiveNote: string,
+  lastDayOfTheWeek: string,
+  completed: boolean,
+  createdAt: Timestamp | null
+}
 
 
 
@@ -37,8 +55,17 @@ const EditDeleteGoals = () => {
     const {theme, darkMode} = useTheme()
 
     const selectedGoal = useAtomValue(SelectedGoalAtom)
+    // const setGoals = useAtomValue(GoalsAtom);
+    const setObjectives = useAtomValue(ObjectiviesAtom);
+    const setMilestones = useAtomValue(MilestonesAtom);
 
     const [loadingImages, setLoadingImages] = useState<{ [id: string]: boolean }>({});
+    const [allMilestoneData, setAllMilestoneData] = useState<MilestoneDataType[]>([])
+    const [mileStoneCompleted, setMilestoneCompleted] = useState<MilestoneDataType[]>([])
+    const [allweeklyObjective, setAllWeeklyObjective] = useState<ObjectivesType[]>([])
+    const [completedWeekleyObjective, setCompletedWeekleyObjective] = useState<ObjectivesType[]>([])
+    
+    
     
     // 🔹 imageSource helper
     const imageSource = (image: string | number | null | undefined) => {
@@ -49,10 +76,6 @@ const EditDeleteGoals = () => {
     const key = selectedGoal?.id || "fallback";
 
     
-    
-
-    console.log("selected Goal:", selectedGoal)
-
     //🔹Delete Goals
     const deleteGoal = async () => {
         const userId = auth.currentUser?.uid;
@@ -73,12 +96,81 @@ const EditDeleteGoals = () => {
                 await deleteDoc(categoryRef);
             }
 
+            router.push("/Goals")
+
         } catch (error) {
             console.error("Error deleting goal:", error);
         }
     };
 
+    //🔹Complete goal function
+    const handleGoalComplete = async() => {
+        
+        const userId = auth.currentUser?.uid
+        if (!userId || !selectedGoal?.id || !selectedGoal.category) return;
 
+        try {
+            const goalRef = doc(db, "users", userId, "goals", selectedGoal.category, "goal", selectedGoal.id)
+
+            await updateDoc(goalRef, {
+                completed: true
+            })
+
+            router.push("/Goals")
+        } catch (error) {
+            console.log("Error updating goal", error)
+        }
+       
+    }
+
+    //🔹fetch milestone
+    useEffect(() => {
+        const userId = auth.currentUser?.uid;
+        if (!userId || !selectedGoal?.id) return;
+    
+        const milestoneCol = collection(db, "users", userId, "goals", selectedGoal.category, "goal", selectedGoal.id, "milestones");
+        const q = query(milestoneCol, orderBy("createdAt", "asc"));
+    
+        const unsubscribe = onSnapshot(q, snapshot => {
+          const milestoneData: MilestoneDataType[] = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          } as MilestoneDataType))
+    
+          setAllMilestoneData(milestoneData);
+    
+          const completedMilesotne = milestoneData.filter(elem => elem.completed)
+          setMilestoneCompleted(completedMilesotne)
+    
+        });
+    
+        return () => unsubscribe();
+    }, [selectedGoal]);
+
+    //🔹Fetch Objectivies
+      useEffect(() => {
+        const userId = auth.currentUser?.uid
+        if(!userId || !selectedGoal?.id) return
+    
+        const objectiviesCol = collection(db, "users", userId, "goals", selectedGoal.category, "goal", selectedGoal.id, "goalObjectives")
+        const q = query(objectiviesCol, orderBy("createdAt", "asc"));
+    
+        const unsubscribe = onSnapshot(q, snapshot => {
+          const goalObjectiviesData : ObjectivesType [] = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          } as ObjectivesType))
+
+          const completedObjectives = goalObjectiviesData.filter(elem => elem.completed)
+
+          setCompletedWeekleyObjective(completedObjectives)
+          setAllWeeklyObjective(goalObjectiviesData)
+        })
+    
+    
+        return () => unsubscribe()
+    
+      }, [selectedGoal])
 
 
 
@@ -113,8 +205,8 @@ const EditDeleteGoals = () => {
                             }}
                         />
 
-                    {loadingImages?.[key] &&(
-                        <ActivityIndicator
+                        {loadingImages?.[key] &&(
+                            <ActivityIndicator
                             size="small"
                             color={theme.primary}
                             style={{
@@ -137,11 +229,11 @@ const EditDeleteGoals = () => {
                 <View style={{flexDirection:"row", columnGap: 20}}>
                     <View style={{flexDirection:"row", alignItems:"center", columnGap:5}}>
                         <Milestone size={20} stroke={theme.tabIconColor}/>
-                        <ThemedText variant='smallertitle'>0/5</ThemedText>
+                        <ThemedText variant='smallertitle'>{mileStoneCompleted.length}/{allMilestoneData.length}</ThemedText>
                     </View>
                     <View  style={{flexDirection:"row", alignItems:"center", columnGap:5}}>
                         <Activity size={20} stroke={theme.tabIconColor} />
-                        <ThemedText variant='smallertitle'>0/5</ThemedText>
+                        <ThemedText variant='smallertitle'>{completedWeekleyObjective.length}/{allweeklyObjective.length}</ThemedText>
                     </View>
                 </View>
                 <View  style={{flexDirection:"row", alignItems:"center", columnGap:5}}>
@@ -185,7 +277,7 @@ const EditDeleteGoals = () => {
                         <ChevronRight size={20} stroke={theme.tabIconColor} />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={{flexDirection:"row", justifyContent:"space-between" , borderBottomWidth: 0.4, paddingBottom: 10, alignItems:"center"}}>
+                <TouchableOpacity style={{flexDirection:"row", justifyContent:"space-between" , borderBottomWidth: 0.4, paddingBottom: 10, alignItems:"center"}} onPress={() => router.push("/(goalscreen)/TrackGoalProgress")}>
                     <View style={{flexDirection:"row", columnGap: 5}}>
                         <Radar size={25} stroke={theme.tabIconColor} />
                         <ThemedText variant='subtitleBold'>Track Progress</ThemedText>
@@ -193,7 +285,20 @@ const EditDeleteGoals = () => {
                     <ChevronRight size={20} stroke={theme.tabIconColor} />
                 </TouchableOpacity>
 
-                <TouchableOpacity style={{flexDirection:"row", justifyContent:"space-between", alignItems:"center"}}>
+                <TouchableOpacity 
+                    style={{flexDirection:"row", justifyContent:"space-between", alignItems:"center"}}
+                    onPress={() => {
+                        Alert.alert(
+                            "Goal Completed?",
+                            "Are you sure you want to mark this goal as completed?",
+                            [
+                                {text: "NO", style:"cancel"},
+                                {text: "YES", onPress:() => handleGoalComplete(), style: "destructive"}
+                            ],
+                            {cancelable: true}
+                        )
+                    }}
+                >
                     <View style={{flexDirection:"row", columnGap: 5, }}>
                         <ClipboardCheck size={25} stroke={theme.tabIconColor} />
                         <ThemedText variant='subtitleBold'>Complete Goal</ThemedText>
@@ -211,7 +316,7 @@ const EditDeleteGoals = () => {
             <Spacer height={10} />
 
             <View style={{borderWidth: 0.4, borderColor: theme.tabIconColor, rowGap: 15, padding: 10, width: "95%", alignSelf:"center", borderRadius: 10}}>
-                <TouchableOpacity style={{flexDirection:"row", justifyContent:"space-between" , borderBottomWidth: 0.4, paddingBottom:  10, alignItems:"center"}}>
+                <TouchableOpacity style={{flexDirection:"row", justifyContent:"space-between" , borderBottomWidth: 0.4, paddingBottom:  10, alignItems:"center"}} onPress={() => router.push({ pathname: "/(goalscreen)/SetGoals", params: { selectedGoal: selectedGoal ? JSON.stringify(selectedGoal) : null } })}>
                     <View style={{flexDirection:"row", columnGap: 5}}>
                         <PencilLine size={20} stroke={theme.tabIconColor}/>
                         <ThemedText variant='subtitleBold'>Edit Goal</ThemedText>

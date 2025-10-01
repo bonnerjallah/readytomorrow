@@ -117,7 +117,7 @@ const WeeklyGoalObjectiveModal = ({isVisible, onClose}: WeeklyGoalObjectiveModal
 
         try {
 
-            const objectiviesCol = collection(db, "users", userId, "goals", selectedGoal.id, "goalObjectives")
+            const objectiviesCol = collection(db, "users", userId, "goals", selectedGoal.category, "goal", selectedGoal.id, "goalObjectives")
 
             
             await addDoc(objectiviesCol, {

@@ -108,12 +108,11 @@ const AuthFlow = () => {
   };
 
   // 🔹 LOGIN HANDLER
-  const handleLoginIn = async () => {
+ const handleLoginIn = async () => {
     setLoading(true);
 
     if (!email || !password) {
       setErrMsg("Email and password required");
-      setTimeout(() => setErrMsg(""), 3000);
       setLoading(false);
       return;
     }
@@ -122,28 +121,32 @@ const AuthFlow = () => {
       const trimedEmail = email.trim();
       const trimedPwd = password.trim();
 
+      // Sign in with Firebase Auth
       const response = await signInWithEmailAndPassword(auth, trimedEmail, trimedPwd);
-
       const userData = response.user;
 
+      // Email verification check
       if (!userData.emailVerified) {
         showError("Please verify your email before logging in.");
         setLoading(false);
         return;
       }
 
+      // Fetch Firestore user
       const userDoc = await getDoc(doc(db, "users", userData.uid));
-      
-      if (userDoc.exists()) {
-        const profileData = userDoc.data();
-        setUser({
-          id: userData.uid,
-          email: userData.email ?? null,
-          createdAt: profileData.createdAt.toDate(),
-          ...profileData,
-        });
-      }
+      if (!userDoc.exists()) throw new Error("User record not found");
 
+      const profileData = userDoc.data();
+
+      // Update atom safely
+      setUser({
+        id: userData.uid,
+        email: userData.email ?? null,
+        createdAt: profileData.createdAt?.toDate ? profileData.createdAt.toDate() : new Date(),
+        ...profileData,
+      });
+
+      // Clear input fields
       setEmail("");
       setPassword("");
 
@@ -151,11 +154,13 @@ const AuthFlow = () => {
 
     } catch (error) {
       console.log("Error logging in", error);
-      showError("Invalid login credentials.");
+      showError("Invalid login credentials or Firebase issue.");
     } finally {
       setLoading(false);
     }
   };
+
+
 
   // 🔹 PASSWORD RESET HANDLER
   const handleReset = async () => {

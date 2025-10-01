@@ -1,5 +1,5 @@
 // 🌱 ROOT IMPORTS
-import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View, Animated, Easing } from 'react-native'
+import { Pressable, ScrollView, StyleSheet, FlatList, TouchableOpacity, View, Animated, Easing } from 'react-native'
 import { useEffect, useState, useMemo } from 'react'
 import Checkbox from "expo-checkbox";
 
@@ -370,49 +370,50 @@ const Home = () => {
         <Spacer height={10} />
 
         <View style={{flex: 1}}>
-            <ScrollView
-                showsVerticalScrollIndicator={false}
-            >
-                <View>
+            
+            <View>
 
-                    <TouchableOpacity
-                        onPress={() => toggleDropDown(0, todayActivities)}
-                    >
-                        <View style={{flexDirection: "row", borderTopWidth: 0.5, paddingTop: 10, borderTopColor: "gray", justifyContent: "space-between"}}>
-                            <View style={{flexDirection: 'row', columnGap: 7, alignItems: "center"}}>
-                                <ClipboardList 
-                                    stroke={theme.tabIconColor}
-                                    size={15}
-                                />
-                                <ThemedText style={{fontSize: 15}}>New Task</ThemedText>
-                            </View>
-
-                            <Animated.View 
-                                style={{
-                                    transform: [{
-                                        rotate: dropdowns[0].open 
-                                        ? '180deg' 
-                                        : '0deg'   // rotate icon when open
-                                    }]
-                                }}>
-                                <ChevronDown stroke={theme.tabIconColor} />
-                            </Animated.View>
+                <TouchableOpacity
+                    onPress={() => toggleDropDown(0, todayActivities)}
+                >
+                    <View style={{flexDirection: "row", borderTopWidth: 0.5, paddingTop: 10, borderTopColor: "gray", justifyContent: "space-between"}}>
+                        <View style={{flexDirection: 'row', columnGap: 7, alignItems: "center"}}>
+                            <ClipboardList 
+                                stroke={theme.tabIconColor}
+                                size={15}
+                            />
+                            <ThemedText style={{fontSize: 15}}>New Task</ThemedText>
                         </View>
-                    </TouchableOpacity>
 
-                    <Spacer height={10} />
+                        <Animated.View 
+                            style={{
+                                transform: [{
+                                    rotate: dropdowns[0].open 
+                                    ? '180deg' 
+                                    : '0deg'   // rotate icon when open
+                                }]
+                            }}>
+                            <ChevronDown stroke={theme.tabIconColor} />
+                        </Animated.View>
+                    </View>
+                </TouchableOpacity>
 
-                    <Animated.View
-                        style={{
-                            height: dropdowns[0].height,
-                            opacity: dropdowns[0].opacity,
-                            overflow: 'hidden', // important so content is clipped when closed
-                        }}  
-                    >
-                        {(sortedData ?? todayActivities).map((elem, idx) => (
+                <Spacer height={10} />
+
+                <Animated.View
+                    style={{
+                        height: dropdowns[0].height,
+                        opacity: dropdowns[0].opacity,
+                        overflow: 'hidden', // important so content is clipped when closed
+                    }}  
+                >
+
+                    <FlatList 
+                        data={sortedData ?? todayActivities}
+                        keyExtractor={(item, idx) => item.id?.toString() ?? idx.toString()}
+                        renderItem={({item}) => (
                             <Taskcard
-                                key={elem.id ?? idx}
-                                elem={elem}
+                                elem={item}
                                 darkMode={darkMode ?? "light"}
                                 theme={theme}
                                 setSelectedTask={setSelectedTask}
@@ -420,104 +421,109 @@ const Home = () => {
                                 handleTaskComplete={handleTaskComplete}
                                 setShowRedoModal={setShowRedoModal}
                             />
-                        ))}
-                    </Animated.View>
+                        )}
+                    />
 
-                    
-                    
-                    {selectedIncludeOption.length > 0 && selectedIncludeOption.includes("Recently Missed Activities") && (
-                        <>
-                            <TouchableOpacity
-                                onPress={() => toggleDropDown(1, missActivities)}
-                            >
-                                <View style={{flexDirection: "row", borderTopWidth: 0.5, paddingTop: 10, borderTopColor: "gray", justifyContent: "space-between"}}>
-                                    <View style={{flexDirection: 'row', columnGap: 7, alignItems: "center"}}>
-                                        <ClipboardX 
-                                            stroke="red"
-                                            size={15}
-                                        />
-                                        <ThemedText style={{fontSize: 15}}>Recently Missed Activities</ThemedText>
-                                    </View>
+                </Animated.View>
 
-                                    <Animated.View 
-                                        style={{
-                                            transform: [{
-                                                rotate: dropdowns[1].open 
-                                                ? '180deg' 
-                                                : '0deg'   // rotate icon when open
-                                            }]
-                                        }}>
-                                        <ChevronDown stroke={theme.tabIconColor} />
-                                    </Animated.View>
-                                </View>
-                            </TouchableOpacity>
-
-                            <Spacer height={10} />
-
-                            <Animated.View
-                                style={{
-                                    height: dropdowns[1].height,
-                                    opacity: dropdowns[1].opacity,
-                                    overflow: 'hidden', // important so content is clipped when closed
-                                }}
-                            >
-                                {missActivities && missActivities.map((elem, idx) => (
-                                    <Taskcard
-                                        key={elem.id ?? idx}
-                                        elem={elem}
-                                        darkMode={darkMode ?? "light"}
-                                        theme={theme}
-                                        setSelectedTask={setSelectedTask}
-                                        setShowEditModal={setShowEditModal}
-                                        handleTaskComplete={handleTaskComplete}
-                                        setShowRedoModal={setShowRedoModal}
-                                        backgroundColor="rgba(255, 77, 109, 0.3)" // ✅ string!
+                
+                
+                {selectedIncludeOption.length > 0 && selectedIncludeOption.includes("Recently Missed Activities") && (
+                    <>
+                        <TouchableOpacity
+                            onPress={() => toggleDropDown(1, missActivities)}
+                        >
+                            <View style={{flexDirection: "row", borderTopWidth: 0.5, paddingTop: 10, borderTopColor: "gray", justifyContent: "space-between"}}>
+                                <View style={{flexDirection: 'row', columnGap: 7, alignItems: "center"}}>
+                                    <ClipboardX 
+                                        stroke="red"
+                                        size={15}
                                     />
-                                ))}
-                            </Animated.View>
-                        </>
-                    )}
+                                    <ThemedText style={{fontSize: 15}}>Recently Missed Activities</ThemedText>
+                                </View>
 
-
-                    
-                    <TouchableOpacity
-                        onPress={() => toggleDropDown(2, doneActivities)}
-                    >
-                        <View style={{flexDirection: "row", borderTopWidth: 0.5, paddingTop: 10, borderTopColor: "gray",  justifyContent: "space-between"}}>
-                            <View style={{flexDirection: 'row', columnGap: 7, alignItems: "center"}}>
-                                <ClipboardCheck
-                                    stroke="green"
-                                    size={15}
-                                />
-                                <ThemedText style={{fontSize: 15}}>Done Task</ThemedText>
+                                <Animated.View 
+                                    style={{
+                                        transform: [{
+                                            rotate: dropdowns[1].open 
+                                            ? '180deg' 
+                                            : '0deg'   // rotate icon when open
+                                        }]
+                                    }}>
+                                    <ChevronDown stroke={theme.tabIconColor} />
+                                </Animated.View>
                             </View>
+                        </TouchableOpacity>
 
-                            <Animated.View 
-                                style={{
-                                    transform: [{
-                                        rotate: dropdowns[2].open 
-                                        ? '180deg' 
-                                        : '0deg'   // rotate icon when open
-                                    }]
-                                }}>
-                                <ChevronDown stroke={theme.tabIconColor} />
-                            </Animated.View>
+                        <Spacer height={10} />
+
+                        <Animated.View
+                            style={{
+                                height: dropdowns[1].height,
+                                opacity: dropdowns[1].opacity,
+                                overflow: 'hidden', // important so content is clipped when closed
+                            }}
+                        >
+                            {missActivities && missActivities.map((elem, idx) => (
+                                <Taskcard
+                                    key={elem.id ?? idx}
+                                    elem={elem}
+                                    darkMode={darkMode ?? "light"}
+                                    theme={theme}
+                                    setSelectedTask={setSelectedTask}
+                                    setShowEditModal={setShowEditModal}
+                                    handleTaskComplete={handleTaskComplete}
+                                    setShowRedoModal={setShowRedoModal}
+                                    backgroundColor="rgba(255, 77, 109, 0.3)" // ✅ string!
+                                />
+                            ))}
+                        </Animated.View>
+                    </>
+                )}
+
+
+                
+                <TouchableOpacity
+                    onPress={() => toggleDropDown(2, doneActivities)}
+                >
+                    <View style={{flexDirection: "row", borderTopWidth: 0.5, paddingTop: 10, borderTopColor: "gray",  justifyContent: "space-between"}}>
+                        <View style={{flexDirection: 'row', columnGap: 7, alignItems: "center"}}>
+                            <ClipboardCheck
+                                stroke="green"
+                                size={15}
+                            />
+                            <ThemedText style={{fontSize: 15}}>Done Task</ThemedText>
                         </View>
-                    </TouchableOpacity>
 
-                    <Spacer height={10} />
-                    
-                    <Animated.View
-                        style={{
-                            height: dropdowns[2].height,
-                            opacity: dropdowns[2].opacity,
-                            overflow: 'hidden', // important so content is clipped when closed
-                        }}
-                    >
-                        {doneActivities && doneActivities.map((elem, idx) => (
-                            <Taskcard
-                                key={elem.id ?? idx}
-                                elem={elem}
+                        <Animated.View 
+                            style={{
+                                transform: [{
+                                    rotate: dropdowns[2].open 
+                                    ? '180deg' 
+                                    : '0deg'   // rotate icon when open
+                                }]
+                            }}>
+                            <ChevronDown stroke={theme.tabIconColor} />
+                        </Animated.View>
+                    </View>
+                </TouchableOpacity>
+
+                <Spacer height={10} />
+                
+                <Animated.View
+                    style={{
+                        height: dropdowns[2].height,
+                        opacity: dropdowns[2].opacity,
+                        overflow: 'hidden', // important so content is clipped when closed
+                    }}
+                >
+
+                    <FlatList 
+                        data={doneActivities && doneActivities}
+                        keyExtractor={(item, idx) => item.id?.toString() ?? idx.toString()}
+                        renderItem={({item}) => (
+                            <Taskcard 
+                                elem={item}
                                 darkMode={darkMode ?? "light"}
                                 theme={theme}
                                 setSelectedTask={setSelectedTask}
@@ -527,11 +533,11 @@ const Home = () => {
                                 backgroundColor='rgba(68, 153, 113, 0.3)'
                                 textStyle={styles.lineThrough}
                             />
-                        ))}
-                    </Animated.View>
+                        )}
+                    />
+                </Animated.View>
 
-                </View>
-            </ScrollView>
+            </View>
 
             <Pressable
                 onPress={() => setShowAddTaskModal(true)}

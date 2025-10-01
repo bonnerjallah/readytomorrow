@@ -28,7 +28,7 @@ type DisplayGoalsOptionModalProps = {
   isVisible: boolean;
   onClose: () => void;
   selectSortBy?: (type: "A-Z" | "Time" | "Date") => void
-  selectGroupBy?: (type: "Days" | "Progress" | "No Grouping") => void
+  selectGroupBy?: (type: "Days" | "Priority" | "No Grouping") => void
   selectIncludes?: (type: ("Recently Missed Activities" | "Skipped Routine")[] )=> void
 };
 
@@ -42,10 +42,10 @@ const DisplayGoalsOptionModal = ({ isVisible, onClose, selectSortBy, selectGroup
     const darkModeBool = darkMode === "dark"
 
     const [selectedSort, setSelectedSort] = useState<"A-Z" | "Time" | "Date" | null>("Time");
-    const [selectedGroupOption, setSelectedGroupOption] = useState<"Days" | "Goals" | "Progress" | "No Grouping" | null>("No Grouping")
+    const [selectedGroupOption, setSelectedGroupOption] = useState<"Days" | "Goals" | "Priority" | "No Grouping" | null>("No Grouping")
 
     const sortOptions: ("A-Z" | "Time" | "Date")[] = ["A-Z", "Time", "Date"];
-    const groupOptions: ("Days" | "Progress" | "No Grouping")[] = ["Days", "Progress", "No Grouping"]
+    const groupOptions: ("Days" | "Priority" | "No Grouping")[] = ["Days", "Priority", "No Grouping"]
     const includeOption: ("Recently Missed Activities" | "Skipped Routine")[]=["Recently Missed Activities", "Skipped Routine"]
 
 
@@ -128,7 +128,6 @@ const DisplayGoalsOptionModal = ({ isVisible, onClose, selectSortBy, selectGroup
 
                 <ThemedText variant="title" title>Display Options</ThemedText>
 
-            
                 <CircleX  
                     onPress={onClose}
                     stroke="#34a0a4"
@@ -226,7 +225,7 @@ const DisplayGoalsOptionModal = ({ isVisible, onClose, selectSortBy, selectGroup
                                     }}
                                 />
                                 <ThemedText style={styles.item}>
-                                    {type === "Days" ? "Days" : type === "Progress" ? "Progress" : "No Grouping" }
+                                    {type === "Days" ? "Days" : type === "Priority" ? "Priority" : "No Grouping" }
                                 </ThemedText>
 
                             </View>
@@ -236,8 +235,6 @@ const DisplayGoalsOptionModal = ({ isVisible, onClose, selectSortBy, selectGroup
                 </View>
 
                 <Spacer height={20} />
-
-                
 
             </ScrollView>
       </ThemedView>

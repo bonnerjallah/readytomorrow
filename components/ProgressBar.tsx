@@ -13,7 +13,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ width, height, progress }) =>
   const points = `0,0 ${filledWidth},0 ${filledWidth},${height} 0,${height}`;
 
   return (
-    <Svg width={width} height={height}>
+    <Svg width={width} height={height} style={{ borderRadius: 5, overflow: 'hidden' }}>
       {/* Background */}
       <Polygon points={`0,0 ${width},0 ${width},${height} 0,${height}`} fill="#ddd" />
       {/* Filled progress */}

@@ -1,12 +1,12 @@
 //🌱 ROOT IMPORTS
-import { StyleSheet, Text, View, TouchableOpacity, ScrollView, Pressable, Animated } from 'react-native'
-import React, { useEffect, useRef, useState } from 'react'
+import { StyleSheet, FlatList, View, TouchableOpacity, ScrollView, Pressable, Animated } from 'react-native'
+import React, { use, useEffect, useRef, useState } from 'react'
 import { router } from 'expo-router'
 
 // ⚛️ STATE MANAGEMENT
 import { useTheme } from '../../components/ThemeContext'
 import { useSetAtom } from 'jotai'
-import { GoalsAtom } from '../../atoms/GoalCategoryAtom';
+import { GoalsAtom, ObjectiviesAtom, MilestonesAtom } from '../../atoms/GoalCategoryAtom';
 
 
 // 🎨 UI
@@ -28,10 +28,10 @@ import GoalProgressModal from "../../components/GoalProgressModal"
 
 //🔥 FIREBASE
 import { auth, db } from 'firebaseConfig'
-import { collection, getDocs, onSnapshot, Timestamp,  } from 'firebase/firestore'
+import { collection, getDocs, onSnapshot, Timestamp, query, orderBy  } from 'firebase/firestore'
 
 type GoalType = {
-  id?: string; // optional, since you’re adding doc.id
+  id?: string; 
   categoryImage: string | null;
   category: string;
   goalName: string;
@@ -39,10 +39,30 @@ type GoalType = {
   targetDate: Timestamp;
   longTerm: boolean;
   startdate: Timestamp;
-  createdAt: Timestamp | null; // serverTimestamp resolves to this
+  completed: boolean,
+  createdAt: Timestamp | null; 
   selectedPriority?: 'Normal' | 'High' | 'Highest' | ''
-
 };
+
+type MilestoneDataType = {
+  id: string;
+  mileStoneName: string;
+  mileStoneNote: string;
+  targetDate: string;
+  completed: boolean;
+  goalId: string;
+  createdAt: Timestamp | null;
+}
+
+type ObjectiveDataType = {
+  id: string;
+  objectiveName: string;  
+  objectiveNote: string;
+  targetDate: string;
+  completed: boolean;
+  goalId: string;
+  createdAt: Timestamp | null;
+}
 
 
 const Goals = () => {
@@ -50,13 +70,21 @@ const Goals = () => {
   const {theme, darkMode} = useTheme()
 
   const setGoals = useSetAtom(GoalsAtom);
+  const setObjectives = useSetAtom(ObjectiviesAtom);
+  const setMilestones = useSetAtom(MilestonesAtom);
 
   const [showWeekLyObjectivies, setShowWeekLyObjectivies] = useState(false)
   const [showDisplayOptionModal, setShowDisplayOptionModal] = useState(false)
   const [longTermGoals, setLongTermGoals] = useState<GoalType[]>([])
   const [shortTermGoals, setShortTermGoals] = useState<GoalType[]>([])
   const [showGoalsProgressModal, setShowGoalsProgressModal] = useState(false)
-
+  const [allMilestoneData, setAllMilestoneData] = useState<MilestoneDataType[]>([])
+  const [mileStoneCompleted, setMilestoneCompleted] = useState<MilestoneDataType[]>([])
+  const [allObjectivesData, setAllObjectivesData] = useState<ObjectiveDataType[]>([]);
+  const [objectiveCompleted, setObjectiveCompleted] = useState<ObjectiveDataType[]>([])
+  const [searchData, setSearchData] = useState<GoalType[]>([])
+  const [sortedGoals, setSortedGoals] = useState<GoalType[]>([])
+  
 
 
   //🔹Animations
@@ -85,7 +113,7 @@ const Goals = () => {
 
     const unsubscribes: (() => void)[] = [];
 
-    const fetchCategoriesRealtime = async () => {
+    const fetchGoalsRealTime = async () => {
       try {
         const categoriesCol = collection(db, "users", userId, "goals");
         const categorySnapshot = await getDocs(categoriesCol);
@@ -120,12 +148,12 @@ const Goals = () => {
             });
 
             setLongTermGoals(prev => {
-              const otherGoals = prev.filter(g => g.category !== catDoc.id); // remove previous goals from this category
+              const otherGoals = prev.filter(g => g.category !== catDoc.id && !g.completed); 
               return [...otherGoals, ...goalsData.filter(g => g.longTerm)];
             });
 
             setShortTermGoals(prev => {
-              const otherGoals = prev.filter(g => g.category !== catDoc.id);
+              const otherGoals = prev.filter(g => g.category !== catDoc.id && !g.completed);
               return [...otherGoals, ...goalsData.filter(g => !g.longTerm)];
             });
 
@@ -138,81 +166,275 @@ const Goals = () => {
       }
     };
 
-    fetchCategoriesRealtime();
+    fetchGoalsRealTime();
 
     // Cleanup all listeners on unmount
     return () => unsubscribes.forEach(unsub => unsub());
   }, []);
 
+  //🔹Fetch milestone
+  useEffect(() => {
+    const userId = auth.currentUser?.uid;
+    if (!userId) return;
+
+    // Store unsubscribe functions for cleanup
+    const unsubscribes: (() => void)[] = [];
+
+    const fetchAllMilestones = async () => {
+      try {
+        // 1️⃣ Fetch all categories once
+        const categoriesSnapshot = await getDocs(collection(db, "users", userId, "goals"));
+
+        categoriesSnapshot.forEach(async (categoryDoc) => {
+          const categoryId = categoryDoc.id;
+
+          // 2️⃣ Fetch all goals inside this category
+          const goalsCol = collection(db, "users", userId, "goals", categoryId, "goal");
+          const goalsSnapshot = await getDocs(goalsCol);
+
+          goalsSnapshot.forEach((goalDoc) => {
+            const goalId = goalDoc.id;
+
+            // 3️⃣ Listen for milestones in this goal
+            const milestonesQuery = query(
+              collection(db, "users", userId, "goals", categoryId, "goal", goalId, "milestones"),
+              orderBy("createdAt", "asc")
+            );
+
+            const unsubscribe = onSnapshot(milestonesQuery, (milestoneSnapshot) => {
+              const allMilestones: MilestoneDataType[] = [];
+
+              milestoneSnapshot.forEach((doc) => {
+                const data = doc.data();
+                allMilestones.push({
+                  id: doc.id,
+                  goalId,
+                  mileStoneName: data.mileStoneName ?? "",
+                  mileStoneNote: data.mileStoneNote ?? "",
+                  targetDate: data.targetDate ?? null,
+                  completed: data.completed ?? false,
+                  createdAt: data.createdAt?.toDate?.() ?? new Date(),
+                });
+              });
+
+              // ✅ Update state only for this goal’s milestones
+              setAllMilestoneData((prev) => [
+                ...prev.filter((m) => m.goalId !== goalId), // remove old milestones for this goal
+                ...allMilestones, // add fresh ones
+              ]);
+              setMilestoneCompleted((prev) => [
+                ...prev.filter((m) => m.goalId !== goalId),
+                ...allMilestones.filter((m) => m.completed),
+              ]);
+
+              setMilestones((prev) => [
+                ...prev.filter((m) => m.goalId !== goalId),
+                ...allMilestones,
+              ]);
+            });
+
+            unsubscribes.push(unsubscribe);
+          });
+        });
+      } catch (err) {
+        console.log("Error fetching milestones:", err);
+      }
+    };
+
+    fetchAllMilestones();
+
+    // Cleanup all listeners on unmount
+    return () => {
+      unsubscribes.forEach((unsub) => unsub());
+    };
+  }, [auth.currentUser?.uid]);
+
+  //🔹Fetch Objectives
+  useEffect(() => {
+    const userId = auth.currentUser?.uid;
+    if (!userId) return;
+
+    const unsubscribes: (() => void)[] = [];
+
+    const fetchAllObjectives = async () => {
+      try {
+        // 1️⃣ Fetch all categories
+        const categoriesSnapshot = await getDocs(
+          collection(db, "users", userId, "goals")
+        );
+
+        for (const categoryDoc of categoriesSnapshot.docs) {
+          const categoryId = categoryDoc.id;
+
+          // 2️⃣ Fetch all goals inside this category
+          const goalsCol = collection(
+            db,
+            "users",
+            userId,
+            "goals",
+            categoryId,
+            "goal"
+          );
+          const goalsSnapshot = await getDocs(goalsCol);
+
+          for (const goalDoc of goalsSnapshot.docs) {
+            const goalId = goalDoc.id;
+
+            // 3️⃣ Real-time listener for objectives
+            const objectivesQuery = query(
+              collection(
+                db,
+                "users",
+                userId,
+                "goals",
+                categoryId,
+                "goal",
+                goalId,
+                "goalObjectives"
+              ),
+              orderBy("createdAt", "asc")
+            );
+
+            const unsubscribe = onSnapshot(objectivesQuery, (objectiveSnapshot) => {
+              const allObjectives: ObjectiveDataType[] = [];
+
+              objectiveSnapshot.forEach((doc) => {
+                const data = doc.data();
+                allObjectives.push({
+                  id: doc.id,
+                  goalId,
+                  objectiveName: data.objectiveName ?? "",
+                  objectiveNote: data.objectiveNote ?? "",
+                  targetDate: data.targetDate ?? null,
+                  completed: data.completed ?? false,
+                  createdAt: data.createdAt?.toDate?.() ?? new Date(),
+                });
+              });
+
+              // ✅ Update state safely (replace old objectives for this goal)
+              setAllObjectivesData((prev) => [
+                ...prev.filter((o) => o.goalId !== goalId),
+                ...allObjectives,
+              ]);
+
+              setObjectiveCompleted((prev) => [
+                ...prev.filter((o) => o.goalId !== goalId ),
+                ...allObjectives.filter((o) => o.completed),
+              ]);
+
+          
+              setObjectives((prev) => [
+                ...prev.filter((o) => o.goalId !== goalId),
+                ...allObjectives,
+              ]);
+            });
+
+            unsubscribes.push(unsubscribe);
+          }
+        }
+      } catch (err) {
+        console.log("Error fetching objectives:", err);
+      }
+    };
+
+    fetchAllObjectives();
+
+    // Cleanup all listeners on unmount
+    return () => {
+      unsubscribes.forEach((unsub) => unsub());
+    };
+  }, [auth.currentUser?.uid]);
+
+  //🔹Goals search funtion
+  const handleSearch = (query: string) => {
+    const allGoals = [...longTermGoals, ...shortTermGoals];
+    const filteredGoals = allGoals.filter(elem => elem.goalName.toLowerCase().includes(query.toLowerCase()));
+    setSearchData(filteredGoals);
+  }
+
+
+
+
+
+
 
 
 
   //🔹Sorting goals by a-z
-  // const selectSortBy = (value: 'A-Z' | 'Time' | 'Date') => {
-  //   let baseData = [...allGoals]; // shallow copy
+  const selectSortBy = (value: 'A-Z' | 'Time' | 'Date') => {
+    let baseData: GoalType[] = []
 
-  //   if (value === 'A-Z') {
-  //     baseData.sort((a: GoalType, b: GoalType) => 
-  //       a.goalName.localeCompare(b.goalName)
-  //     );
-  //   }
+    if(!showWeekLyObjectivies) {
+      baseData = [...longTermGoals]; 
+    } else {
+      baseData = [...shortTermGoals]; 
+    }
 
-  //   if (value === 'Time') {
-  //     baseData.sort((a: GoalType, b: GoalType) => {
-  //       const aTime = a.createdAt?.toMillis ? a.createdAt.toMillis() : Infinity;
-  //       const bTime = b.createdAt?.toMillis ? b.createdAt.toMillis() : Infinity;
-  //       return aTime - bTime;
-  //     });
-  //   }
+    if (value === 'A-Z') {
+      baseData.sort((a: GoalType, b: GoalType) => 
+        a.goalName.localeCompare(b.goalName)
+      );
+    }
 
-
-  //   if (value === 'Date') {
-  //     baseData.sort((a: GoalType, b: GoalType) => {
-  //       const aDate = a.startdate?.toMillis ? a.startdate.toMillis() : Infinity;
-  //       const bDate = b.startdate?.toMillis ? b.startdate.toMillis() : Infinity;
-  //       return aDate - bDate;
-  //     });
-  //   }
+    if (value === 'Time') {
+      baseData.sort((a: GoalType, b: GoalType) => {
+        const aTime = a.createdAt?.toMillis ? a.createdAt.toMillis() : Infinity;
+        const bTime = b.createdAt?.toMillis ? b.createdAt.toMillis() : Infinity;
+        return aTime - bTime;
+      });
+    }
 
 
-  //   setSortedGoals(baseData)
-  // };
-
-  // const selectGroupBy = (value: 'Days' | 'Priority' | 'No Grouping') => {
-  //   let baseGroup = [...allGoals]
-
-  //   if (value === 'No Grouping') {
-  //     setSortedGoals(baseGroup)
-  //     return
-  //   }
-
-  //   type GroupGoals<T> = T & { groupKey: string }
-  //   let grouped: GroupGoals<GoalType>[] = []
-
-  //   if (value === 'Days') {
-  //     grouped = baseGroup.map(elem => ({
-  //       ...elem,
-  //       groupKey: elem.startdate
-  //         ? elem.startdate.toDate().toDateString() // ✅ convert Timestamp to Date
-  //         : 'No Data'
-  //     }))
-  //   }
-
-  //   if (value === 'Priority') {
-  //     const priorityOrder = ['Highest', 'High', 'Normal']
-  //     baseGroup.sort((a, b) => {
-  //       const aIndex = priorityOrder.indexOf(a.selectedPriority ?? 'Normal')
-  //       const bIndex = priorityOrder.indexOf(b.selectedPriority ?? 'Normal')
-  //       return aIndex - bIndex
-  //     })
-  //     grouped = baseGroup.map(elem => ({ ...elem, groupKey: elem.selectedPriority ?? 'Normal' }))
-  //   }
-
-  //   setGoals(grouped)
-
-  // }
+    if (value === 'Date') {
+      baseData.sort((a: GoalType, b: GoalType) => {
+        const aDate = a.startdate?.toMillis ? a.startdate.toMillis() : Infinity;
+        const bDate = b.startdate?.toMillis ? b.startdate.toMillis() : Infinity;
+        return aDate - bDate;
+      });
+    }
 
 
+    setSortedGoals(baseData)
+  };
+
+  const selectGroupBy = (value: 'Days' | 'Priority' | 'No Grouping') => {
+    let baseGroup: GoalType[] = []
+    if(!showWeekLyObjectivies) {
+      baseGroup = [...longTermGoals]; 
+    } else {
+      baseGroup = [...shortTermGoals]; 
+    }
+
+    if (value === 'No Grouping') {
+      setSortedGoals(baseGroup)
+      return
+    }
+
+    type GroupGoals<T> = T & { groupKey: string }
+    let grouped: GroupGoals<GoalType>[] = []
+
+    if (value === 'Days') {
+      grouped = baseGroup.map(elem => ({
+        ...elem,
+        groupKey: elem.startdate
+          ? elem.startdate.toDate().toDateString() // ✅ convert Timestamp to Date
+          : 'No Data'
+      }))
+    }
+
+    if (value === 'Priority') {
+      const priorityOrder = ['Highest', 'High', 'Normal']
+      baseGroup.sort((a, b) => {
+        const aIndex = priorityOrder.indexOf(a.selectedPriority ?? 'Normal')
+        const bIndex = priorityOrder.indexOf(b.selectedPriority ?? 'Normal')
+        return aIndex - bIndex
+      })
+      grouped = baseGroup.map(elem => ({ ...elem, groupKey: elem.selectedPriority ?? 'Normal' }))
+    }
+
+    setSortedGoals(grouped)
+
+  }
 
 
 
@@ -250,49 +472,72 @@ const Goals = () => {
       <ThemedTextInput 
         style={{backgroundColor:theme.background, alignItems:"center"}}
         placeholder='Search'
+        onChangeText={handleSearch}
       >
         <Search  stroke={theme.tabIconColor}/>
       </ThemedTextInput>
 
       <Spacer height={20} />
 
-      <ScrollView  contentContainerStyle={{ alignItems: 'center'}}>
-          <Animated.View
-            style={{
-              opacity: shortTermAnim,
-              transform:[
-                {translateX: shortTermAnim.interpolate({inputRange: [0, 1], outputRange:[200, 0]})}
-              ],
-              position:"absolute",
-              width:'100%'
-            }}
-          >
-            {shortTermGoals.map((elem, idx) => (
-              <GoalsCard 
-                key={elem.id ?? idx}
-                elem={elem}
+      <View style={{position:"relative", flex:1}}>
+        <Animated.View
+          style={{
+            opacity: shortTermAnim,
+            transform:[
+              {translateX: shortTermAnim.interpolate({inputRange: [0, 1], outputRange:[200, 0]})}
+            ],
+            position:"absolute",
+            width:'100%'
+          }}
+        >
+          <FlatList
+            data={shortTermGoals}
+            keyExtractor={(item, index) => item.id?.toString() ?? index.toString()}
+            renderItem={({ item }) => (
+              <GoalsCard
+                elem={item}
+                allMilestoneData={allMilestoneData}
+                mileStoneCompleted={mileStoneCompleted}
+                allObjectivesData={allObjectivesData}  
+                objectiveCompleted={objectiveCompleted}
+                goalId={item.id}
               />
-            ))}
-          </Animated.View>
-          < Animated.View
-            style={{
-              opacity: longTermAnim,
-              transform:[
-                {translateX: longTermAnim.interpolate({inputRange: [0, 1], outputRange: [-200, 0]})}
-              ],
-              width:'100%'
-            }}
-          >
-            {longTermGoals.map((elem, idx) => (
-              <GoalsCard 
-                key={elem.id ?? idx}
-                elem={elem}
-              />
-            ))}
-          </Animated.View>
-        
-      </ScrollView>
+            )}
+            showsVerticalScrollIndicator={false}
+          />
 
+        </Animated.View>
+
+        < Animated.View
+          style={{
+            opacity: longTermAnim,
+            transform:[
+              {translateX: longTermAnim.interpolate({inputRange: [0, 1], outputRange: [-200, 0]})}
+            ],
+            width:'100%'
+          }}
+        >
+
+          <FlatList
+            data={searchData.length > 0 ? searchData : sortedGoals.length > 0 ? sortedGoals : longTermGoals}
+            keyExtractor={(item, index) => item.id?.toString() ?? index.toString()}
+            renderItem={({ item }) => (
+              <GoalsCard
+                elem={item}
+                allMilestoneData={allMilestoneData}
+                mileStoneCompleted={mileStoneCompleted}
+                allObjectivesData={allObjectivesData}  
+                objectiveCompleted={objectiveCompleted}
+                goalId={item.id}
+              />
+            )}
+            showsVerticalScrollIndicator={false}
+          />
+
+        </Animated.View>
+      </View>
+        
+              
       <Pressable
         onPress={() => router.push("/(goalscreen)/AddGoals")}
         style={({ pressed }) => [
@@ -319,11 +564,11 @@ const Goals = () => {
         <CirclePlus size={28} color="white" strokeWidth={2} />
       </Pressable>
 
-        <DisplayGoalsOptionModal
+      <DisplayGoalsOptionModal
         isVisible={showDisplayOptionModal}
         onClose={() => setShowDisplayOptionModal(false)}
-        // selectSortBy={selectSortBy}
-        // selectGroupBy={selectGroupBy}
+        selectSortBy={selectSortBy}
+        selectGroupBy={selectGroupBy}
       />
 
       <GoalProgressModal isVisible={showGoalsProgressModal} onClose={() => setShowGoalsProgressModal(false)} />

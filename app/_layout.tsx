@@ -103,6 +103,7 @@ function Layout () {
         <Stack.Screen name="(auth)" options={{headerShown: false}} />
         <Stack.Screen name="(dashboard)" options={{headerShown: false}} />
         <Stack.Screen name="(goalscreen)" options={{headerShown: false}} />
+        <Stack.Screen name="(notifications)" options={{headerShown: false}} />
         
       </Stack>
     </View>

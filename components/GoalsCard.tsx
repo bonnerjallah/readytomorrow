@@ -16,36 +16,70 @@ import { useTheme } from './ThemeContext';
 //🎨 COMPONENT
 import ThemedText from './ThemedText'
 import ThemedView from './ThemedView';
+import ProgressBar from './ProgressBar';
+
+//🔥FIREBASE
+import { Timestamp } from 'firebase/firestore';
 
 
 
 // 🔤 TYPE
 type GoalsCardProps = {
-  elem: any;         
-  
+    elem: any,        
+    allMilestoneData?: MilestoneDataType[];
+    mileStoneCompleted?: MilestoneDataType[];
+    allObjectivesData?: goalObjectiveType[];
+    objectiveCompleted?: goalObjectiveType[];
+    goalId?: string;
+    milestoneData?: MilestoneDataType[];
+    allgoalObjectives?: goalObjectiveType[];
 };
 
-const GoalsCard: React.FC<GoalsCardProps> = ({elem}) => {
+type MilestoneDataType = {
+    id: string;
+    mileStoneName: string;
+    mileStoneNote: string;
+    targetDate: string;
+    completed: boolean;
+    createdAt: Timestamp | null;
+    goalId?: string;
+}
+
+type goalObjectiveType = {
+    id: string;
+    objectiveName: string;
+    objectiveNote: string;
+    targetDate: string;
+    completed: boolean;
+    createdAt: Timestamp | null;
+    goalId?: string;
+}
+
+const GoalsCard = ({elem, allMilestoneData, allObjectivesData, objectiveCompleted }: GoalsCardProps) => {
 
     const {theme, darkMode} = useTheme()
 
     const setSelectedAtom = useSetAtom(SelectedGoalAtom)
 
-
     const [loadingImage, setLoadingImages] = useState<{[key: string] : boolean}>()
 
+    //🔹Image source
     const imageSource  = (image: string | number | null | undefined) => {
         if (!image) return require("../assets/images/manwriting.png");
 
         return typeof image === "number" ? image : { uri: image };
     };
 
+    const milestonesForThisGoal = allMilestoneData?.filter(m => m.goalId === elem.id) ?? [];
+    const completedForThisGoal = milestonesForThisGoal.filter(m => m.completed);
 
+    const goalObjectiveForThisGoal = allObjectivesData?.filter(o => o.goalId === elem.id) ?? [];
+    const completedObjectivesForThisGoal = goalObjectiveForThisGoal.filter(o => o.completed);
+
+    
   return (
     <GestureHandlerRootView>
-
         
-
         <ThemedView style={{marginVertical: 10}}>
             <Pressable
                 onPress={() => {
@@ -101,12 +135,12 @@ const GoalsCard: React.FC<GoalsCardProps> = ({elem}) => {
                     <View style={{flexDirection:"row", justifyContent:"space-between"}}>
                         <View style={{flexDirection:"row", columnGap: 20}}>
                             <View style={{flexDirection:"row", alignItems:"center", columnGap:5}}>
-                                <Milestone size={20} stroke={theme.tabIconColor}/>
-                                <ThemedText variant='smallertitle'>0/5</ThemedText>
+                            <Milestone size={20} stroke={theme.tabIconColor}/>
+                                <ThemedText variant='smallertitle'>{completedForThisGoal?.length ?? 0}/{milestonesForThisGoal?.length ?? 0}</ThemedText>
                             </View>
                             <View  style={{flexDirection:"row", alignItems:"center", columnGap:5}}>
                                 <Activity size={20} stroke={theme.tabIconColor} />
-                                <ThemedText variant='smallertitle'>0/5</ThemedText>
+                                <ThemedText variant='smallertitle'>{completedObjectivesForThisGoal?.length ?? 0}/{goalObjectiveForThisGoal?.length ?? 0}</ThemedText>
                             </View>
                         </View>
                         <View  style={{flexDirection:"row", alignItems:"center", columnGap:5}}>
@@ -117,8 +151,7 @@ const GoalsCard: React.FC<GoalsCardProps> = ({elem}) => {
                         </View>
                     </View>
 
-                    
-                    <ThemedText>Traker bar</ThemedText>
+                    <ProgressBar width={280} height={5} progress={milestonesForThisGoal.length === 0 ? 0 : (completedForThisGoal.length / milestonesForThisGoal.length)} />
 
                     <View style={{flexDirection:"row", justifyContent:"space-between"}}>
                         <View style={{justifyContent:"center", alignItems:"center"}}>

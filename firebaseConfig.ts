@@ -1,9 +1,12 @@
-import { initializeApp } from "firebase/app";
-import { initializeAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+// firebaseConfig.ts
+import { initializeApp } from 'firebase/app';
+import { initializeAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import getReactNativePersistence  from '@react-native-firebase/auth';
 
-// Firebase configuration
+// 🔹 Environment variables
 import {
   FIREBASE_API_KEY,
   FIREBASE_AUTH_DOMAIN,
@@ -11,8 +14,9 @@ import {
   FIREBASE_STORAGE_BUCKET,
   FIREBASE_MESSAGING_SENDER_ID,
   FIREBASE_APP_ID,
-} from "@env";
+} from '@env';
 
+// 🔹 Firebase configuration
 const firebaseConfig = {
   apiKey: FIREBASE_API_KEY,
   authDomain: FIREBASE_AUTH_DOMAIN,
@@ -22,12 +26,18 @@ const firebaseConfig = {
   appId: FIREBASE_APP_ID,
 };
 
-// Initialize Firebase
+// 🔹 Initialize Firebase App
 const app = initializeApp(firebaseConfig);
 
-// Initialize Auth (React Native Auto-persistence)
-export const auth = initializeAuth(app);
+// 🔹 Initialize Auth with React Native persistence
+export const auth = initializeAuth(app, {
+  persistence: undefined, // defaults to inMemoryPersistence
+});
 
-// Initialize Firestore and Storage
+// 🔹 Initialize Firestore
 export const db = getFirestore(app);
+
+// 🔹 Initialize Storage
 export const storage = getStorage(app);
+
+export default app;

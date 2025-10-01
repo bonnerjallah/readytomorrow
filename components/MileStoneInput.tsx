@@ -96,14 +96,14 @@ const MileStoneInput = ({isVisible, onClose}: MileStoneInputType) => {
     };
 
 
-
+    //🔹Milestone submit 
     const handleMileStoneSubmit = async () => {
         const userId = auth.currentUser?.uid;
         if (!userId || !selectedGoal?.id) return; // category is not needed
 
         try {
             // Collection path: users/{userId}/goals/{goalId}/milestones
-            const milestoneCol = collection(db, "users", userId, "goals", selectedGoal.id, "milestones");
+            const milestoneCol = collection(db, "users", userId, "goals", selectedGoal.category, "goal", selectedGoal.id, "milestones");
 
             await addDoc(milestoneCol, {
                 mileStoneName,
