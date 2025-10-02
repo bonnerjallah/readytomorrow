@@ -1,6 +1,8 @@
 // 🌱 ROOT IMPORTS
-import { Pressable, ScrollView, StyleSheet, FlatList, TouchableOpacity, View, Animated, Easing } from 'react-native'
-import { useEffect, useState, useMemo } from 'react'
+import { Pressable, ScrollView, StyleSheet, FlatList, TouchableOpacity, View, Animated, Easing, Alert } from 'react-native'
+import { useEffect, useState, useMemo, useRef } from 'react'
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+
 import Checkbox from "expo-checkbox";
 
 // 🎨 UI
@@ -19,6 +21,7 @@ import EditDeleteModal from "../../components/EditDeleteModal"
 import Taskcard from "../../components/Taskcard"
 import RescheduleModal from "../../components/RescheduleModal"
 import ScheduleRoutineModal from '../../components/ScheduleRoutineModal'
+import SwipeableRow from "../../components/SwipeableRow"
 
 
 
@@ -30,7 +33,8 @@ import {taskAtom} from "../../atoms/selectedTaskAtom"
 
 // 💾 FIREBASE
 import {auth, db} from "../../firebaseConfig"
-import { collection, getDocs, doc, query, orderBy, updateDoc, onSnapshot} from 'firebase/firestore'
+import { collection, getDocs, doc, query, orderBy, updateDoc, onSnapshot, deleteDoc} from 'firebase/firestore'
+
 
 
 // 🔤 TYPES
@@ -52,9 +56,12 @@ type ActivityType = {
   done: boolean;
 };
 
+type RoutineType = ActivityType;
+
 const Home = () => {
 
     const {theme, darkMode} = useTheme()
+    const rowRef = useRef<any>(null);
 
     const setSelectedTask = useSetAtom(taskAtom)
 
@@ -86,28 +93,51 @@ const Home = () => {
 
     const toggleDropDown = (index: number, items: ActivityType[]) => {
         const current = dropdowns[index];
-        const ITEM_HEIGHT = 140; // height of a single task card
-        const targetHeight = items.length * ITEM_HEIGHT;
+        const ITEM_HEIGHT = 140; // approx height of each Taskcard
+        const contentHeight = items.length * ITEM_HEIGHT;
+        const MAX_HEIGHT = 350; // cap height for scrollable list
+        const targetHeight = Math.min(contentHeight, MAX_HEIGHT);
 
         if (current.open) {
             Animated.parallel([
-                Animated.timing(current.height, { toValue: 0, duration: 250, easing: Easing.out(Easing.ease), useNativeDriver: false }),
-                Animated.timing(current.opacity, { toValue: 0, duration: 150, useNativeDriver: false }),
+            Animated.timing(current.height, {
+                toValue: 0,
+                duration: 250,
+                easing: Easing.out(Easing.ease),
+                useNativeDriver: false,
+            }),
+            Animated.timing(current.opacity, {
+                toValue: 0,
+                duration: 150,
+                useNativeDriver: false,
+            }),
             ]).start(() => {
-                const updated = [...dropdowns];
-                updated[index].open = false;
-                setDropdowns(updated);
+            const updated = [...dropdowns];
+            updated[index].open = false;
+            setDropdowns(updated);
             });
         } else {
             const updated = [...dropdowns];
             updated[index].open = true;
             setDropdowns(updated);
+
             Animated.parallel([
-                Animated.spring(current.height, { toValue: targetHeight, stiffness: 120, damping: 15, mass: 1, useNativeDriver: false }),
-                Animated.timing(current.opacity, { toValue: 1, duration: 150, useNativeDriver: false }),
+            Animated.spring(current.height, {
+                toValue: targetHeight,
+                stiffness: 120,
+                damping: 15,
+                mass: 1,
+                useNativeDriver: false,
+            }),
+            Animated.timing(current.opacity, {
+                toValue: 1,
+                duration: 150,
+                useNativeDriver: false,
+            }),
             ]).start();
         }
     };
+
 
 
     // 🔹Fetch user activities
@@ -314,6 +344,28 @@ const Home = () => {
         setSelectedIncludeOption(value);
     }
 
+    //🔹Delete task
+    const handleDeleteTask = async (item: ActivityType | RoutineType, type: "task" | "routine") => {
+        const userId = auth.currentUser?.uid;
+        if (!userId) return;
+
+        if (!item?.id) return Alert.alert("No item selected to delete");
+
+        try {
+            const collectionName = type === "task" ? "activities" : "routines";
+            const docRef = doc(db, "users", userId, collectionName, item.id);
+            await deleteDoc(docRef);
+
+            // Optimistically update local state so UI removes it immediately
+            setAllActivities(prev => prev.filter(task => task.id !== item.id));
+            
+        } catch (error) {
+            console.log("Error deleting item", error);
+            Alert.alert("Error", "Could not delete the item");
+        }
+    };
+
+
 
   return (
     <ThemedView style={styles.container} safe>
@@ -408,21 +460,43 @@ const Home = () => {
                     }}  
                 >
 
-                    <FlatList 
-                        data={sortedData ?? todayActivities}
-                        keyExtractor={(item, idx) => item.id?.toString() ?? idx.toString()}
-                        renderItem={({item}) => (
-                            <Taskcard
-                                elem={item}
-                                darkMode={darkMode ?? "light"}
-                                theme={theme}
-                                setSelectedTask={setSelectedTask}
-                                setShowEditModal={setShowEditModal}
-                                handleTaskComplete={handleTaskComplete}
-                                setShowRedoModal={setShowRedoModal}
-                            />
-                        )}
-                    />
+                    <GestureHandlerRootView  style={{flex: 1}}>
+                        <FlatList 
+                            data={sortedData ?? todayActivities}
+                            keyExtractor={(item, idx) => item.id?.toString() ?? idx.toString()}
+                            renderItem={({item}) => (
+                                <SwipeableRow
+                                    ref={rowRef}
+                                    id={item.id}
+                                    onDelete={(id) => {
+                                        Alert.alert(
+                                            "Delete Task",
+                                            "Are you sure you want to delete task?", 
+                                            [
+                                                {text: "NO", style:"cancel", onPress: () => {
+                                                    rowRef.current?.resetSwipe(); // reset swipe back
+                                                }},
+                                                {text: "YES", style: "destructive", onPress:() => {
+                                                    handleDeleteTask({ ...item, id: String(id) }, "task")
+                                                }}
+                                            ]
+                                        )
+                                    }} 
+                                >
+                                    <Taskcard
+                                        elem={item}
+                                        darkMode={darkMode ?? "light"}
+                                        theme={theme}
+                                        setSelectedTask={setSelectedTask}
+                                        setShowEditModal={setShowEditModal}
+                                        handleTaskComplete={handleTaskComplete}
+                                        setShowRedoModal={setShowRedoModal}
+                                    />
+                                </SwipeableRow>
+                                
+                            )}
+                        />
+                    </GestureHandlerRootView >
 
                 </Animated.View>
 

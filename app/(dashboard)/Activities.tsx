@@ -240,7 +240,7 @@ const Activities = () => {
           <ChartNoAxesColumn size={35} stroke={darkMode === 'dark' ? '#34a0a4' : 'black'} />
         </TouchableOpacity>
 
-        <ThemedText variant="heading">Activities</ThemedText>
+        <ThemedText variant="heading" title>Activities</ThemedText>
 
         <TouchableOpacity onPress={() => setShowDisplayOptionModal(true)}>
           <SlidersHorizontal size={35} stroke={darkMode === 'dark' ? '#34a0a4' : 'black'} />

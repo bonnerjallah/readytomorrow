@@ -53,7 +53,7 @@ const Profile = (props: Props) => {
   return (
     <ThemedView style={styles.container} safe>
       <Spacer height={20} />
-      <ThemedText variant='heading' style={{textAlign:'center'}}>Profile</ThemedText>
+      <ThemedText variant='heading' style={{textAlign:'center'}} title>Profile</ThemedText>
 
       <Spacer height={20} />
 

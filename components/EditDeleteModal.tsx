@@ -140,7 +140,7 @@ const EditDeleteModal = ({isVisible, onClose}: DisplayOptionsModalProps) => {
                         "Are you sure you want to delete task?", 
                         [
                           {text: "NO", style:"cancel"},
-                          {text: "Yes", onPress: () => handleDeleteTask(), style:"destructive"}
+                          {text: "YES", onPress: () => handleDeleteTask(), style:"destructive"}
                         ],
                         {cancelable: true}
                       )

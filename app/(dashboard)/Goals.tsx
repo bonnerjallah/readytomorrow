@@ -1,7 +1,9 @@
 //🌱 ROOT IMPORTS
-import { StyleSheet, FlatList, View, TouchableOpacity, ScrollView, Pressable, Animated } from 'react-native'
+import { StyleSheet, FlatList, View, TouchableOpacity, ScrollView, Pressable, Animated, Alert } from 'react-native'
 import React, { use, useEffect, useRef, useState } from 'react'
 import { router } from 'expo-router'
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+
 
 // ⚛️ STATE MANAGEMENT
 import { useTheme } from '../../components/ThemeContext'
@@ -23,12 +25,14 @@ import { CirclePlus } from 'lucide-react-native'
 import GoalsCard from "../../components/GoalsCard"
 import DisplayGoalsOptionModal from "../../components/DisplayGoalsOptionModal" 
 import GoalProgressModal from "../../components/GoalProgressModal"
+import SwipeableRow from "../../components/SwipeableRow"
+
 
 //
 
 //🔥 FIREBASE
 import { auth, db } from 'firebaseConfig'
-import { collection, getDocs, onSnapshot, Timestamp, query, orderBy  } from 'firebase/firestore'
+import { collection, getDocs, onSnapshot, Timestamp, query, orderBy, deleteDoc, doc  } from 'firebase/firestore'
 
 type GoalType = {
   id?: string; 
@@ -68,6 +72,8 @@ type ObjectiveDataType = {
 const Goals = () => {
 
   const {theme, darkMode} = useTheme()
+    const rowRef = useRef<any>(null);
+
 
   const setGoals = useSetAtom(GoalsAtom);
   const setObjectives = useSetAtom(ObjectiviesAtom);
@@ -352,14 +358,6 @@ const Goals = () => {
     setSearchData(filteredGoals);
   }
 
-
-
-
-
-
-
-
-
   //🔹Sorting goals by a-z
   const selectSortBy = (value: 'A-Z' | 'Time' | 'Date') => {
     let baseData: GoalType[] = []
@@ -436,6 +434,34 @@ const Goals = () => {
 
   }
 
+  //🔹Delete task
+  const handleDeleteGoal = async (item: GoalType) => {
+    const userId = auth.currentUser?.uid;
+    if (!userId || !item.id || !item.category) return;
+
+    try {
+      // Reference to the goal document
+      const goalRef = doc(db, "users", userId, "goals", item.category, "goal", item.id);
+      await deleteDoc(goalRef);
+
+      // Check if the category has no more goals
+      const goalsCol = collection(db, "users", userId, "goals", item.category, "goal");
+      const snapshot = await getDocs(goalsCol);
+
+      if (snapshot.empty) {
+        const categoryRef = doc(db, "users", userId, "goals", item.category);
+        await deleteDoc(categoryRef);
+      }
+
+      router.push("/Goals");
+    } catch (error) {
+      console.error("Error deleting goal:", error);
+      Alert.alert("Error", "Could not delete the goal");
+    }
+  };
+
+
+
 
 
 
@@ -446,7 +472,7 @@ const Goals = () => {
           <ChartNoAxesColumn size={35} stroke={darkMode === 'dark' ? '#34a0a4' : 'black'} />
         </TouchableOpacity>
 
-        <ThemedText variant="heading">My Goals</ThemedText>
+        <ThemedText variant="heading" title>My Goals</ThemedText>
 
         <TouchableOpacity onPress={() => setShowDisplayOptionModal(true)}>
           <SlidersHorizontal size={35} stroke={darkMode === 'dark' ? '#34a0a4' : 'black'} />
@@ -479,63 +505,106 @@ const Goals = () => {
 
       <Spacer height={20} />
 
-      <View style={{position:"relative", flex:1}}>
-        <Animated.View
-          style={{
-            opacity: shortTermAnim,
-            transform:[
-              {translateX: shortTermAnim.interpolate({inputRange: [0, 1], outputRange:[200, 0]})}
-            ],
-            position:"absolute",
-            width:'100%'
-          }}
-        >
-          <FlatList
-            data={shortTermGoals}
-            keyExtractor={(item, index) => item.id?.toString() ?? index.toString()}
-            renderItem={({ item }) => (
-              <GoalsCard
-                elem={item}
-                allMilestoneData={allMilestoneData}
-                mileStoneCompleted={mileStoneCompleted}
-                allObjectivesData={allObjectivesData}  
-                objectiveCompleted={objectiveCompleted}
-                goalId={item.id}
-              />
-            )}
-            showsVerticalScrollIndicator={false}
-          />
+      <GestureHandlerRootView>
+        <View style={{position:"relative", flex:1}}>
+          <Animated.View
+            style={{
+              opacity: shortTermAnim,
+              transform:[
+                {translateX: shortTermAnim.interpolate({inputRange: [0, 1], outputRange:[200, 0]})}
+              ],
+              position:"absolute",
+              width:'100%'
+            }}
+          >
+            <FlatList
+              data={shortTermGoals}
+              keyExtractor={(item, index) => item.id?.toString() ?? index.toString()}
+              renderItem={({ item, index }) => (
+                <SwipeableRow
+                  ref={rowRef}
+                  id={item.id ?? String(index)}
+                  onDelete={(id) => {
+                    Alert.alert(
+                      "Delete Task",
+                      "Are you sure you want to delete task?", 
+                      [
+                        {text: "NO", style:"cancel", onPress: () => {
+                          rowRef.current?.resetSwipe(); // reset swipe back
+                        }},
+                        {text: "YES", style: "destructive", onPress:() => {
+                          handleDeleteGoal({ ...item, id: String(id) })
+                        }}
+                      ]
+                    )
+                  }} 
+                >
+                  <GoalsCard
+                    elem={item}
+                    allMilestoneData={allMilestoneData}
+                    mileStoneCompleted={mileStoneCompleted}
+                    allObjectivesData={allObjectivesData}  
+                    objectiveCompleted={objectiveCompleted}
+                    goalId={item.id}
+                  />
+                </SwipeableRow>
 
-        </Animated.View>
+              )}
+              showsVerticalScrollIndicator={false}
+            />
 
-        < Animated.View
-          style={{
-            opacity: longTermAnim,
-            transform:[
-              {translateX: longTermAnim.interpolate({inputRange: [0, 1], outputRange: [-200, 0]})}
-            ],
-            width:'100%'
-          }}
-        >
+          </Animated.View>
 
-          <FlatList
-            data={searchData.length > 0 ? searchData : sortedGoals.length > 0 ? sortedGoals : longTermGoals}
-            keyExtractor={(item, index) => item.id?.toString() ?? index.toString()}
-            renderItem={({ item }) => (
-              <GoalsCard
-                elem={item}
-                allMilestoneData={allMilestoneData}
-                mileStoneCompleted={mileStoneCompleted}
-                allObjectivesData={allObjectivesData}  
-                objectiveCompleted={objectiveCompleted}
-                goalId={item.id}
-              />
-            )}
-            showsVerticalScrollIndicator={false}
-          />
-
-        </Animated.View>
-      </View>
+          < Animated.View
+            style={{
+              opacity: longTermAnim,
+              transform:[
+                {translateX: longTermAnim.interpolate({inputRange: [0, 1], outputRange: [-200, 0]})}
+              ],
+              width:'100%'
+            }}
+          >
+            <FlatList
+              data={searchData.length > 0 ? searchData : sortedGoals.length > 0 ? sortedGoals : longTermGoals}
+              keyExtractor={(item, index) => item.id?.toString() ?? index.toString()}
+              renderItem={({ item, index }) => (
+                <SwipeableRow
+                  id={item.id ?? String(index)}
+                  onDelete={(id) => {
+                    Alert.alert(
+                      "Delete Task",
+                      "Are you sure you want to delete task?", 
+                      [
+                        {
+                          text: "NO",
+                          style: "cancel",
+                        },
+                        {
+                          text: "YES",
+                          style: "destructive",
+                          onPress: () => {
+                            handleDeleteGoal({ ...item, id: String(id) });
+                          },
+                        }
+                      ]
+                    );
+                  }}
+                >
+                  <GoalsCard
+                    elem={item}
+                    allMilestoneData={allMilestoneData}
+                    mileStoneCompleted={mileStoneCompleted}
+                    allObjectivesData={allObjectivesData}  
+                    objectiveCompleted={objectiveCompleted}
+                    goalId={item.id}
+                  />
+                </SwipeableRow>
+              )}
+              showsVerticalScrollIndicator={false}
+            />
+          </Animated.View>
+        </View>       
+      </GestureHandlerRootView>
         
               
       <Pressable
@@ -585,3 +654,7 @@ const styles = StyleSheet.create({
     flex: 1
   }
 })
+
+function setAllActivities(arg0: (prev: any) => any) {
+  throw new Error('Function not implemented.');
+}
