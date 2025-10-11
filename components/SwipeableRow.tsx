@@ -1,3 +1,5 @@
+// SwipeableRow.tsx
+import React, { forwardRef, useImperativeHandle } from "react";
 import { StyleSheet, View } from "react-native";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
@@ -9,8 +11,6 @@ import Animated, {
   Extrapolate,
 } from "react-native-reanimated";
 import { Trash2 } from "lucide-react-native";
-import React, { forwardRef, useImperativeHandle } from "react";
-
 
 type SwipeableRowType = {
   id: string | number;
@@ -18,33 +18,35 @@ type SwipeableRowType = {
   children: React.ReactNode;
 };
 
-const SwipeableRow = (
+const SwipeableRow = forwardRef(function SwipeableRow(
   { id, onDelete, children }: SwipeableRowType,
   ref: React.Ref<{ resetSwipe: () => void }>
-) => {
+) {
   const translateX = useSharedValue(0);
   const SWIPE_THRESHOLD = -100;
+  const MAX_SWIPE = -120;
 
   const panGesture = Gesture.Pan()
-    .onBegin((e) => {
-      // optional: could lock gesture if vertical
-    })
+    .activeOffsetX([-10, 10])
+    .failOffsetY([-10, 10])
     .onUpdate((e) => {
-      // Only move left
-      if (Math.abs(e.translationX) > Math.abs(e.translationY)) {
-        translateX.value = Math.min(0, e.translationX);
-      }
+      if (e.translationX < 0) translateX.value = Math.max(e.translationX, -150);
     })
-    .onEnd((e) => {
+    .onEnd(() => {
       if (translateX.value < SWIPE_THRESHOLD) {
-        translateX.value = withTiming(-300, { duration: 200 }, () => {
+        translateX.value = withTiming(MAX_SWIPE, { duration: 200 }, () => {
           runOnJS(onDelete)(id);
         });
       } else {
-        translateX.value = withTiming(0);
+        translateX.value = withTiming(0, { duration: 200 });
       }
-    })
-    .hitSlop({ left: 0, right: 0, top: 5, bottom: 5 }); // small hitSlop to improve scrolling
+    });
+
+  useImperativeHandle(ref, () => ({
+    resetSwipe: () => {
+      translateX.value = withTiming(0, { duration: 200 });
+    },
+  }));
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
@@ -60,36 +62,31 @@ const SwipeableRow = (
     return { opacity };
   });
 
-  // Expose a reset function
-  useImperativeHandle(ref, () => ({
-    resetSwipe: () => {
-      translateX.value = withTiming(0);
-    },
-  }));
-
   return (
-    <View style={{ marginBottom: 10, borderRadius: 10, overflow: "hidden" }}>
-      {/* Trash background */}
+    <View style={styles.container}>
       <Animated.View style={[styles.trashBackground, trashStyle]}>
-        <Trash2 size={30} stroke="white" />
+        <Trash2 size={26} stroke="white" />
       </Animated.View>
 
-      {/* Swipeable foreground */}
       <GestureDetector gesture={panGesture}>
-        <Animated.View style={[animatedStyle]}>{children}</Animated.View>
+        <Animated.View style={[styles.swipeable, animatedStyle]}>
+          {children}
+        </Animated.View>
       </GestureDetector>
     </View>
   );
-};
+});
 
-export default forwardRef(SwipeableRow);
+export default SwipeableRow;
 
 const styles = StyleSheet.create({
+  container: { marginBottom: 10, borderRadius: 10, overflow: "hidden" },
+  swipeable: { alignItems: "center"},
   trashBackground: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: "center",
     alignItems: "flex-end",
     paddingRight: 20,
-    backgroundColor:"red"
+    backgroundColor: "red",
   },
 });

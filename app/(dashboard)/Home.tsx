@@ -61,7 +61,7 @@ type RoutineType = ActivityType;
 const Home = () => {
 
     const {theme, darkMode} = useTheme()
-    const rowRef = useRef<any>(null);
+    const rowRefs = useRef<Record<string | number, { resetSwipe: () => void }>>({});
 
     const setSelectedTask = useSetAtom(taskAtom)
 
@@ -460,43 +460,55 @@ const Home = () => {
                     }}  
                 >
 
-                    <GestureHandlerRootView  style={{flex: 1}}>
-                        <FlatList 
+                    <GestureHandlerRootView style={{ flex: 1 }}>
+                        <FlatList
                             data={sortedData ?? todayActivities}
                             keyExtractor={(item, idx) => item.id?.toString() ?? idx.toString()}
-                            renderItem={({item}) => (
-                                <SwipeableRow
-                                    ref={rowRef}
-                                    id={item.id}
-                                    onDelete={(id) => {
-                                        Alert.alert(
-                                            "Delete Task",
-                                            "Are you sure you want to delete task?", 
-                                            [
-                                                {text: "NO", style:"cancel", onPress: () => {
-                                                    rowRef.current?.resetSwipe(); // reset swipe back
-                                                }},
-                                                {text: "YES", style: "destructive", onPress:() => {
-                                                    handleDeleteTask({ ...item, id: String(id) }, "task")
-                                                }}
-                                            ]
-                                        )
-                                    }} 
-                                >
-                                    <Taskcard
-                                        elem={item}
-                                        darkMode={darkMode ?? "light"}
-                                        theme={theme}
-                                        setSelectedTask={setSelectedTask}
-                                        setShowEditModal={setShowEditModal}
-                                        handleTaskComplete={handleTaskComplete}
-                                        setShowRedoModal={setShowRedoModal}
-                                    />
-                                </SwipeableRow>
-                                
+                            renderItem={({ item }) => (
+                            <SwipeableRow
+                                ref={(ref) => {
+                                    if (ref) rowRefs.current[item.id] = ref;
+                                    else delete rowRefs.current[item.id]; // cleanup when unmounted
+                                }}
+                                id={item.id}
+                                onDelete={(id) => {
+                                Alert.alert(
+                                    "Delete Task",
+                                    "Are you sure you want to delete task?",
+                                    [
+                                    {
+                                        text: "NO",
+                                        style: "cancel",
+                                        onPress: () => {
+                                        // ✅ reset only the swiped row
+                                        rowRefs.current[id]?.resetSwipe?.();
+                                        },
+                                    },
+                                    {
+                                        text: "YES",
+                                        style: "destructive",
+                                        onPress: () => {
+                                        handleDeleteTask({ ...item, id: String(id) }, "task");
+                                        },
+                                    },
+                                    ]
+                                );
+                                }}
+                            >
+                                <Taskcard
+                                elem={item}
+                                darkMode={darkMode ?? "light"}
+                                theme={theme}
+                                setSelectedTask={setSelectedTask}
+                                setShowEditModal={setShowEditModal}
+                                handleTaskComplete={handleTaskComplete}
+                                setShowRedoModal={setShowRedoModal}
+                                />
+                            </SwipeableRow>
                             )}
                         />
-                    </GestureHandlerRootView >
+                    </GestureHandlerRootView>
+
 
                 </Animated.View>
 

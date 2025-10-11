@@ -79,7 +79,7 @@ const GoalsCard = ({elem, allMilestoneData, allObjectivesData, objectiveComplete
     
   return (
         
-    <View style={{marginVertical: 10,}}>
+    <View style={{marginVertical: 10, width: "100%"}}>
         <Pressable
             onPress={() => {
                 setSelectedAtom(elem)
