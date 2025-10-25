@@ -37,6 +37,7 @@ import ThemedButton from "./ThemedButton";
 
 // 🧩 COMPONENTS
 import CustomWheelPicker from "../components/CustomePicker";
+import CloseButton from "./CloseButton";
 
 // 🔤 TYPES
 type ActivityInputModalProps = {
@@ -309,11 +310,11 @@ const EditActivityModal = ({ isVisible, onClose }: ActivityInputModalProps) => {
   }, [selectedRoutineAtom])
 
   return (
-    <Modal visible={isVisible} animationType="slide" transparent>
+    <Modal visible={isVisible } animationType="slide" transparent>
       <ThemedView style={styles.container} safe>
         {/* Header */}
         <View style={{ flexDirection: "row", alignItems: "center" }}>
-          <ArrowBigLeft size={40} stroke="#77d1d2ff" onPress={onClose} />
+          <CloseButton onPress={onClose} style={{ marginLeft: 10 }} />
           <ThemedText
             style={{ textAlign: "center", width: "83%" }}
             variant="title"

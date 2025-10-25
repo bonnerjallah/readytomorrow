@@ -20,6 +20,7 @@
 
   // 🧩 COMPONENTS
   import CustomWheelPicker from '../components/CustomePicker';
+  import CloseButton from './CloseButton';
 
   // 🔤 TYPES
   type ActivityInputModalProps = {
@@ -159,7 +160,7 @@
         <ThemedView style={styles.container} safe>
           {/* Header */}
           <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <CircleX size={40} stroke="#77d1d2ff" onPress={onClose} />
+            <CloseButton onClose={onClose}  style={{marginLeft: 10}}/>
             <ThemedText style={{ textAlign: "center", width: "83%" }} variant='title'>Add Activity</ThemedText>
           </View>
 

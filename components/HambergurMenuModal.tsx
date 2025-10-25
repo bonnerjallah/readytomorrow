@@ -12,6 +12,7 @@ type HambergurMenuModalProps = {
 import ThemedView from "../components/ThemedView"
 import ThemedText from "../components/ThemedText"
 import Spacer from "../components/Spacer"
+import { router } from 'expo-router'
 
 
 const HambergurMenuModal = ({isVisible, onClose} : HambergurMenuModalProps) => {
@@ -35,7 +36,12 @@ const HambergurMenuModal = ({isVisible, onClose} : HambergurMenuModalProps) => {
                             🔁 Routine                      
                         </ThemedText>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.touchStyle}>
+                    <TouchableOpacity style={styles.touchStyle}
+                        onPress={() => {
+                            router.push('/PlanMyWeek')
+                            onClose()
+                        }}
+                    >
                         <ThemedText>
                             🗒️ Plan My Week
                         </ThemedText>

@@ -2,7 +2,8 @@
 import { Activity, Calendar, EllipsisVertical, Milestone } from 'lucide-react-native'
 import { Alert, StyleSheet, Text, TouchableOpacity, View,  ActivityIndicator, Image,  Pressable } from 'react-native'
 import { router } from 'expo-router'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
+import { Audio, InterruptionModeIOS, InterruptionModeAndroid } from 'expo-av';
 
 //🎨 UI
 import ThemedView from 'components/ThemedView'
@@ -13,20 +14,18 @@ import { ArrowBigLeft, ChevronRight, ClipboardCheck, PencilLine, Radar, Trash2 }
 import { useAtomValue } from 'jotai'
 import { useTheme } from '../../components/ThemeContext';
 import { SelectedGoalAtom} from 'atoms/GoalCategoryAtom'
-import { GoalsAtom, ObjectiviesAtom, MilestonesAtom } from '../../atoms/GoalCategoryAtom';
-
-
-
+import { ObjectiviesAtom, MilestonesAtom } from '../../atoms/GoalCategoryAtom';
+import { completionSoundAtom } from 'atoms/notificationAtom';
 
 //🧩COMPONENTS
 import GoalsCard from 'components/GoalsCard'
 import Spacer from 'components/Spacer'
+import ProgressBar from 'components/ProgressBar';
 
 
 //🔥FIREBASE
 import { auth, db } from 'firebaseConfig'
 import { collection, deleteDoc, doc, getDocs, updateDoc, onSnapshot, query, orderBy, Timestamp,} from 'firebase/firestore'
-import ThemedButton from 'components/ThemedButton'
 
 //🔤TYPES
 type MilestoneDataType = {
@@ -54,6 +53,10 @@ const EditDeleteGoals = () => {
 
     const {theme, darkMode} = useTheme()
 
+    const completeSoundRef = useRef<Audio.Sound | null>(null);
+    const completionSound = useAtomValue(completionSoundAtom);
+
+
     const selectedGoal = useAtomValue(SelectedGoalAtom)
     // const setGoals = useAtomValue(GoalsAtom);
     const setObjectives = useAtomValue(ObjectiviesAtom);
@@ -63,8 +66,7 @@ const EditDeleteGoals = () => {
     const [allMilestoneData, setAllMilestoneData] = useState<MilestoneDataType[]>([])
     const [mileStoneCompleted, setMilestoneCompleted] = useState<MilestoneDataType[]>([])
     const [allweeklyObjective, setAllWeeklyObjective] = useState<ObjectivesType[]>([])
-    const [completedWeekleyObjective, setCompletedWeekleyObjective] = useState<ObjectivesType[]>([])
-    
+    const [completedWeekleyObjective, setCompletedWeekleyObjective] = useState<ObjectivesType[]>([])    
     
     
     // 🔹 imageSource helper
@@ -103,8 +105,33 @@ const EditDeleteGoals = () => {
         }
     };
 
+    //🔹Completion sound
+    const completeSound = async () => {
+        try {
+            // Create the sound only when function is called
+            const { sound } = await Audio.Sound.createAsync(
+                require("../../assets/audio/claps.mp3")
+            );
+            completeSoundRef.current = sound;
+            await completeSoundRef.current.replayAsync();
+
+            // Optional: unload after finishing to free memory
+            completeSoundRef.current.setOnPlaybackStatusUpdate((status) => {
+                if (status.isLoaded && status.didJustFinish) {
+                    completeSoundRef.current?.unloadAsync();
+                    completeSoundRef.current = null;
+                }
+            });
+        } catch (err) {
+            console.log("Error playing sound:", err);
+        }
+    };
+
     //🔹Complete goal function
     const handleGoalComplete = async() => {
+        if(completionSound){
+            await completeSound()
+        }
         
         const userId = auth.currentUser?.uid
         if (!userId || !selectedGoal?.id || !selectedGoal.category) return;
@@ -148,29 +175,51 @@ const EditDeleteGoals = () => {
     }, [selectedGoal]);
 
     //🔹Fetch Objectivies
-      useEffect(() => {
-        const userId = auth.currentUser?.uid
-        if(!userId || !selectedGoal?.id) return
-    
-        const objectiviesCol = collection(db, "users", userId, "goals", selectedGoal.category, "goal", selectedGoal.id, "goalObjectives")
-        const q = query(objectiviesCol, orderBy("createdAt", "asc"));
-    
-        const unsubscribe = onSnapshot(q, snapshot => {
-          const goalObjectiviesData : ObjectivesType [] = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          } as ObjectivesType))
+    useEffect(() => {
+    const userId = auth.currentUser?.uid
+    if(!userId || !selectedGoal?.id) return
 
-          const completedObjectives = goalObjectiviesData.filter(elem => elem.completed)
+    const objectiviesCol = collection(db, "users", userId, "goals", selectedGoal.category, "goal", selectedGoal.id, "goalObjectives")
+    const q = query(objectiviesCol, orderBy("createdAt", "asc"));
 
-          setCompletedWeekleyObjective(completedObjectives)
-          setAllWeeklyObjective(goalObjectiviesData)
-        })
-    
-    
-        return () => unsubscribe()
-    
-      }, [selectedGoal])
+    const unsubscribe = onSnapshot(q, snapshot => {
+        const goalObjectiviesData : ObjectivesType [] = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+        } as ObjectivesType))
+
+        const completedObjectives = goalObjectiviesData.filter(elem => elem.completed)
+
+        setCompletedWeekleyObjective(completedObjectives)
+        setAllWeeklyObjective(goalObjectiviesData)
+    })
+
+
+    return () => unsubscribe()
+
+    }, [selectedGoal])
+
+    //🔹Audio config
+    useEffect(() => {
+        const configureAudio = async () => {
+            await Audio.setAudioModeAsync({
+            allowsRecordingIOS: false,
+            staysActiveInBackground: false,
+            interruptionModeIOS: InterruptionModeIOS.DoNotMix, // ✅ updated
+            playsInSilentModeIOS: true,
+            shouldDuckAndroid: true,
+            interruptionModeAndroid: InterruptionModeAndroid.DoNotMix, // ✅ updated
+            playThroughEarpieceAndroid: false,
+            });
+        };
+
+        configureAudio();
+
+        return () => {
+            completeSoundRef.current?.unloadAsync();
+        };
+    }, []);
+
 
 
 
@@ -244,7 +293,7 @@ const EditDeleteGoals = () => {
                 </View>
             </View>
 
-            <ThemedText>Traker bar</ThemedText>
+          <ProgressBar width={280} height={5} progress={allMilestoneData.length === 0 ? 0 : (mileStoneCompleted.length / allMilestoneData.length)} />
 
             <View style={{flexDirection:"row", justifyContent:"space-between"}}>
                 <View style={{justifyContent:"center", alignItems:"center"}}>
@@ -267,7 +316,7 @@ const EditDeleteGoals = () => {
             <Spacer height={10} />
 
             <View style={{borderWidth: 0.4, borderColor: theme.tabIconColor, rowGap: 15, padding: 10, width: "95%", alignSelf:"center", borderRadius: 10}}>
-                <TouchableOpacity style={{flexDirection:"row", justifyContent:"space-between" , borderBottomWidth: 0.4, paddingBottom:  10, alignItems:"center"}}>
+                <TouchableOpacity style={{flexDirection:"row", justifyContent:"space-between" , borderBottomWidth: 0.4, paddingBottom:  10, alignItems:"center"}} onPress={() => completeSound()}>
                         <View style={{flexDirection:"row", columnGap: 5}}>
                             <Image source={require("../../assets/images/openAI.png")} 
                                 style={{ width: 25, height: 25 }}

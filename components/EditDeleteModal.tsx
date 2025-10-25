@@ -28,6 +28,9 @@ import { taskAtom } from "atoms/selectedTaskAtom";
 import { selectedItemTypeAtom } from "atoms/selectedTaskAtom";
 import { routineAtom as selectedRoutineAtom } from "atoms/selectedTaskAtom";
 
+//🧩 COMPONENTS
+import CloseButton from "./CloseButton";
+
 
 
 // 🔤 TYPES
@@ -93,68 +96,57 @@ const EditDeleteModal = ({isVisible, onClose}: DisplayOptionsModalProps) => {
     <Modal transparent visible={isVisible} onRequestClose={onClose} animationType="slide">
        
 
-      <ThemedView style={[{backgroundColor: theme.background, marginTop: 50 }, styles.container]} safe>
-            <TouchableOpacity 
-                style={{
-                    position: "absolute",
-                    top: 45,
-                    left: 20
-                }} 
-                onPress={onClose}
-            >
-                <ArrowBigLeft size={40} stroke="#77d1d2ff" />
-            </TouchableOpacity>
+      <ThemedView style={[{backgroundColor: theme.background, marginTop: 20 }, styles.container]} safe>
 
-            <ThemedText style={{alignSelf: "center"}} variant="title">
-                Edit or delete task
-            </ThemedText>
+        <CloseButton onPress={onClose} style={{marginLeft: 10}} />
 
-            <Spacer height={50} />
+        <ThemedText style={{alignSelf: "center"}} variant="title">
+          Edit or delete task
+        </ThemedText>
 
+        <Spacer height={50} />
+
+        <View>
+          <ThemedText variant="smallertitle">Manage</ThemedText>
+          <TouchableOpacity
+              onPress={() => setEditActivityModal(true)}
+          >
+              <View style={[styles.optionsWrapper, {justifyContent: "space-between", marginTop: 10, borderColor: darkMode === "dark" ? "gray" : "black"}]}>
+                  <View style={{flexDirection: "row", columnGap: 20, alignItems:"center"}}>
+                      <PencilLine  size={20} stroke={theme.primary}/>
+                      <ThemedText>Edit Activity</ThemedText>
+                  </View>
+                  <ChevronRight 
+                      stroke={theme.tabIconColor}
+                  />
+              </View>
+          </TouchableOpacity>
             
-        
 
-            <View>
-                <ThemedText variant="smallertitle">Manage</ThemedText>
-                <TouchableOpacity
-                    onPress={() => setEditActivityModal(true)}
-                >
-                    <View style={[styles.optionsWrapper, {justifyContent: "space-between", marginTop: 10, borderColor: darkMode === "dark" ? "gray" : "black"}]}>
-                        <View style={{flexDirection: "row", columnGap: 20, alignItems:"center"}}>
-                            <PencilLine  size={20} stroke={theme.primary}/>
-                            <ThemedText>Edit Activity</ThemedText>
-                        </View>
-                        <ChevronRight 
-                            stroke={theme.tabIconColor}
-                        />
-                    </View>
-                </TouchableOpacity>
-                
+          <Spacer height={15} />
 
-                <Spacer height={15} />
+          <TouchableOpacity
+              onPress={() => {
+                Alert.alert(
+                  "Delete Task",
+                  "Are you sure you want to delete task?", 
+                  [
+                    {text: "NO", style:"cancel"},
+                    {text: "YES", onPress: () => handleDeleteTask(), style:"destructive"}
+                  ],
+                  {cancelable: true}
+                )
+              }}
+          >
+              <View style={[styles.optionsWrapper, {borderColor: darkMode === "dark" ? "gray" : "black"}]}>
+                  <Trash2 size={20} stroke= "red"/>
+                  <ThemedText style={{color: "red"}}>Delete Activity</ThemedText>
+              </View>
+          </TouchableOpacity>
+            
+        </View>
 
-                <TouchableOpacity
-                    onPress={() => {
-                      Alert.alert(
-                        "Delete Task",
-                        "Are you sure you want to delete task?", 
-                        [
-                          {text: "NO", style:"cancel"},
-                          {text: "YES", onPress: () => handleDeleteTask(), style:"destructive"}
-                        ],
-                        {cancelable: true}
-                      )
-                    }}
-                >
-                    <View style={[styles.optionsWrapper, {borderColor: darkMode === "dark" ? "gray" : "black"}]}>
-                        <Trash2 size={20} stroke= "red"/>
-                        <ThemedText style={{color: "red"}}>Delete Activity</ThemedText>
-                    </View>
-                </TouchableOpacity>
-                
-            </View>
-
-            <EditActivityModal isVisible={showEditActivityModal} onClose={() => setEditActivityModal(false)} />
+        <EditActivityModal isVisible={showEditActivityModal} onClose={() => setEditActivityModal(false)} />
 
       </ThemedView>
     </Modal>

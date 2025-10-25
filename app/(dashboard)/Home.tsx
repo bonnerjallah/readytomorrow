@@ -476,21 +476,21 @@ const Home = () => {
                                     "Delete Task",
                                     "Are you sure you want to delete task?",
                                     [
-                                    {
-                                        text: "NO",
-                                        style: "cancel",
-                                        onPress: () => {
-                                        // ✅ reset only the swiped row
-                                        rowRefs.current[id]?.resetSwipe?.();
+                                        {
+                                            text: "NO",
+                                            style: "cancel",
+                                            onPress: () => {
+                                            // ✅ reset only the swiped row
+                                            rowRefs.current[id]?.resetSwipe?.();
+                                            },
                                         },
-                                    },
-                                    {
-                                        text: "YES",
-                                        style: "destructive",
-                                        onPress: () => {
-                                        handleDeleteTask({ ...item, id: String(id) }, "task");
+                                        {
+                                            text: "YES",
+                                            style: "destructive",
+                                            onPress: () => {
+                                            handleDeleteTask({ ...item, id: String(id) }, "task");
+                                            },
                                         },
-                                    },
                                     ]
                                 );
                                 }}

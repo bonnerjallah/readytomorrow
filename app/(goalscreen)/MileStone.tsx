@@ -4,6 +4,7 @@ import { router } from 'expo-router'
 import React, { useEffect, useRef, useState } from 'react'
 import { StatusBar } from 'expo-status-bar'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import Checkbox from 'expo-checkbox'
 import BottomSheet, {BottomSheetScrollView} from '@gorhom/bottom-sheet'
 
 
@@ -25,11 +26,11 @@ import MileStoneInput from "../../components/MileStoneInput"
 import WeeklyGoalObjectiveModal from "../../components/WeeklyGoalObjectiveModal"
 import GoalsNoteInputModal from "../../components/GoalsNoteInputModal"
 import ProgressBar from 'components/ProgressBar'
+import BackButton from 'components/BackButton'
 
 //🔥FIREBASE
 import { auth, db } from 'firebaseConfig'
 import { collection, onSnapshot, query, orderBy, Timestamp, updateDoc, doc, deleteDoc } from 'firebase/firestore'
-import Checkbox from 'expo-checkbox'
 import { BottomSheetView } from '@gorhom/bottom-sheet'
 import ThemedView from 'components/ThemedView'
 
@@ -101,7 +102,6 @@ const MileStone = () => {
     })
   }
 
-
   //🔹Image soruce
   const imageSource = (image: string | number | null | undefined) => {
     if (!image) return require("../../assets/images/manwriting.png")
@@ -124,7 +124,7 @@ const MileStone = () => {
 
       setAllMilestoneData(milestoneData);
 
-      const completedMilesotne = milestoneData.filter(elem => !elem.completed)
+      const completedMilesotne = milestoneData.filter(elem => elem.completed)
       setMilestoneCompleted(completedMilesotne)
 
       const displayMilestone = milestoneData.filter(elem => !elem.completed)
@@ -211,12 +211,6 @@ const MileStone = () => {
       console.log("Error updating milestone:", error);
     }
   };
-
-  //🔹Milestone completed function
-  useEffect(() => {
-    const totalMilestoneDone = allMilestoneData.filter(elem => elem.completed)
-    setMilestoneCompleted(totalMilestoneDone)
-  }, [allMilestoneData])
 
   //🔹Complete objectities function
   const handleCompleteObjectivies = async(goalObjectivies: ObjectivesType) => {
@@ -320,19 +314,8 @@ const MileStone = () => {
           />
         )}
 
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={{
-            position: "absolute",   // key fix
-            top: insets.top + 10,   // safe area aware
-            left: 10,
-            zIndex: 10,
-            backgroundColor: "white",
-            borderRadius: 10 
-          }}
-        >
-          <ArrowBigLeft size={40} stroke= "#77d1d2ff"  />
-        </TouchableOpacity>
+        {/* Back button */}
+        <BackButton />
 
         <Spacer height={175} />
 
@@ -564,7 +547,6 @@ const MileStone = () => {
             style={({ pressed }) => [
                 {
                 position: "absolute",
-                
                 bottom: 90,
                 right: 35,
                 backgroundColor: "#34a0a4",

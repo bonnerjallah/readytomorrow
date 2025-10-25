@@ -78,7 +78,8 @@ const GoalsNoteInputModal = ({isVisible, onClose}: GoalsNoteInputModalType) => {
                 borderRadius: 8,
                 padding: 10,
                 fontSize: 16,
-                height: 200
+                height: 200,
+                backgroundColor: theme.background
                 }}
                 value={goalNote}
                 onChangeText={setGoalNote}

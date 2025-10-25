@@ -7,8 +7,6 @@ import { useTheme } from './ThemeContext'
 
 
 //🎨UI
-import ThemeView from "../components/ThemedView"
-import ThemedButton from './ThemedButton'
 import ThemedText from './ThemedText'
 import { CalendarPlus, Milestone, NotebookPen } from 'lucide-react-native'
 

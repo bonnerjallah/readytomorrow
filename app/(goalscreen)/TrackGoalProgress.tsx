@@ -126,10 +126,10 @@ const TrackGoalProgress = (props: Props) => {
 
     }, [selectedGoal])
 
-     // 🔹 milestone and objectives completed
+    // 🔹 milestone and objectives completed
     useEffect(() => {
-        const completedMilestone = goalMilestone.filter(elem => elem.goalId !== selectedGoal?.id && elem.completed);
-        const completedObjectives = goalObjectivies.filter(elem => elem.goalId !== selectedGoal?.id && elem.completed);
+        const completedMilestone = goalMilestone.filter(elem => elem.goalId == selectedGoal?.id && elem.completed);
+        const completedObjectives = goalObjectivies.filter(elem => elem.goalId == selectedGoal?.id && elem.completed);
 
         const allCompleted = [...completedMilestone, ...completedObjectives];
         const allItems = [...goalMilestone, ...goalObjectivies];
@@ -257,71 +257,71 @@ const TrackGoalProgress = (props: Props) => {
                     keyExtractor={(item, indx) => item.id?.toString() ?? indx.toString()}
                     renderItem={({ item }) => (
                         <View
-                        style={{
-                            flexDirection: "row",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            padding: 4,
-                            marginVertical: 6,
-                            marginHorizontal: 10,
-                            borderRadius: 10,
-                            backgroundColor: darkMode === "dark" ? "#1e293b" : "#f8fafc",
-                            shadowColor: "#000",
-                            shadowOpacity: 0.1,
-                            shadowOffset: { width: 0, height: 2 },
-                            shadowRadius: 4,
-                            elevation: 3,
-                        }}
-                        >
-                        {/* Left side: title + note */}
-                        <View style={{ flex: 1 }}>
-                            <ThemedText variant="subtitleBold" style={{ marginBottom: 4 }}>
-                            {item.mileStoneName}
-                            </ThemedText>
-                        </View>
-
-                        {/* Right side: target date + status */}
-                        <View style={{ alignItems: "flex-end" }}>
-                            <ThemedText
-                            variant="smallertitle"
-                            style={{ color: darkMode === "dark" ? "#cbd5e1" : "#475569" }}
+                            style={{
+                                flexDirection: "row",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                padding: 4,
+                                marginVertical: 6,
+                                marginHorizontal: 10,
+                                borderRadius: 10,
+                                backgroundColor: darkMode === "dark" ? "#1e293b" : "#f8fafc",
+                                shadowColor: "#000",
+                                shadowOpacity: 0.1,
+                                shadowOffset: { width: 0, height: 2 },
+                                shadowRadius: 4,
+                                elevation: 3,
+                            }}
                             >
-                            {item.targetDate}
-                            </ThemedText>
+                            {/* Left side: title + note */}
+                            <View style={{ flex: 1 }}>
+                                <ThemedText variant="subtitleBold" style={{ marginBottom: 4 }}>
+                                {item.mileStoneName}
+                                </ThemedText>
+                            </View>
 
-                            {item.completed ? (
-                                <View
-                                    style={{
-                                    marginTop: 6,
-                                    backgroundColor: "#34a853",
-                                    borderRadius: 20,
-                                    paddingHorizontal: 10,
-                                    paddingVertical: 2,
-                                    }}
+                            {/* Right side: target date + status */}
+                            <View style={{ alignItems: "flex-end" }}>
+                                <ThemedText
+                                variant="smallertitle"
+                                style={{ color: darkMode === "dark" ? "#cbd5e1" : "#475569" }}
                                 >
-                                    <ThemedText style={{ color: "white", fontSize: 12 }}>
-                                    Completed
-                                    </ThemedText>
-                                </View>
-                                ) : (
-                                <View
-                                    style={{
-                                    marginTop: 6,
-                                    backgroundColor: "#e2e8f0",
-                                    borderRadius: 20,
-                                    paddingHorizontal: 10,
-                                    paddingVertical: 2,
-                                    }}
-                                >
-                                    <ThemedText style={{ color: "#475569", fontSize: 12 }}>
-                                    Pending
-                                    </ThemedText>
-                                </View>
-                            )}
-                        </View>
+                                {item.targetDate}
+                                </ThemedText>
+
+                                {item.completed ? (
+                                    <View
+                                        style={{
+                                        marginTop: 6,
+                                        backgroundColor: "#34a853",
+                                        borderRadius: 20,
+                                        paddingHorizontal: 10,
+                                        paddingVertical: 2,
+                                        }}
+                                    >
+                                        <ThemedText style={{ color: "white", fontSize: 12 }}>
+                                        Completed
+                                        </ThemedText>
+                                    </View>
+                                    ) : (
+                                    <View
+                                        style={{
+                                        marginTop: 6,
+                                        backgroundColor: "#e2e8f0",
+                                        borderRadius: 20,
+                                        paddingHorizontal: 10,
+                                        paddingVertical: 2,
+                                        }}
+                                    >
+                                        <ThemedText style={{ color: "#475569", fontSize: 12 }}>
+                                        Pending
+                                        </ThemedText>
+                                    </View>
+                                )}
+                            </View>
                         </View>
                     )}
-            />
+                />
 
             </View>
         </View>

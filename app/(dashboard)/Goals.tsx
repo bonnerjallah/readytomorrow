@@ -28,8 +28,6 @@ import GoalProgressModal from "../../components/GoalProgressModal"
 import SwipeableRow from "../../components/SwipeableRow"
 
 
-//
-
 //🔥 FIREBASE
 import { auth, db } from 'firebaseConfig'
 import { collection, getDocs, onSnapshot, Timestamp, query, orderBy, deleteDoc, doc  } from 'firebase/firestore'
@@ -155,12 +153,14 @@ const Goals = () => {
 
             setLongTermGoals(prev => {
               const otherGoals = prev.filter(g => g.category !== catDoc.id && !g.completed); 
-              return [...otherGoals, ...goalsData.filter(g => g.longTerm)];
+              const newGoals = goalsData.filter(g => g.longTerm && !g.completed);
+              return [...otherGoals, ...newGoals];
             });
 
             setShortTermGoals(prev => {
               const otherGoals = prev.filter(g => g.category !== catDoc.id && !g.completed);
-              return [...otherGoals, ...goalsData.filter(g => !g.longTerm)];
+              const newGoals = goalsData.filter(g => !g.longTerm && !g.completed);
+              return [...otherGoals, ...newGoals];
             });
 
           });
@@ -527,7 +527,7 @@ const Goals = () => {
               data={shortTermGoals}
               keyExtractor={(item, index) => item.id?.toString() ?? index.toString()}
               renderItem={({ item, index }) => {
-                const rowId = item.id ?? `index-${index}`; // ✅ Safe fallback key
+                const rowId = item.id ?? `index-${index}`; 
                 return (
                   <SwipeableRow
                     ref={(ref) => {

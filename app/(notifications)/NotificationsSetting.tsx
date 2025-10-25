@@ -1,157 +1,187 @@
-import { StyleSheet, Text, View, TouchableOpacity, Switch } from 'react-native'
-import { router } from 'expo-router'
-import React, { useState } from 'react'
-
+import { StyleSheet, Text, View, TouchableOpacity, Switch } from 'react-native';
+import { router } from 'expo-router';
+import React, { useState } from 'react';
 
 // 🎨 UI
-import ThemedView from 'components/ThemedView'
-import ThemedText from 'components/ThemedText'
-import { ArrowBigLeft } from 'lucide-react-native'
-import Spacer from 'components/Spacer'
+import ThemedView from 'components/ThemedView';
+import ThemedText from 'components/ThemedText';
+import { ArrowBigLeft } from 'lucide-react-native';
+import Spacer from 'components/Spacer';
+import { useTheme } from 'components/ThemeContext';
+import NotificationTimeSettingModal from '../../components/NotificationTimeSettingModal';
 
-import { useTheme } from 'components/ThemeContext'
+import BackButton from 'components/BackButton';
 
-import NotificationTimeSettingModal from "../../components/NotificationTimeSettingModal"
+import { useAtom } from 'jotai';
+import { alertTimesAtom, dailyRemindersAtom, remindersAtom, notificationAtom } from 'atoms/notificationAtom';
 
-
+const DEFAULT_ALERT_TIMES = {
+  "Default Alert Time": "08:00 AM",
+  "Morning Routine Reminder": "07:00 AM",
+  "Evening Routine Reminder": "07:00 PM",
+};
 
 const NotificationsSetting = () => {
+  const { theme, darkMode } = useTheme();
 
-  const {theme, darkMode} = useTheme()
+  const [notificationOff, setNotificationOff] = useAtom(notificationAtom);
+  const [reminderOff, setReminderOff] = useAtom(remindersAtom);
+  const [dailyReminderOff, setDailyReminderOff] = useAtom(dailyRemindersAtom);
 
-  const [notificationOff, setNotificationOff] = useState<boolean>(false)
-  const [reminderOff, setReminderOff] = useState<boolean>(false)
-  const [dailyReminderOff, setDailyReminderOff] = useState<boolean>(false)
-  const [showNotificationTimeSettingModal, setShowNotificationTimeSettingModal] = useState<boolean>(false)
-  const [currentNotificationLable, setCurrentNotificationLable] = useState<string>("Default Alert Time");
+  const [showNotificationTimeSettingModal, setShowNotificationTimeSettingModal] = useState(false);
+  const [currentNotificationLabel, setCurrentNotificationLabel] = useState<keyof typeof DEFAULT_ALERT_TIMES>("Default Alert Time");
 
-  const [alertTimes, setAlertTimes] = useState<{ [label: string]: string }>({
-    "Default Alert Time": "08:00 AM",
-    "Morning Routine Reminder": "07:00 AM",
-    "Evening Routine Reminder": "07:00 PM",
-  });
+  const [alertTimes, setAlertTimes] = useAtom(alertTimesAtom);
 
+  const toggleNotification = () => setNotificationOff(prev => !prev);
+  const toggleReminder = () => setReminderOff(prev => !prev);
+  const toggleDailyReminder = () => setDailyReminderOff(prev => !prev);
 
-  const toggleNotification = () => {
-    setNotificationOff(prev => !prev)
-  }
+  // Safe function to subtract minutes
+  const getMinutesBefore = (timeStr: string, minutesBefore: number) => {
+    if (!timeStr) timeStr = "08:00 AM"; // fallback
+    const [time, meridiem] = timeStr.split(" ");
+    const [hourStr, minuteStr] = time.split(":");
+    let hours = parseInt(hourStr, 10);
+    const minutes = parseInt(minuteStr, 10);
 
-  const toogleReminder = () => {
-    setReminderOff(prev => !prev)
-  }
+    if (meridiem === "PM" && hours < 12) hours += 12;
+    if (meridiem === "AM" && hours === 12) hours = 0;
 
-  const toggleDailyReminder = () => {
-    setDailyReminderOff(prev => !prev)
-  }
-
-  const getMinutesBefore = (time: string, minutesBefore: number) => {
-    const [hours, minutes] = time.split(":").map(Number);
     const date = new Date();
-    date.setHours(hours, minutes - minutesBefore, 0, 0); // subtract minutes
-    let adjustedHours = date.getHours();
-    let adjustedMinutes = date.getMinutes();
-    const ampm = adjustedHours >= 12 ? "PM" : "AM";
-    adjustedHours = adjustedHours % 12;
-    if (adjustedHours === 0) adjustedHours = 12;
+    date.setHours(hours, minutes, 0, 0);
+    date.setMinutes(date.getMinutes() - minutesBefore);
 
-    return `${adjustedHours}:${String(adjustedMinutes).padStart(2, "0")} ${ampm}`;
+    const resultHours = date.getHours();
+    const resultMinutes = date.getMinutes();
+
+    const ampm = resultHours >= 12 ? "PM" : "AM";
+    const hour12 = resultHours % 12 === 0 ? 12 : resultHours % 12;
+    const minuteStrPadded = String(resultMinutes).padStart(2, "0");
+
+    return `${hour12}:${minuteStrPadded} ${ampm}`;
   };
 
-
-
+  const renderNotificationRow = (label: keyof typeof DEFAULT_ALERT_TIMES) => (
+    <TouchableOpacity
+      key={label}
+      style={{
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderWidth: 0.5,
+        borderColor: theme.tabIconColor,
+        padding: 15,
+        borderRadius: 10,
+        marginBottom: 10,
+      }}
+      onPress={() => {
+        setCurrentNotificationLabel(label);
+        setShowNotificationTimeSettingModal(true);
+      }}
+    >
+      <ThemedText variant="subtitle">{label}</ThemedText>
+      <ThemedText
+        variant="smallertitle"
+        style={{ color: darkMode === 'dark' ? theme.primary : 'black' }}
+      >
+        {getMinutesBefore(alertTimes?.[label] ?? DEFAULT_ALERT_TIMES[label], 10)}
+      </ThemedText>
+    </TouchableOpacity>
+  );
 
   return (
     <ThemedView style={styles.container} safe>
-      <TouchableOpacity 
-        onPress={() => router.back()}
-        style={{top:20, left: 10,  
-            justifyContent: "center",
-            alignItems: "center",
-            borderRadius: 40,
-            width:"10%"
-        }}
-      >
-        <ArrowBigLeft size={40} stroke="#77d1d2ff" />
-      </TouchableOpacity>
+      
 
-      <ThemedText variant='title' style={{textAlign:"center"}}>Notification Setting</ThemedText>
+      <BackButton />
+
+      <Spacer height={20} />
+
+      <ThemedText variant="title" style={{ textAlign: 'center' }}>
+        Notification Setting
+      </ThemedText>
 
       <Spacer height={25} />
 
       <View>
-        <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', borderWidth: 0.5, borderColor: theme.tabIconColor, padding: 15, borderRadius: 10, marginBottom: 10}}>
-          <ThemedText variant='subtitle'>Notification</ThemedText>
-          <Switch 
-            value={notificationOff}
-            onValueChange={toggleNotification}
-          />
-        </View>
-
-        <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', borderWidth: 0.5, borderColor: theme.tabIconColor, padding: 15, borderRadius: 10, marginBottom: 10}}>
-          <ThemedText variant='subtitle'>Reminders</ThemedText>
-          <Switch 
-            value={reminderOff}
-            onValueChange={toogleReminder}
-          />
-        </View>
-
-        <TouchableOpacity style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', borderWidth: 0.5, borderColor: theme.tabIconColor, padding: 15, borderRadius: 10, marginBottom: 10}}
-          onPress={() => {
-            setCurrentNotificationLable("Default Alert Time");
-            setShowNotificationTimeSettingModal(true)
+        {/* Notification Switches */}
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderWidth: 0.5,
+            borderColor: theme.tabIconColor,
+            padding: 15,
+            borderRadius: 10,
+            marginBottom: 10,
           }}
         >
-          <ThemedText variant='subtitle'>Default Alert Time</ThemedText>
-          <ThemedText variant='smallertitle' style={{color: darkMode === "dark" ? theme.primary : "black"}}>10 min before: {getMinutesBefore(alertTimes["Default Alert Time"], 10)}</ThemedText>
-        </TouchableOpacity>
-
-        <View style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', borderWidth: 0.5, borderColor: theme.tabIconColor, padding: 15, borderRadius: 10, marginBottom: 10}}>
-          <ThemedText variant='subtitle'>Daily Reminders</ThemedText>
-          <Switch 
-            value={dailyReminderOff}
-            onValueChange={toggleDailyReminder}
-          />
+          <ThemedText variant="subtitle">Notification</ThemedText>
+          <Switch value={notificationOff} onValueChange={toggleNotification} />
         </View>
 
-        <TouchableOpacity style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', borderWidth: 0.5, borderColor: theme.tabIconColor, padding: 15, borderRadius: 10, marginBottom: 10}}
-          onPress={() => {
-            setCurrentNotificationLable("Morning Routine Reminder")
-            setShowNotificationTimeSettingModal(true)
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderWidth: 0.5,
+            borderColor: theme.tabIconColor,
+            padding: 15,
+            borderRadius: 10,
+            marginBottom: 10,
           }}
         >
-          <ThemedText variant='subtitle'>Morning Routine Reminder</ThemedText>
-          <ThemedText variant='smallertitle' style={{color: darkMode === "dark" ? theme.primary : "black"}}>{alertTimes["Morning Routine Reminder"]}</ThemedText>
-        </TouchableOpacity>
+          <ThemedText variant="subtitle">Reminders</ThemedText>
+          <Switch value={reminderOff} onValueChange={toggleReminder} />
+        </View>
 
-        <TouchableOpacity style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', borderWidth: 0.5, borderColor: theme.tabIconColor, padding: 15, borderRadius: 10, marginBottom: 10}}
-          onPress={() => {
-            setCurrentNotificationLable("Evening Routine Reminder")
-            setShowNotificationTimeSettingModal(true)
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderWidth: 0.5,
+            borderColor: theme.tabIconColor,
+            padding: 15,
+            borderRadius: 10,
+            marginBottom: 10,
           }}
         >
-          <ThemedText variant='subtitle'>Evening Routine Reminder</ThemedText>
-          <ThemedText variant='smallertitle' style={{color: darkMode === "dark" ? theme.primary : "black"}}>{alertTimes["Evening Routine Reminder"]}</ThemedText>
-        </TouchableOpacity>
+          <ThemedText variant="subtitle">Daily Reminders</ThemedText>
+          <Switch value={dailyReminderOff} onValueChange={toggleDailyReminder} />
+        </View>
 
+        {/* Notification Times */}
+        {Object.keys(DEFAULT_ALERT_TIMES).map((key) =>
+          renderNotificationRow(key as keyof typeof DEFAULT_ALERT_TIMES)
+        )}
       </View>
 
-      <NotificationTimeSettingModal 
-        isVisible={showNotificationTimeSettingModal} 
-        onClose={() => setShowNotificationTimeSettingModal(false)} 
-        lable={currentNotificationLable}
-        value={alertTimes[currentNotificationLable]}
-        onTimeSelect={(time: any) => {
-          setAlertTimes(prev => ({ ...prev, [currentNotificationLable]: time })); // update only that label
+      {/* Modal */}
+      <NotificationTimeSettingModal
+        isVisible={showNotificationTimeSettingModal}
+        onClose={() => setShowNotificationTimeSettingModal(false)}
+        label={currentNotificationLabel}
+        value={alertTimes?.[currentNotificationLabel] ?? DEFAULT_ALERT_TIMES[currentNotificationLabel]}
+        defaultTime={
+          alertTimes?.[currentNotificationLabel] ??
+          DEFAULT_ALERT_TIMES[currentNotificationLabel]
+        }
+        onTimeSelect={(time: string) => {
+          setAlertTimes(prev => ({ ...(prev ?? {}), [currentNotificationLabel]: time }));
         }}
       />
     </ThemedView>
-  )
-}
+  );
+};
 
-export default NotificationsSetting
+export default NotificationsSetting;
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  }
-})
+  },
+});

@@ -1,5 +1,7 @@
 import { Alert, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native'
 import React, { useState } from 'react'
+import { router } from 'expo-router'
+
 
 // 🎨 UI
 import ThemedButton from 'components/ThemedButton'
@@ -12,7 +14,9 @@ import { CirclePlus } from 'lucide-react-native'
 
 //⚛️ STATE MANAGEMENT
 import { useTheme } from 'components/ThemeContext'
-import { router } from 'expo-router'
+import { useAtom } from 'jotai'
+import { completionSoundAtom } from 'atoms/notificationAtom'
+
 
 //🔥FIREBASE
 import { auth } from '../../firebaseConfig'
@@ -25,19 +29,15 @@ const Profile = (props: Props) => {
 
   const {theme, darkMode, setDarkmode } = useTheme();
 
-  const [completionSound, setCompletionSound] = useState(false);
+  const [completionSound, setCompletionSound] = useAtom(completionSoundAtom);
 
   const toogleCompletionSound = () => {
-    setCompletionSound(!completionSound);
+    setCompletionSound(prev => !prev);
   }
 
   const toggleDarkMode = () => {
     setDarkmode(darkMode === "dark" ? "light" : "dark");
   }
-
-
-  //🔹 Darkmode
-
 
   //🔹 Sign out function
   const handleSignOut = async () => {
