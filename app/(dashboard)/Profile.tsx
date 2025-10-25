@@ -57,7 +57,7 @@ const Profile = (props: Props) => {
 
       <Spacer height={20} />
 
-      <TouchableOpacity style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', borderWidth: 0.5, borderColor: theme.tabIconColor, padding: 15, borderRadius: 10, marginBottom: 10}}>
+      <TouchableOpacity style={{flexDirection:'row', justifyContent:'space-between', alignItems:'center', borderWidth: 0.5, borderColor: theme.tabIconColor, padding: 15, borderRadius: 10, marginBottom: 10}} onPress={() => router.push("(subscribe)/Subscription")}>
         <ThemedText>Premium Subscription</ThemedText>
         <ChevronRight size={30} stroke={darkMode === "dark" ? theme.tabIconColor : "black"} />
       </TouchableOpacity>
